@@ -10,14 +10,14 @@ import { toDomain, toRow } from './order.mapper';
 
 export const orderRepository: OrderRepository = {
   async findById(tenantId: string, id: OrderId): Promise<Order | null> {
-    const row = await db.query.orders.findFirst({ where: and(eq(orders.tenantId, tenantId), eq(orders.id, id)) });
+    const row = await db().query.orders.findFirst({ where: and(eq(orders.tenantId, tenantId), eq(orders.id, id)) });
     return row ? toDomain(row) : null;
   },
 
   async save(tenantId: string, order: Order): Promise<void> {
     const row = toRow(order);
     try {
-      await db
+      await db()
         .insert(orders)
         .values({ ...row, tenantId })
         .onConflictDoUpdate({ target: orders.id, set: row, setWhere: eq(orders.tenantId, tenantId) });

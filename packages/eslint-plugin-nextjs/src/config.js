@@ -10,7 +10,10 @@ const TEST_GLOBS = ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/__fakes
 /**
  * @param {object} [options]
  * @param {string} [options.appRoot='.']   folder that holds app/, modules/, lib/ (e.g. 'src' or 'apps/web')
- * @param {string[]} [options.legacy=[]]   globs of pre-module code (NX-LAYER-10), relative to appRoot
+ * @param {string[]} [options.legacy=[]]   globs of pre-module code (NX-LAYER-10), relative to appRoot and
+ *                                          matched against the whole path: 'components/**' is the app's
+ *                                          components/, not a module's. Exclude a folder with an extglob:
+ *                                          'components/!(ui)/**'.
  * @param {string} [options.tsconfig='./tsconfig.json']
  * @param {string[]} [options.extraServerOnly=[]]  extra packages banned from domain/application
  */
@@ -38,7 +41,8 @@ export function createConfig(options = {}) {
     { type: 'ui-primitives', pattern: p('components/ui') },
     { type: 'app', pattern: p('app') },
   ];
-  if (legacy.length) elements.unshift({ type: 'legacy', pattern: legacy.map(p) });
+  // mode 'full' anchors the globs at the app root, so a module's own components/ is never legacy
+  if (legacy.length) elements.unshift({ type: 'legacy', pattern: legacy.map(p), mode: 'full' });
 
   const FRAMEWORK = ['react', 'react-dom', 'next', 'next/*', 'server-only', 'client-only'];
   const ORM = ['drizzle-orm', 'drizzle-orm/*', 'postgres', 'pg'];
@@ -55,8 +59,9 @@ export function createConfig(options = {}) {
       { from: 'application', allow: [same('contracts')], importKind: 'type' },
       // an event handler names the event it receives from the publisher's public API (NX-XMOD-02)
       { from: 'application', allow: [other('module-index')], importKind: 'type' },
-      { from: 'infra', allow: [same('infra'), same('application'), same('domain'), same('contracts'), 'lib-core', 'lib-db', 'lib'] },
-      { from: 'contracts', allow: [same('domain'), 'lib-core', 'lib'] },
+      // infra maps to and from another module's public types; contracts reuse the owner's schema (NX-TYPE-01)
+      { from: 'infra', allow: [same('infra'), same('application'), same('domain'), same('contracts'), 'lib-core', 'lib-db', 'lib', other('module-index')] },
+      { from: 'contracts', allow: [same('domain'), 'lib-core', 'lib', other('module-index')] },
       { from: 'ui', allow: [same('ui'), same('commands'), same('application'), same('infra'), same('contracts'), same('domain'), 'lib-core', 'lib', 'ui-primitives', other('module-index'), other('module-server')] },
       // commands.ts wires use cases to infra, policy and clock (NX-LAYER-11)
       { from: 'commands', allow: [same('application'), same('infra'), same('contracts'), same('domain'), 'lib-core', 'lib', other('module-index'), other('module-server')] },
@@ -167,6 +172,12 @@ export function createConfig(options = {}) {
     {
       name: 'conventions/nextjs/env-readers',
       files: [p('lib/env.ts'), p('lib/db/client.ts')],
+      rules: { 'no-restricted-syntax': 'off' },
+    },
+    // ---- tooling outside the app: config files and scripts read their own env (NX-ZOD-05) --
+    {
+      name: 'conventions/nextjs/tooling',
+      files: [p('*.config.{ts,mts,cts,js,mjs,cjs}'), p('scripts/**')],
       rules: { 'no-restricted-syntax': 'off' },
     },
     // ---- tests: exempt from layer rules, not from naming (NX-TEST-07) ---------------------

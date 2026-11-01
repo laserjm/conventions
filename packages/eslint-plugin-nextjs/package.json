@@ -1,6 +1,6 @@
 {
   "name": "@conventions/eslint-plugin-nextjs",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "ESLint flat config and custom rules for the nextjs conventions profile",
   "type": "module",
   "main": "src/index.js",

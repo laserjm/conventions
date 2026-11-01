@@ -3,8 +3,22 @@ import { createConfig as createBaseConfig } from './config.js';
 
 export { rules };
 
+/** Rules that do not apply to `legacy` code; everything else, the layer rules above all, does. */
+const LEGACY_EXEMPT = [
+  '@typescript-eslint/naming-convention',
+  '@typescript-eslint/consistent-type-assertions',
+  'no-restricted-syntax',
+  'check-file/filename-naming-convention',
+  'check-file/folder-naming-convention',
+  'nextjs/action-suffix',
+  'nextjs/schema-suffix',
+  'nextjs/use-case-export-name',
+  'nextjs/tag-matches-type-name',
+  'nextjs/no-inline-cache-tags',
+];
+
 const plugin = {
-  meta: { name: '@conventions/eslint-plugin-nextjs', version: '0.1.1' },
+  meta: { name: '@conventions/eslint-plugin-nextjs', version: '0.1.2' },
   rules,
   configs: {},
 };
@@ -37,6 +51,17 @@ export function createConfig(options = {}) {
       files: ['**/*.test.ts', '**/*.spec.ts', '**/__fakes__/**', `${root}tests/**`],
       rules: { 'nextjs/use-case-export-name': 'off', 'nextjs/action-suffix': 'off' },
     },
+    // Legacy code keeps its shape until its module migrates (NX-LAYER-10): only the layer rules
+    // apply to it. Naming, cast and env rules start when its folder leaves the list.
+    ...(options.legacy?.length
+      ? [
+          {
+            name: 'conventions/nextjs/legacy',
+            files: options.legacy.map((glob) => root + glob),
+            rules: Object.fromEntries(LEGACY_EXEMPT.map((rule) => [rule, 'off'])),
+          },
+        ]
+      : []),
   ];
 }
 

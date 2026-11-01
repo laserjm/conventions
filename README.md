@@ -56,10 +56,10 @@ the tag is the version.
 
 ```sh
 # npm (and anything that uses package-lock.json, e.g. Vercel's `npm ci`)
-npm i -D -E https://github.com/laserjm/conventions/releases/download/v0.1.1/conventions-eslint-plugin-nextjs-0.1.1.tgz
+npm i -D -E https://github.com/laserjm/conventions/releases/download/v0.1.2/conventions-eslint-plugin-nextjs-0.1.2.tgz
 
 # pnpm can also install straight from the tag
-pnpm add -D "github:laserjm/conventions#v0.1.1&path:/packages/eslint-plugin-nextjs"
+pnpm add -D "github:laserjm/conventions#v0.1.2&path:/packages/eslint-plugin-nextjs"
 ```
 
 `eslint` (9+) and `typescript` (5+) are peer dependencies. Working on the rules and a project
@@ -73,7 +73,7 @@ The skill reads the catalogue from the installed lint package, so install that f
 the same tag:
 
 ```sh
-npx skills add https://github.com/laserjm/conventions/tree/v0.1.1 --skill nextjs-conventions
+npx skills add https://github.com/laserjm/conventions/tree/v0.1.2 --skill nextjs-conventions
 ```
 
 Or as a Claude Code plugin: `claude plugin marketplace add laserjm/conventions` then
@@ -84,7 +84,7 @@ Or as a Claude Code plugin: `claude plugin marketplace add laserjm/conventions` 
 ```sh
 SRC=node_modules/@conventions/eslint-plugin-nextjs/templates
 mkdir -p lib tests && cp -r $SRC/lib/* lib/ && cp -r $SRC/tests/* tests/
-curl -fsSL https://raw.githubusercontent.com/laserjm/conventions/v0.1.1/docs/templates/ARCHITECTURE.md \
+curl -fsSL https://raw.githubusercontent.com/laserjm/conventions/v0.1.2/docs/templates/ARCHITECTURE.md \
   -o ARCHITECTURE.md   # fill the header; delete the Legacy section
 ```
 
@@ -103,7 +103,9 @@ Follow the refactoring playbook in [`docs/nextjs/architecture.md`](docs/nextjs/a
 Setting it up is step 1, guardrails first:
 
 1. **Merge the helpers, do not copy over them.** `lib/result.ts`, `lib/errors.ts`, `lib/db/*`,
-   `lib/safe-action.ts` and `tests/support/local-stack.ts` often exist already.
+   `lib/safe-action.ts` and `tests/support/local-stack.ts` often exist already. Most templates
+   say "do not edit": adopt them as shipped and move the project's own additions next to them.
+   `lib/db/client.ts` and `lib/auth/requester.ts` are starters the project owns.
    `diff -r node_modules/@conventions/eslint-plugin-nextjs/templates/lib lib` shows what
    differs; copy the files that are missing, reconcile the rest by hand, and record any shape you
    keep as an `ARCHITECTURE.md` entry.
@@ -121,12 +123,17 @@ Setting it up is step 1, guardrails first:
    import conventions from '@conventions/eslint-plugin-nextjs';
    export default [
      // ...framework presets and ignores
-     ...conventions.createConfig({ appRoot: '.', legacy: ['lib/server/**', 'components/**'] }),
+     ...conventions.createConfig({ appRoot: '.', legacy: ['lib/server/**', 'components/!(ui)/**'] }),
    ];
    ```
 
-   Lint until it passes: fix what is cheap, record the rest as deviations with a rule ID. Do not
-   widen `legacy` to silence a rule; it lists old code, not exceptions.
+   Legacy globs are anchored at the app root, and only the layer rules apply to legacy code:
+   naming, cast and env rules start when a folder leaves the list. Everything else lints in
+   full. Lint until it passes: fix what is cheap, record the rest as deviations with a rule ID.
+   Do not widen `legacy` to silence a rule; it lists old code, not exceptions.
+   A deviation that lint keeps watching is a config block after `createConfig` that sets the
+   rule to `warn` for exactly the files listed in the `ARCHITECTURE.md` row; the same mistake
+   anywhere else still fails.
 4. **Inventory the database code** in [`db-inventory.md`](docs/templates/db-inventory.md)
    (NX-DB-02).
 

@@ -1,6 +1,6 @@
 {
   "name": "conventions",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Architecture conventions per stack profile: skills that point the agent at the rule catalogue and the linter.",
   "skills": ["./skills/nextjs-conventions"]
 }

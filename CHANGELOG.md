@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.1.2
+
+Fixes found adopting the profile in a brownfield project (screenerhub).
+
+- `legacy` globs are anchored at `appRoot` (boundaries `mode: 'full'`): `components/**` no longer
+  turns a module's `components/` into legacy. Exclude a folder with an extglob,
+  `components/!(ui)/**`.
+- Legacy code gets the layer rules only (NX-LAYER-10): naming, cast, env and the custom naming
+  rules start when a folder leaves the list.
+- NX-ZOD-05 skips tooling outside the app: `*.config.*` at the app root and `scripts/**`.
+- `contracts.ts` and `infra/` may import another module's `index.ts` (NX-LAYER-01, NX-TYPE-01);
+  `application/` stays types-only.
+- Templates, upstreamed from screenerhub:
+  - `lib/db/transaction.ts`: a nested `withTransaction` joins the outer transaction;
+    `set_config` with a bound value instead of `sql.raw`; optional `statementTimeout` override.
+  - `lib/db/errors.ts`: unwraps Drizzle's error wrapper; `postgresErrorCode()`; works with
+    node-postgres and postgres.js.
+  - `lib/db/client.ts` is a starter the project owns and exports a lazy `db()` (it connected on
+    import, against NX-TYPE-06). **Copies of the old template call `db.` → `db().`**
+  - New starter `lib/auth/requester.ts` (binding: supabase), which `lib/safe-action.ts` imports.
+
 ## 0.1.1
 
 - Skill `nextjs-conventions` installs with `npx skills add https://github.com/laserjm/conventions/tree/v0.1.1 --skill nextjs-conventions`:

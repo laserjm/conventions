@@ -1,6 +1,6 @@
 # Generated from the rule tables in docs/nextjs/**.md by scripts/build-catalog.py — do not edit by hand.
 profile: nextjs
-version: 0.1.1
+version: 0.1.2
 rules:
   - id: NX-STR-01
     severity: error
@@ -81,7 +81,7 @@ rules:
     severity: error
     enforcement: "eslint:boundaries"
     doc: docs/nextjs/architecture.md#layer-rules
-    rule: "Code that predates the modules is declared as the `legacy` element in the ESLint config. Legacy code keeps the imports it has but reaches a module only through `index.ts`/`server.ts`. No new feature lands in legacy; a folder leaves the list when its module is done."
+    rule: "Code that predates the modules is declared as the `legacy` element in the ESLint config. Legacy code keeps the imports it has but reaches a module only through `index.ts`/`server.ts`. No new feature lands in legacy; a folder leaves the list when its module is done. Legacy globs are anchored at the app root, so `components/**` is never a module's `components/`. Lint applies only the layer rules to legacy code; naming, cast and env rules start when the folder leaves the list."
   - id: NX-LAYER-11
     severity: error
     enforcement: "eslint:nextjs/actions-use-commands + eslint:boundaries + eslint:nextjs/require-server-only"
@@ -541,7 +541,7 @@ rules:
     severity: error
     enforcement: "review"
     doc: docs/nextjs/bindings/drizzle.md#rules
-    rule: "`withTransaction` sets `statement_timeout` per caller class: interactive callers 8 s, system callers 5 min (defaults; the project may change them in `ARCHITECTURE.md`)."
+    rule: "`withTransaction` sets `statement_timeout` per caller class: interactive callers 8 s, system callers 5 min (defaults; the project may change them in `ARCHITECTURE.md`). A nested `withTransaction` joins the outer transaction and its timeout; `statementTimeout` overrides the budget for tests and maintenance only."
   - id: NX-DRZ-06
     severity: error
     enforcement: "eslint:boundaries"

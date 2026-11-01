@@ -7,9 +7,9 @@ the convention ID it enforces; look the ID up in `docs/nextjs/*.md`.
 
 ```sh
 # npm
-npm i -D -E https://github.com/laserjm/conventions/releases/download/v0.1.1/conventions-eslint-plugin-nextjs-0.1.1.tgz
+npm i -D -E https://github.com/laserjm/conventions/releases/download/v0.1.2/conventions-eslint-plugin-nextjs-0.1.2.tgz
 # pnpm
-pnpm add -D "github:laserjm/conventions#v0.1.1&path:/packages/eslint-plugin-nextjs"
+pnpm add -D "github:laserjm/conventions#v0.1.2&path:/packages/eslint-plugin-nextjs"
 ```
 
 Not published to npm; each release of the repo attaches the tarball, and the tag is the
@@ -24,7 +24,7 @@ import conventions from '@conventions/eslint-plugin-nextjs';
 export default [
   ...conventions.createConfig({
     appRoot: '.',                       // 'src' if you use one (NX-STR-01)
-    legacy: ['lib/server/**', 'lib/monitor/**'], // pre-module code (NX-LAYER-10); shrink as modules land
+    legacy: ['lib/server/**', 'components/!(ui)/**'], // pre-module code (NX-LAYER-10), anchored at appRoot; shrink as modules land
     tsconfig: './tsconfig.json',
   }),
   // project overrides below — every override needs an ARCHITECTURE.md entry (NX-MIG-04)
@@ -44,7 +44,7 @@ cp -r node_modules/@conventions/eslint-plugin-nextjs/templates/tests/* tests/
 
 | Convention | Mechanism |
 | --- | --- |
-| NX-LAYER-01/03/04/10 layer direction, module entry points, legacy | `boundaries/element-types` |
+| NX-LAYER-01/03/04/10 layer direction, module entry points, legacy (legacy files get the layer rules only) | `boundaries/element-types` |
 | NX-LAYER-02, NX-CACHE-01/04, NX-DRZ-01, NX-NSA-05, NX-SB-08 vendor packages per layer | `boundaries/external` |
 | NX-LAYER-05 browser-safe `index.ts`, `server-only` | `nextjs/no-server-exports-from-index`, `nextjs/require-server-only` |
 | NX-LAYER-08 no `throw` in domain/application | `no-restricted-syntax` |
