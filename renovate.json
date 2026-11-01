@@ -3,8 +3,9 @@
   "extends": ["config:recommended"],
   "packageRules": [
     {
-      "description": "Conventions bumps are reviewed, never auto-merged: a major means new error rules.",
-      "matchPackageNames": ["@conventions/eslint-plugin-nextjs"],
+      "description": "Conventions bumps are reviewed, never auto-merged: a major means new error rules. Copy this rule into a project's renovate.json.",
+      "matchPackageNames": ["@conventions/nextjs", "@conventions/cli"],
+      "groupName": "conventions",
       "automerge": false,
       "labels": ["conventions"]
     }

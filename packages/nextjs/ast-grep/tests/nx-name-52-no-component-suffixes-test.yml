@@ -1,0 +1,6 @@
+id: nx-name-52-no-component-suffixes
+valid:
+  - "export function OrderCard() { return <div />; }"
+invalid:
+  - "export function OrderCardComponent() { return <div />; }"
+  - "export const OrderListContainer = () => <div />;"

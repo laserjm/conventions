@@ -1,0 +1,8 @@
+id: nx-drz-08-no-raw-sql-in-repository
+snapshots:
+  const rows = await db().execute(sql`select * from orders`);:
+    labels:
+    - source: sql`select * from orders`
+      style: primary
+      start: 32
+      end: 57

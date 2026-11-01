@@ -1,0 +1,11 @@
+id: nx-name-61-dto-suffix-only
+language: typescript
+severity: error
+message: "NX-NAME-61: 'Dto' is the only suffix for shapes that cross the wire; rename '$NAME' (not Payload, Request, Response, Data, Info)."
+files: ["**/modules/*/contracts.ts", "**/modules/*/domain/**/*.ts", "**/modules/*/application/**/*.ts"]
+rule:
+  any:
+    - pattern: type $NAME = $$$BODY
+    - pattern: interface $NAME { $$$BODY }
+constraints:
+  NAME: { regex: '(Payload|Request|Response|Data|Info)$' }

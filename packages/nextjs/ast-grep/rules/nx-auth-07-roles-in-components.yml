@@ -1,0 +1,8 @@
+id: nx-auth-07-roles-in-components
+language: tsx
+severity: warning
+message: "NX-AUTH-07: components never decide permissions; receive a boolean like `can.editOrder` computed in queries.ts instead of reading roles."
+files: ["**/modules/*/components/**/*.tsx", "**/app/**/*.tsx"]
+rule:
+  kind: member_expression
+  has: { field: property, regex: '^roles$' }

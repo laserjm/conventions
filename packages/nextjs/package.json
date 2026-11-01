@@ -1,0 +1,84 @@
+{
+  "name": "@conventions/nextjs",
+  "version": "0.2.0",
+  "description": "The nextjs conventions profile: ESLint flat config, ast-grep rules, ls-lint config, the rule catalogue and the runtime core (Result, errors, use cases, transactions, action clients, test helpers).",
+  "type": "module",
+  "exports": {
+    ".": "./eslint/index.js",
+    "./eslint": "./eslint/index.js",
+    "./core": {
+      "types": "./dist/core/index.d.ts",
+      "default": "./dist/core/index.js"
+    },
+    "./drizzle": {
+      "types": "./dist/drizzle/index.d.ts",
+      "default": "./dist/drizzle/index.js"
+    },
+    "./next-safe-action": {
+      "types": "./dist/next-safe-action/index.d.ts",
+      "default": "./dist/next-safe-action/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing/index.d.ts",
+      "default": "./dist/testing/index.js"
+    },
+    "./profile.json": "./profile.json",
+    "./ls-lint.yml": "./ls-lint.yml",
+    "./ast-grep/*": "./ast-grep/*",
+    "./rules/*": "./rules/*",
+    "./starters/*": "./starters/*",
+    "./templates/*": "./templates/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "eslint",
+    "dist",
+    "ast-grep",
+    "rules",
+    "starters",
+    "templates",
+    "profile.json",
+    "ls-lint.yml",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "node --test test/*.test.js && ast-grep test -c ast-grep/sgconfig.yml",
+    "prepack": "pnpm build"
+  },
+  "peerDependencies": {
+    "eslint": ">=9.0.0",
+    "typescript": ">=5.0.0",
+    "drizzle-orm": ">=0.40.0",
+    "next-safe-action": ">=8.0.0",
+    "vitest": ">=2.0.0"
+  },
+  "peerDependenciesMeta": {
+    "drizzle-orm": {
+      "optional": true
+    },
+    "next-safe-action": {
+      "optional": true
+    },
+    "vitest": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "@typescript-eslint/parser": "^8.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "eslint-plugin-boundaries": "^5.0.0",
+    "eslint-plugin-import-x": "^4.0.0",
+    "eslint-import-resolver-typescript": "^4.0.0",
+    "@conventions/cli": "workspace:*"
+  },
+  "devDependencies": {
+    "@ast-grep/cli": "^0.51.0",
+    "drizzle-orm": "^0.44.0",
+    "eslint": "^9.0.0",
+    "next-safe-action": "^8.7.3",
+    "typescript": "^5.0.0",
+    "vitest": "^3.0.0",
+    "@types/node": "^22.0.0"
+  }
+}

@@ -1,0 +1,13 @@
+id: nx-layer-05-require-server-only
+language: typescript
+severity: error
+message: "NX-LAYER-05: server.ts, queries.ts and commands.ts start with import 'server-only', so a client import fails the build."
+note: Add `import 'server-only';` as the first line.
+files: ["**/modules/*/server.ts", "**/modules/*/queries.ts", "**/modules/*/commands.ts"]
+rule:
+  kind: program
+  not:
+    has:
+      stopBy: end
+      kind: import_statement
+      regex: "^import ['\"]server-only['\"]"

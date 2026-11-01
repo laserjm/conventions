@@ -1,0 +1,6 @@
+id: nx-name-50-action-suffix-required
+valid:
+  - "export const payOrderAction = memberActionClient.action(f); export async function revalidateOrder(id) {}"
+invalid:
+  - "export const payOrder = memberActionClient.action(f);"
+  - "export async function pay() {}"

@@ -1,0 +1,7 @@
+id: nx-type-06-lazy-db-client
+language: typescript
+severity: error
+message: "NX-TYPE-06: importing a module must not connect; export a lazy `db()` that connects on first use, not `const db = drizzle(...)`."
+files: ["**/lib/db/client.ts"]
+rule:
+  pattern: export const $NAME = drizzle($$$ARGS)

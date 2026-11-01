@@ -1,0 +1,5 @@
+id: nx-test-03-integration-tests-skip-loudly
+valid:
+  - "import { describeIntegration } from '@conventions/nextjs/testing'; describeIntegration('orderRepository', () => {});"
+invalid:
+  - "import { describe } from 'vitest'; describe('orderRepository', () => {});"

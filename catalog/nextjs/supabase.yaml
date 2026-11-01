@@ -1,0 +1,44 @@
+# docs/nextjs/bindings/supabase.md — table "supabase". Edit here; docs tables and rules/nextjs.yaml are generated.
+group: supabase
+rules:
+  - id: NX-SB-01
+    severity: guidance
+    rule: Supabase migrations are the only schema source (`supabase migration new`, `supabase/migrations/`). The project is **migrations-first** (NX-DB-01, NX-DRZ-03).
+    mechanism: agent
+    checklist: true
+  - id: NX-SB-02
+    severity: guidance
+    rule: The app connects with the ORM as the database owner through the transaction pooler. Row policies therefore do **not** apply to app queries; tenant isolation is enforced in the repository (NX-AUTH-03). Row policies guard only the Data API (NX-AUTH-04).
+    mechanism: agent
+    checklist: true
+  - id: NX-SB-03
+    severity: guidance
+    rule: "`Requester` is built from `supabase.auth.getUser()` in `lib/safe-action.ts` and `lib/auth/requester.ts`. `tenantId` is the user's id until shared workspaces exist, when it becomes the workspace id; `roles` is empty until roles exist."
+    mechanism: agent
+    checklist: true
+  - id: NX-SB-04
+    severity: error
+    rule: "`handle_new_user` on `auth.users` is a category D hook (NX-DB-02): it provisions the account row and its defaults however a user appears. It is the only trigger allowed to write business rows."
+    mechanism: check
+    tool: inventory
+  - id: NX-SB-05
+    severity: error
+    rule: Queue claims (`claim_*`, `finalize_*`) are category A; `SECURITY DEFINER` helpers used by policies or `CHECK` constraints (`is_iana_timezone`) are category C; read-model functions for the Data API are category B. All have inventory rows.
+    mechanism: check
+    tool: inventory
+  - id: NX-SB-06
+    severity: error
+    rule: Database tests (policies, constraints, category A–E functions) are written with pgTAP in `supabase/tests/` and run in CI against the local stack (NX-TEST-04).
+    mechanism: ci
+    tool: pgtap
+  - id: NX-SB-07
+    severity: error
+    rule: Integration tests use `describeIntegration()` from `@conventions/nextjs/testing`, whose default probe is `supabase status`.
+    mechanism: ast-grep
+    tool: nx-test-03-integration-tests-skip-loudly
+    reportedAs: NX-TEST-03
+  - id: NX-SB-08
+    severity: error
+    rule: The Supabase JS client is used for Auth and Storage only; data access goes through the ORM. A module that needs the Data API (realtime, edge) records it in `ARCHITECTURE.md`.
+    mechanism: eslint
+    tool: boundaries/external

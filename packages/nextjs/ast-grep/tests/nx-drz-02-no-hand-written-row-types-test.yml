@@ -1,0 +1,5 @@
+id: nx-drz-02-no-hand-written-row-types
+valid:
+  - "export type OrderRow = InferSelectModel<typeof orders>;"
+invalid:
+  - "export type OrderRow = { id: string; tenantId: string };"

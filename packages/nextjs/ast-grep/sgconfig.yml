@@ -1,0 +1,6 @@
+# ast-grep rules of the nextjs profile. Rule ids start with the convention id they enforce, so
+# `ast-grep scan --filter '^nx-layer'` runs one ruleset. Run the tests: `ast-grep test -c ast-grep/sgconfig.yml`.
+ruleDirs:
+  - rules
+testConfigs:
+  - testDir: tests

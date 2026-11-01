@@ -1,0 +1,12 @@
+id: nx-name-50-action-suffix-required
+language: typescript
+severity: error
+message: "NX-NAME-50: every export of actions.ts ends in 'Action' (revalidate<Noun> excepted); '$NAME' does not."
+files: ["**/modules/*/actions.ts"]
+rule:
+  any:
+    - pattern: export const $NAME = $INIT
+    - pattern: export async function $NAME($$$PARAMS) { $$$BODY }
+    - pattern: export function $NAME($$$PARAMS) { $$$BODY }
+constraints:
+  NAME: { not: { regex: '(Action$|^revalidate[A-Z])' } }

@@ -1,0 +1,6 @@
+id: nx-nsa-01-no-action-client-creation
+valid:
+  - "import { memberActionClient } from '@/lib/safe-action';"
+invalid:
+  - "export const client = createSafeActionClient();"
+  - "export const { actionClient } = createActionClients({ getRequester });"

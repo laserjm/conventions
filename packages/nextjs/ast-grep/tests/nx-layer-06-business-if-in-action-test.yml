@@ -1,0 +1,6 @@
+id: nx-layer-06-business-if-in-action
+valid:
+  - "export const payOrderAction = memberActionClient.action(async ({ ctx }) => { const result = await payOrder(ctx.requester, 1); if (result.ok) await revalidateOrder(1); return result; });"
+  - "export const payOrderAction = memberActionClient.action(async ({ ctx }) => { if (!result.ok) return result; return result; });"
+invalid:
+  - "export const payOrderAction = memberActionClient.action(async ({ ctx, parsedInput }) => { if (parsedInput.total > 100) { return err(tooBig()); } return ok(1); });"

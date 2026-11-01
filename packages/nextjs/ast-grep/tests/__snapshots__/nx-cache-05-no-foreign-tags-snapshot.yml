@@ -1,0 +1,30 @@
+id: nx-cache-05-no-foreign-tags
+snapshots:
+  "import { ORDER_TAGS } from '@/modules/orders/server';":
+    labels:
+    - source: ORDER_TAGS
+      style: primary
+      start: 9
+      end: 19
+    - source: "'@/modules/orders/server'"
+      style: secondary
+      start: 27
+      end: 52
+    - source: import { ORDER_TAGS } from '@/modules/orders/server';
+      style: secondary
+      start: 0
+      end: 53
+  "import { getOrder, ORDER_TAGS } from '../orders/server';":
+    labels:
+    - source: ORDER_TAGS
+      style: primary
+      start: 19
+      end: 29
+    - source: "'../orders/server'"
+      style: secondary
+      start: 37
+      end: 55
+    - source: import { getOrder, ORDER_TAGS } from '../orders/server';
+      style: secondary
+      start: 0
+      end: 56

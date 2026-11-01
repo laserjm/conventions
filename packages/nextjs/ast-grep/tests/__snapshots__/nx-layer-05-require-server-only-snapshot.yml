@@ -1,0 +1,14 @@
+id: nx-layer-05-require-server-only
+snapshots:
+  export const getOrder = 1;:
+    labels:
+    - source: export const getOrder = 1;
+      style: primary
+      start: 0
+      end: 26
+  "import { x } from 'y'; export * from './queries';":
+    labels:
+    - source: import { x } from 'y'; export * from './queries';
+      style: primary
+      start: 0
+      end: 49

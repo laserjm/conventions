@@ -1,15 +1,13 @@
-// Shipped by @conventions/eslint-plugin-nextjs (binding: drizzle) as a STARTER — NX-TYPE-06.
-// The project owns this file: adapt the driver and pool to its hosting. Keep `db()` lazy, so
-// importing a module needs no DATABASE_URL, and keep `Database`, which transaction.ts uses.
+// Starter from @conventions/nextjs (binding: drizzle) — NX-TYPE-06, NX-DB-06. The project owns this file.
 import 'server-only';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
+import { createTransactionRunner } from '@conventions/nextjs/drizzle';
 import * as schema from './schema';
 
 function connect() {
   const url = process.env.DATABASE_URL;
   if (!url) throw new Error('DATABASE_URL is not set');
-  // prepare: false for transaction poolers (Supavisor, PgBouncer), which share sessions.
   return drizzle(postgres(url, { prepare: false }), { schema });
 }
 
@@ -22,3 +20,6 @@ export function db() {
 }
 
 export type Database = ReturnType<typeof db>;
+
+/** The only place a transaction is opened; only infra/ imports it (NX-DB-06). */
+export const withTransaction = createTransactionRunner(() => db());

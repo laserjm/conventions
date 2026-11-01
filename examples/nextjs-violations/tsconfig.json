@@ -10,5 +10,5 @@
     "skipLibCheck": true,
     "paths": { "@/*": ["./*"] }
   },
-  "include": ["app", "modules", "lib", "components", "tests"]
+  "include": ["app", "modules", "lib", "components"]
 }

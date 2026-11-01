@@ -1,0 +1,11 @@
+id: nx-zod-05-env-outside-env-readers
+language: typescript
+severity: error
+message: "NX-ZOD-05: read the environment through lib/env.ts (lib/db/client.ts excepted); tooling outside the app may read its own."
+ignores: ["**/lib/env.ts", "**/lib/db/client.ts", "**/*.config.*", "**/scripts/**", "**/tests/**", "**/*.test.ts", "**/*.spec.ts"]
+rule:
+  any:
+    - pattern: process.env
+    - pattern: process.env.$NAME
+    - pattern: process.env[$KEY]
+    - pattern: const { $$$NAMES } = process

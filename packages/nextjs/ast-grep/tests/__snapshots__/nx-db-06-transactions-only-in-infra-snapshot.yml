@@ -1,0 +1,12 @@
+id: nx-db-06-transactions-only-in-infra
+snapshots:
+  "import { createTransactionRunner } from '@conventions/nextjs/drizzle';":
+    labels:
+    - source: import { createTransactionRunner } from '@conventions/nextjs/drizzle';
+      style: primary
+      start: 0
+      end: 70
+    - source: "'@conventions/nextjs/drizzle'"
+      style: secondary
+      start: 40
+      end: 69

@@ -1,0 +1,5 @@
+id: nx-rich-03-no-domain-classes
+valid:
+  - "export type Order = { id: string }; export function applyPayment(o: Order) { return o; }"
+invalid:
+  - "export class Order { pay() {} }"

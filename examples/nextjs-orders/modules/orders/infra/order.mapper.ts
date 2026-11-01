@@ -1,5 +1,6 @@
 // The only file that knows both OrderRow and Order (NX-NAME-41). Casts are allowed here (NX-TYPE-02).
 import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
+import { TenantId } from '@conventions/nextjs/core';
 import type { orders } from '@/lib/db/schema';
 import type { Order } from '../domain/order';
 import { OrderId } from '../domain/order-id';
@@ -11,7 +12,7 @@ export type NewOrderRow = InferInsertModel<typeof orders>;
 export function toDomain(row: OrderRow): Order {
   return {
     id: OrderId(row.id),
-    tenantId: row.tenantId,
+    tenantId: TenantId(row.tenantId),
     status: row.status,
     total: money(row.totalCents),
     paidAt: row.paidAt,

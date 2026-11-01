@@ -1,2 +1,2 @@
-// expect: check-file/filename-naming-convention
+// expect: NX-STR-02
 export const helper = 1;

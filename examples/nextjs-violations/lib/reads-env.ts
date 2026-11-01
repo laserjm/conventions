@@ -1,2 +1,3 @@
-// expect: no-restricted-syntax
-export const url = process.env.DATABASE_URL;
+// expect: NX-ZOD-05
+const { env } = process;
+export const url = env.DATABASE_URL;

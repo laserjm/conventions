@@ -1,6 +1,10 @@
 {
   "name": "conventions",
-  "version": "0.1.2",
-  "description": "Architecture conventions per stack profile: skills that point the agent at the rule catalogue and the linter.",
-  "skills": ["./skills/nextjs-conventions"]
+  "version": "0.2.0",
+  "description": "Architecture conventions per stack profile: skills that read the installed rule catalogue and the lint output, hooks that lint every written file and run the structural checks on stop.",
+  "skills": [
+    "./skills/nextjs-conventions",
+    "./skills/new-module"
+  ],
+  "hooks": "./hooks/hooks.json"
 }

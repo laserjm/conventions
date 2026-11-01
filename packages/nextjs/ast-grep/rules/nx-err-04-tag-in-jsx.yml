@@ -1,0 +1,10 @@
+id: nx-err-04-tag-in-jsx
+language: tsx
+severity: warning
+message: "NX-ERR-04: the raw _tag never reaches the UI; map it to copy with an exhaustive record."
+files: ["**/*.tsx"]
+rule:
+  kind: jsx_expression
+  has:
+    kind: member_expression
+    has: { field: property, regex: '^_tag$' }

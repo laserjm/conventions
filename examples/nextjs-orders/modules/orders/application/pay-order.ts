@@ -1,6 +1,5 @@
-// Use case: (input, deps) => Promise<Result>. One value export named after the file (NX-NAME-03).
-import { err, ok, type Result } from '@/lib/result';
-import { forbidden, notFound, type Forbidden, type NotFound, type Requester } from '@/lib/errors';
+// Use case: defineUseCase pins (input, deps) => Promise<Result> (NX-LAYER-07, NX-ERR-01). One value export, named after the file (NX-NAME-03).
+import { defineUseCase, err, ok, forbidden, notFound, type Forbidden, type NotFound, type Requester } from '@conventions/nextjs/core';
 import type { PayOrderInput } from '../contracts';
 import { applyPayment } from '../domain/order';
 import type { OrderError } from '../domain/errors';
@@ -16,21 +15,19 @@ export type PayOrderDeps = {
 
 export type PayOrderOutput = { orderId: PayOrderInput['orderId']; paidAt: Date };
 
-export async function payOrder(
-  input: PayOrderInput,
-  deps: PayOrderDeps,
-): Promise<Result<PayOrderOutput, OrderError | NotFound | Forbidden>> {
-  const { requester, orders, clock, events, uow } = deps;
-  if (!requester.roles.includes('member') && requester.tenantId !== input.tenantId) {
-    return err(forbidden('not your order')); // NX-AUTH-02: authorization is a use-case decision
-  }
-  return uow.run(async () => {
-    const order = await orders.findById(requester.tenantId, input.orderId);
-    if (!order) return err(notFound('Order', input.orderId));
-    const result = applyPayment(order, input.payment, clock.now());
-    if (!result.ok) return result;
-    await orders.save(requester.tenantId, result.value.order);
-    events.collect(result.value.event);
-    return ok({ orderId: order.id, paidAt: result.value.event.paidAt });
-  });
-}
+export const payOrder = defineUseCase<PayOrderInput, PayOrderOutput, OrderError | NotFound | Forbidden, PayOrderDeps>(
+  async (input, { requester, orders, clock, events, uow }) => {
+    if (!requester.roles.includes('member') && requester.tenantId !== input.tenantId) {
+      return err(forbidden('not your order')); // NX-AUTH-02: authorization is a use-case decision
+    }
+    return uow.run(async () => {
+      const order = await orders.findById(requester.tenantId, input.orderId);
+      if (!order) return err(notFound('Order', input.orderId));
+      const result = applyPayment(order, input.payment, clock.now());
+      if (!result.ok) return result;
+      await orders.save(requester.tenantId, result.value.order);
+      events.collect(result.value.event);
+      return ok({ orderId: order.id, paidAt: result.value.event.paidAt });
+    });
+  },
+);

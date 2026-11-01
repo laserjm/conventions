@@ -1,0 +1,12 @@
+id: nx-auth-01-session-read-outside-edge
+snapshots:
+  "import { getRequester } from '@/lib/auth/requester';":
+    labels:
+    - source: import { getRequester } from '@/lib/auth/requester';
+      style: primary
+      start: 0
+      end: 52
+    - source: "'@/lib/auth/requester'"
+      style: secondary
+      start: 29
+      end: 51

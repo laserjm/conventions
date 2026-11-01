@@ -1,0 +1,7 @@
+id: nx-layer-07-use-define-use-case
+valid:
+  - "export const payOrder = defineUseCase<PayOrderInput, PayOrderOutput, OrderError, PayOrderDeps>(async (input, deps) => ok(1));"
+  - "export type PayOrderDeps = { orders: OrderRepository };"
+invalid:
+  - "export async function payOrder(input, deps) { return ok(1); }"
+  - "export const payOrder = async (input, deps) => ok(1);"

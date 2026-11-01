@@ -1,0 +1,8 @@
+id: nx-layer-08-no-throw-in-pure-layers
+language: typescript
+severity: error
+message: "NX-LAYER-08: return err(...) — throwing is reserved for bugs and never crosses a layer."
+files: ["**/modules/*/domain/**/*.ts", "**/modules/*/application/**/*.ts"]
+ignores: ["**/*.test.ts", "**/__fakes__/**"]
+rule:
+  kind: throw_statement

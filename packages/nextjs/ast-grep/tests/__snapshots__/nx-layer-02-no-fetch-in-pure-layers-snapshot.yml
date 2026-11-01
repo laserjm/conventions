@@ -1,0 +1,8 @@
+id: nx-layer-02-no-fetch-in-pure-layers
+snapshots:
+  "export const f = async () => fetch('https://x');":
+    labels:
+    - source: fetch('https://x')
+      style: primary
+      start: 29
+      end: 47

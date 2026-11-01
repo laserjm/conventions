@@ -1,0 +1,10 @@
+id: nx-auth-01-session-read-outside-edge
+language: typescript
+severity: error
+message: "NX-AUTH-01: the session is read in lib/safe-action.ts and queries.ts only; commands.ts and use cases receive the Requester from their caller."
+ignores: ["**/lib/safe-action.ts", "**/lib/auth/**", "**/modules/*/queries.ts", "**/app/**", "**/*.test.ts"]
+rule:
+  kind: import_statement
+  has:
+    field: source
+    regex: 'lib/auth/requester'

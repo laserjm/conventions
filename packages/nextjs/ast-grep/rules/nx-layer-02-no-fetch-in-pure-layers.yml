@@ -1,0 +1,8 @@
+id: nx-layer-02-no-fetch-in-pure-layers
+language: typescript
+severity: error
+message: "NX-LAYER-02: domain/ and application/ do no I/O; put the call behind a port in ports.ts and implement it in infra/."
+files: ["**/modules/*/domain/**/*.ts", "**/modules/*/application/**/*.ts"]
+ignores: ["**/*.test.ts", "**/__fakes__/**"]
+rule:
+  pattern: fetch($$$ARGS)

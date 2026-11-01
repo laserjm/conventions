@@ -1,0 +1,14 @@
+id: nx-nsa-01-no-action-client-creation
+snapshots:
+  export const client = createSafeActionClient();:
+    labels:
+    - source: createSafeActionClient()
+      style: primary
+      start: 22
+      end: 46
+  "export const { actionClient } = createActionClients({ getRequester });":
+    labels:
+    - source: createActionClients({ getRequester })
+      style: primary
+      start: 32
+      end: 69

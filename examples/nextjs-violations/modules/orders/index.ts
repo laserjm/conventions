@@ -1,3 +1,4 @@
-// expect: nextjs/no-server-exports-from-index
-export * from './queries';
-export { orderRepository } from './infra/order.repository';
+// expect: NX-LAYER-05
+export { getOrder } from './queries';
+export type { Order } from './domain/order';
+export { OrderId } from './domain/order-id';

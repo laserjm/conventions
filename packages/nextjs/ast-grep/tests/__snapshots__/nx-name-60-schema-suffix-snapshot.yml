@@ -1,0 +1,58 @@
+id: nx-name-60-schema-suffix
+snapshots:
+  "const PayOrderSchema = z.object({}).strict();":
+    labels:
+    - source: PayOrderSchema = z.object({}).strict()
+      style: primary
+      start: 6
+      end: 44
+    - source: PayOrderSchema
+      style: secondary
+      start: 6
+      end: 20
+    - source: const PayOrderSchema = z.object({}).strict();
+      style: secondary
+      start: 0
+      end: 45
+    - source: const PayOrderSchema = z.object({}).strict();
+      style: secondary
+      start: 0
+      end: 45
+    - source: z
+      style: secondary
+      start: 23
+      end: 24
+    - source: z.object
+      style: secondary
+      start: 23
+      end: 31
+  "export const payOrderInput = z.object({});":
+    labels:
+    - source: payOrderInput = z.object({})
+      style: primary
+      start: 13
+      end: 41
+    - source: payOrderInput
+      style: secondary
+      start: 13
+      end: 26
+    - source: export const payOrderInput = z.object({});
+      style: secondary
+      start: 0
+      end: 42
+    - source: export const payOrderInput = z.object({});
+      style: secondary
+      start: 0
+      end: 42
+    - source: const payOrderInput = z.object({});
+      style: secondary
+      start: 7
+      end: 42
+    - source: z
+      style: secondary
+      start: 29
+      end: 30
+    - source: z.object
+      style: secondary
+      start: 29
+      end: 37
