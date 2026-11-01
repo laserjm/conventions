@@ -5,7 +5,8 @@ message: "NX-NAME-20: no Model, Entity, Domain or VO suffix on '$NAME'; the fold
 files: ["**/modules/*/domain/**/*.ts"]
 rule:
   any:
-    - pattern: type $NAME = $$$BODY
-    - pattern: interface $NAME { $$$BODY }
+    - kind: type_alias_declaration
+    - kind: interface_declaration
+  has: { field: name, pattern: $NAME }
 constraints:
   NAME: { regex: '(Model|Entity|Domain|VO)$' }

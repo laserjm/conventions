@@ -27,3 +27,13 @@ export function adopted(project, id) {
   const chosen = project.header?.rulesets;
   return !chosen || !chosen.length || chosen.includes(rule.group);
 }
+
+/** Absolute matches of a glob that may start with `../`: the static prefix is resolved first. */
+export async function globFrom(dir, pattern) {
+  const parts = pattern.split('/');
+  const i = parts.findIndex((p) => /[*?{[]/.test(p));
+  const base = path.resolve(dir, parts.slice(0, i < 0 ? -1 : i).join('/'));
+  const rest = parts.slice(i < 0 ? -1 : i).join('/');
+  const list = await glob([rest], { cwd: base, onlyFiles: true, ignore: ['**/node_modules/**'] });
+  return list.sort().map((f) => path.join(base, f));
+}

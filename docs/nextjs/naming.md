@@ -22,7 +22,7 @@ document.
 | ID | Sev | Rule | Enforcement |
 | --- | --- | --- | --- |
 | NX-NAME-01 | error | Files and folders are `kebab-case`. Route folders follow Next conventions: `(group)`, `[param]`, `_private`. | ls-lint |
-| NX-NAME-02 | error | Types, interfaces and components are `PascalCase`; functions and variables `camelCase`; module-level constants may be `SCREAMING_SNAKE_CASE`. No `I` prefix on interfaces, no `Impl` suffix. | eslint:@typescript-eslint/naming-convention |
+| NX-NAME-02 | error | Types, interfaces and components are `PascalCase`; functions and variables `camelCase`; module-level constants may be `SCREAMING_SNAKE_CASE`. No `I` prefix on interfaces, no `Impl` suffix. | eslint:nx-ts/naming-convention |
 | NX-NAME-03 | error | In `application/<use-case>.ts` and in component files the file exports exactly one value whose name is the camelCase/PascalCase of the file name. Other files (`actions.ts`, `queries.ts`, `contracts.ts`, `ports.ts`, `errors.ts`, `events.ts`, entity files) export several things by design. | eslint:nextjs/use-case-export-name |
 | NX-NAME-04 | guidance | Singular for a thing, plural for a collection: `order.ts` holds `Order`; `orders` table; `OrderRepository`. | agent |
 | NX-NAME-05 | guidance | No abbreviations except universal ones (`id`, `url`, `db`, `dto`, `ui`, `env`). | agent |

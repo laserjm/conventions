@@ -2,7 +2,7 @@
 
 The `nextjs` conventions profile in one package:
 
-- `@conventions/nextjs` — ESLint 9 flat config (`createConfig()`) and three custom rules.
+- `@conventions/nextjs` — ESLint 9 flat config (`createConfig()`) and three custom rules. typescript-eslint is registered as `nx-ts`, so a framework preset that brings `@typescript-eslint` does not collide.
 - `@conventions/nextjs/core` — `Result`, `ok`, `err`, the standard errors, `TenantId`,
   `Requester`, `systemRequester`, `defineUseCase`, `defineRepository`, `ConstraintViolation`.
 - `@conventions/nextjs/drizzle` — `createTransactionRunner`, `violatedConstraint`, `postgresErrorCode`.

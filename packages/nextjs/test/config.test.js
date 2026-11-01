@@ -20,14 +20,14 @@ describe('createConfig', () => {
     const config = createConfig({ architecture: false, appRoot: 'src', legacy: ['lib/server/**'] });
     const legacy = config.find((c) => c.name === 'conventions/nextjs/legacy');
     assert.deepEqual(legacy.files, ['src/lib/server/**']);
-    assert.equal(legacy.rules['@typescript-eslint/naming-convention'], 'off');
+    assert.equal(legacy.rules['nx-ts/naming-convention'], 'off');
     assert.equal(config[0].settings['boundaries/elements'][0].type, 'legacy');
   });
 
   it('switches off the rules of rulesets a project has not adopted', () => {
     const config = createConfig({ architecture: false, rulesets: ['layers'] });
     const off = config.find((c) => c.name === 'conventions/nextjs/rulesets-off');
-    assert.equal(off.rules['@typescript-eslint/naming-convention'], 'off');
+    assert.equal(off.rules['nx-ts/naming-convention'], 'off');
     assert.equal(off.rules['boundaries/element-types'], undefined);
     assert.ok(Object.values(RULE_GROUPS).includes('layers'));
   });

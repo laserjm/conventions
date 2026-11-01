@@ -1,6 +1,9 @@
 id: nx-name-50-action-suffix-required
 valid:
   - "export const payOrderAction = memberActionClient.action(f); export async function revalidateOrder(id) {}"
+  - "export async function revalidateOrder(id: string): Promise<void> {}"
 invalid:
   - "export const payOrder = memberActionClient.action(f);"
   - "export async function pay() {}"
+  - "export async function pay(input: Input): Promise<Result<O, E>> { return ok(1); }"
+  - "export const pay: Handler = memberActionClient.action(f);"

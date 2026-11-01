@@ -156,7 +156,7 @@ module has no `helpers.ts`, `utils/` or `hooks/`; hooks live in `components/`.
 | NX-LAYER-07 | error | A use case is declared with `defineUseCase<Input, Output, Error, Deps>(async (input, deps) => …)` from `@conventions/nextjs/core`; the helper fixes the signature. Dependencies arrive as one object typed `<UseCase>Deps`; no global singletons inside `application/`. | ast-grep:nx-layer-07-use-define-use-case |
 | NX-LAYER-08 | error | Errors cross layer boundaries as values (`Result`), never as thrown exceptions. `throw` is reserved for bugs and does not appear in `domain/` or `application/`. | ast-grep:nx-layer-08-no-throw-in-pure-layers |
 | NX-LAYER-09 | error | If two modules import each other, merge them or extract a third. | eslint:import-x/no-cycle |
-| NX-LAYER-10 | error | Code that predates the modules is declared as the `legacy` element in the ESLint config. Legacy code keeps the imports it has but reaches a module only through `index.ts`/`server.ts`. No new feature lands in legacy; a folder leaves the list when its module is done. Legacy globs are anchored at the app root, so `components/**` is never a module's `components/`. Lint applies only the layer rules to legacy code; naming, cast and env rules start when the folder leaves the list. | eslint:boundaries/element-types |
+| NX-LAYER-10 | error | Code that predates the modules is declared as the `legacy` element in the ESLint config. Legacy code keeps the imports it has but reaches a module only through `index.ts`/`server.ts`. No new feature lands in legacy; a folder leaves the list when its module is done. Legacy globs are anchored at the app root, so `components/**` is never a module's `components/`. Lint applies only the layer rules to legacy code; naming, cast and env rules start when the folder leaves the list. Tooling outside the app (`scripts/`, `*.config.*`) may import legacy code and module APIs. | eslint:boundaries/element-types |
 | NX-LAYER-11 | error | `commands.ts` is optional: it appears with the module's first write use case, so anemic modules have none. It wires each use case to its repositories, unit of work, policy and clock and exports it under the use case's name, taking the `Requester` the caller signed in as its first argument: `payOrder(requester, input)`. It holds no business rule, reads no session and revalidates nothing. Once it exists, `actions.ts` calls it and imports no value from its own `application/` or `infra/`; `server.ts` re-exports it for workers, other modules and tests. | eslint:nextjs/actions-use-commands |
 <!-- /rules -->
 
@@ -196,7 +196,7 @@ Every shape has exactly one source of truth; everything else is inferred.
 | ID | Sev | Rule | Enforcement |
 | --- | --- | --- | --- |
 | NX-TYPE-01 | guidance | One source of truth per shape (table above). If you write the same type twice by hand, one of them is already wrong. | agent |
-| NX-TYPE-02 | error | No `as` cast across a layer boundary. If the types don't line up, add a mapper in `infra/` or fix the schema. `as` is allowed only in `*.mapper.ts`, `lib/db/`, brand constructors (`domain/*-id.ts`) and `as const`. | eslint:@typescript-eslint/consistent-type-assertions |
+| NX-TYPE-02 | error | No `as` cast across a layer boundary. If the types don't line up, add a mapper in `infra/` or fix the schema. `as` is allowed only in `*.mapper.ts`, `lib/db/`, brand constructors (`domain/*-id.ts`) and `as const`. | eslint:nx-ts/consistent-type-assertions |
 | NX-TYPE-03 | guidance | Validate at the edge once: action input, webhook payload, env, external API responses, database function results. Inside the module, trust the types. | agent |
 | NX-TYPE-04 | guidance | Forms use the same contract schema as the action. Client and server disagree on nothing. | agent |
 | NX-TYPE-05 | guidance | Ids and money are branded primitives (`type OrderId = string & { __brand: 'OrderId' }`). | agent |
@@ -330,7 +330,7 @@ project skips this section: it starts with the config as shipped and an empty `l
 | NX-MIG-01 | guidance | No new database code may be added during the transition unless it passes NX-DB-02/03, even in untouched modules. | agent |
 | NX-MIG-02 | guidance | No new code imports a legacy helper that a module already replaced. | agent |
 | NX-MIG-03 | error | A half-migrated module carries a `MIGRATING.md` ([template](../templates/MIGRATING.md)) listing what still bypasses it. | check:migrating-file |
-| NX-MIG-04 | error | Every deviation from these rules is an entry in the project's `ARCHITECTURE.md` ([template](../templates/ARCHITECTURE.md)): decision, where enforced, where recorded. Add the entry before you deviate. | check:deviations |
+| NX-MIG-04 | error | Every deviation from these rules is a row in the project's `ARCHITECTURE.md` Deviations table: rule id, the files or globs it covers in backticks, why, until when. Lint and `conventions check` report findings of that rule on those paths as warnings, so the same mistake anywhere else still fails; a rule disabled in source without a row fails. Add the row before you deviate. | check:deviations |
 <!-- /rules -->
 
 ## Checklist

@@ -6,6 +6,7 @@ rules:
     rule: Imports follow the table above. `domain/` imports nothing outside its module except `@conventions/nextjs/core`.
     mechanism: eslint
     tool: boundaries/element-types
+    note: A project migrating from 0.1 may still hold copies of lib/result.ts and lib/errors.ts; domain/ and application/ may import those two files until they are deleted (NX-ERR-03 reports the copy).
   - id: NX-LAYER-02
     severity: error
     rule: "`domain/` and `application/` import no framework or vendor package (`react`, `next/*`, the ORM, the contract-schema library at runtime). Type-only imports from `contracts.ts` are allowed in `application/`."
@@ -50,7 +51,7 @@ rules:
     tool: import-x/no-cycle
   - id: NX-LAYER-10
     severity: error
-    rule: Code that predates the modules is declared as the `legacy` element in the ESLint config. Legacy code keeps the imports it has but reaches a module only through `index.ts`/`server.ts`. No new feature lands in legacy; a folder leaves the list when its module is done. Legacy globs are anchored at the app root, so `components/**` is never a module's `components/`. Lint applies only the layer rules to legacy code; naming, cast and env rules start when the folder leaves the list.
+    rule: Code that predates the modules is declared as the `legacy` element in the ESLint config. Legacy code keeps the imports it has but reaches a module only through `index.ts`/`server.ts`. No new feature lands in legacy; a folder leaves the list when its module is done. Legacy globs are anchored at the app root, so `components/**` is never a module's `components/`. Lint applies only the layer rules to legacy code; naming, cast and env rules start when the folder leaves the list. Tooling outside the app (`scripts/`, `*.config.*`) may import legacy code and module APIs.
     mechanism: eslint
     tool: boundaries/element-types
   - id: NX-LAYER-11

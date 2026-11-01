@@ -6,9 +6,27 @@ snapshots:
       style: primary
       start: 7
       end: 43
+    - source: OrderEntity
+      style: secondary
+      start: 17
+      end: 28
   "export type OrderModel = { id: string };":
     labels:
     - source: "type OrderModel = { id: string };"
       style: primary
       start: 7
       end: 40
+    - source: OrderModel
+      style: secondary
+      start: 12
+      end: 22
+  "export type OrderModel<T> = { id: T };":
+    labels:
+    - source: "type OrderModel<T> = { id: T };"
+      style: primary
+      start: 7
+      end: 38
+    - source: OrderModel
+      style: secondary
+      start: 12
+      end: 22

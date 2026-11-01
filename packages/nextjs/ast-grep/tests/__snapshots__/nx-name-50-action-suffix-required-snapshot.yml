@@ -2,13 +2,65 @@ id: nx-name-50-action-suffix-required
 snapshots:
   "export async function pay() {}":
     labels:
-    - source: export async function pay() {}
+    - source: async function pay() {}
       style: primary
+      start: 7
+      end: 30
+    - source: export async function pay() {}
+      style: secondary
       start: 0
       end: 30
+    - source: pay
+      style: secondary
+      start: 22
+      end: 25
+  "export async function pay(input: Input): Promise<Result<O, E>> { return ok(1); }":
+    labels:
+    - source: "async function pay(input: Input): Promise<Result<O, E>> { return ok(1); }"
+      style: primary
+      start: 7
+      end: 80
+    - source: "export async function pay(input: Input): Promise<Result<O, E>> { return ok(1); }"
+      style: secondary
+      start: 0
+      end: 80
+    - source: pay
+      style: secondary
+      start: 22
+      end: 25
+  "export const pay: Handler = memberActionClient.action(f);":
+    labels:
+    - source: "pay: Handler = memberActionClient.action(f)"
+      style: primary
+      start: 13
+      end: 56
+    - source: "export const pay: Handler = memberActionClient.action(f);"
+      style: secondary
+      start: 0
+      end: 57
+    - source: "const pay: Handler = memberActionClient.action(f);"
+      style: secondary
+      start: 7
+      end: 57
+    - source: pay
+      style: secondary
+      start: 13
+      end: 16
   export const payOrder = memberActionClient.action(f);:
     labels:
-    - source: export const payOrder = memberActionClient.action(f);
+    - source: payOrder = memberActionClient.action(f)
       style: primary
+      start: 13
+      end: 52
+    - source: export const payOrder = memberActionClient.action(f);
+      style: secondary
       start: 0
       end: 53
+    - source: const payOrder = memberActionClient.action(f);
+      style: secondary
+      start: 7
+      end: 53
+    - source: payOrder
+      style: secondary
+      start: 13
+      end: 21

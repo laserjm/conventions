@@ -5,7 +5,18 @@ import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import YAML from 'yaml';
 
-/** @typedef {{ conventions: string, profile: string, bindings: string[], appRoot: string, schemaSource?: string, rulesets?: string[], legacy: string[] }} ArchitectureHeader */
+/**
+ * @typedef {object} ArchitectureHeader
+ * @property {string} conventions   pinned version
+ * @property {string} profile
+ * @property {string[]} bindings
+ * @property {string} appRoot        folder with app/, modules/, lib/ — relative to ARCHITECTURE.md
+ * @property {string} [schemaSource]
+ * @property {string[]} [rulesets]   adopted rulesets; undefined = all
+ * @property {string[]} legacy       pre-module folders, globs relative to appRoot (NX-LAYER-10)
+ * @property {string} [migrations]   glob of SQL migrations, relative to ARCHITECTURE.md (monorepo: ../../supabase/migrations/*.sql)
+ * @property {string} [inventory]    path of the database inventory, relative to ARCHITECTURE.md
+ */
 
 /** Walks up from `startDir` to the first ARCHITECTURE.md with a conventions header. */
 export function findArchitecture(startDir = process.cwd()) {
@@ -42,6 +53,8 @@ export function parseHeader(markdown) {
     schemaSource: raw['schema-source'] ? String(raw['schema-source']) : undefined,
     rulesets: raw.rulesets === undefined ? undefined : list(raw.rulesets),
     legacy: list(raw.legacy),
+    migrations: raw.migrations ? String(raw.migrations) : undefined,
+    inventory: raw.inventory ? String(raw.inventory) : undefined,
   };
 }
 
@@ -50,17 +63,38 @@ export function withConventionsVersion(markdown, version) {
   return markdown.replace(/(```ya?ml\r?\n[\s\S]*?^conventions:\s*)([^\r\n]*)/m, `$1${version}`);
 }
 
-/** Parses the Deviations and Legacy tables (rows with a rule id / a folder in the first column). */
+/**
+ * Parses the Deviations and Legacy tables. A Deviations row names a rule id in the first column
+ * and, in backticks in the second, the files or globs it covers (`modules/x/domain/{a,b}.ts`,
+ * `lib/legacy/**`); findings of that rule on those paths are reported as warnings, not errors.
+ * A row without paths covers the whole project. A Legacy row names its folder in backticks first.
+ */
 export function parseTables(markdown) {
   const deviations = [], legacy = [];
   let section = '';
   for (const line of markdown.split('\n')) {
     const h = /^##\s+(.*)/.exec(line);
     if (h) { section = h[1].trim().toLowerCase(); continue; }
-    const cells = /^\|(.+)\|\s*$/.exec(line)?.[1].split('|').map((c) => c.trim());
-    if (!cells || cells[0] === '---' || /^-+$/.test(cells[0])) continue;
-    if (section.startsWith('deviations') && /^[A-Z]{2}-[A-Z]+-\d{2}$/.test(cells[0])) deviations.push({ rule: cells[0], deviation: cells[1], why: cells[2], until: cells[3] });
-    if (section.startsWith('legacy') && /^`.+`$/.test(cells[0])) legacy.push({ folder: cells[0].slice(1, -1), module: cells[1], status: cells[2] });
+    const cells = splitRow(line);
+    if (!cells || /^-+$/.test(cells[0])) continue;
+    if (section.startsWith('deviations') && /^[A-Z]{2}-[A-Z]+-\d{2}$/.test(cells[0])) {
+      deviations.push({ rule: cells[0], deviation: cells[1] ?? '', why: cells[2] ?? '', until: cells[3] ?? '', paths: pathsIn(cells[1] ?? '') });
+    }
+    if (section.startsWith('legacy')) {
+      const folder = /`([^`]+)`/.exec(cells[0])?.[1];
+      if (folder) legacy.push({ folder, module: cells[1] ?? '', status: cells[2] ?? '' });
+    }
   }
   return { deviations, legacy };
+}
+
+function splitRow(line) {
+  const m = /^\|(.+)\|\s*$/.exec(line);
+  if (!m) return undefined;
+  return m[1].split(/(?<!\\)\|/).map((c) => c.trim().replace(/\\\|/g, '|'));
+}
+
+/** Backticked tokens that look like paths: contain a slash, a glob character or a source extension. */
+export function pathsIn(text) {
+  return [...text.matchAll(/`([^`]+)`/g)].map((m) => m[1]).filter((t) => /[\/*{]/.test(t) || /\.(ts|tsx|mts|js|mjs|sql|md)$/.test(t)).map((t) => t.replace(/\/$/, '/**'));
 }

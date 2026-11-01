@@ -3,15 +3,17 @@ language: typescript
 severity: error
 message: "NX-LAYER-07: a use case is `export const $NAME = defineUseCase<Input, Output, Error, Deps>(async (input, deps) => …)`; the helper fixes the signature and the Result return type (NX-ERR-01, NX-NAME-32)."
 files: ["**/modules/*/application/*.ts"]
-ignores: ["**/application/ports.ts", "**/application/errors.ts", "**/application/events.ts", "**/application/index.ts", "**/*.test.ts"]
+ignores: ["**/application/ports.ts", "**/application/errors.ts", "**/application/events.ts", "**/application/index.ts", "**/*.test.ts", "**/__fakes__/**"]
 rule:
   any:
-    - pattern: export async function $NAME($$$PARAMS) { $$$BODY }
-    - pattern: export function $NAME($$$PARAMS) { $$$BODY }
-    - all:
-        - pattern: export const $NAME = $INIT
-        - not:
-            has:
-              stopBy: end
-              kind: call_expression
-              has: { field: function, regex: '^defineUseCase$' }
+    - kind: function_declaration
+      inside: { kind: export_statement }
+      has: { field: name, pattern: $NAME }
+    - kind: variable_declarator
+      inside: { kind: lexical_declaration, inside: { kind: export_statement } }
+      has: { field: name, pattern: $NAME }
+      not:
+        has:
+          stopBy: end
+          kind: call_expression
+          has: { field: function, regex: '^defineUseCase$' }

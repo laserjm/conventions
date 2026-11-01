@@ -9,6 +9,8 @@ app-root: {{appRoot}}            # or src
 schema-source: migrations-first  # or code-first
 # rulesets: [structure, layers]  # omit to adopt every ruleset; list some to adopt them one at a time
 legacy: []                       # globs of pre-module code, relative to app-root (NX-LAYER-10), e.g. [lib/server/**, components/!(ui)/**]
+# migrations: ../../supabase/migrations/*.sql   # monorepo: where the SQL migrations are, relative to this file
+# inventory: ../../docs/architecture/db-inventory.md
 ```
 
 This app follows the Next.js Architecture Rules, Naming Conventions and Testing Policy of the
@@ -33,7 +35,7 @@ root; `@/` points there (NX-STR-01).
 
 ## Deviations
 
-<!-- Rules this project does not follow, with the rule id. A disabled rule in source without a row here fails `conventions check`. Review quarterly. -->
+<!-- Rules this project does not follow yet. Name the files or globs in backticks in the Deviation column: findings of that rule there are warnings, not errors; a row without paths covers the whole project. A disabled rule in source without a row here fails `conventions check`. Review quarterly. -->
 
 | Rule | Deviation | Why | Until |
 | --- | --- | --- | --- |

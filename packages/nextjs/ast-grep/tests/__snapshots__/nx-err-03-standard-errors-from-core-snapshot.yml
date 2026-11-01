@@ -6,9 +6,27 @@ snapshots:
       style: primary
       start: 7
       end: 60
+    - source: NotFound
+      style: secondary
+      start: 12
+      end: 20
   "interface Forbidden { _tag: 'Forbidden' }":
     labels:
     - source: "interface Forbidden { _tag: 'Forbidden' }"
       style: primary
       start: 0
       end: 41
+    - source: Forbidden
+      style: secondary
+      start: 10
+      end: 19
+  "type Unexpected<T> = { _tag: 'Unexpected'; cause: T };":
+    labels:
+    - source: "type Unexpected<T> = { _tag: 'Unexpected'; cause: T };"
+      style: primary
+      start: 0
+      end: 54
+    - source: Unexpected
+      style: secondary
+      start: 5
+      end: 15

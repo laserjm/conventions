@@ -51,6 +51,13 @@ const uncovered = lintRules.filter((r) => !reportedIds.has(r.reportedAs ?? r.id)
 if (uncovered.length) { console.log(`✗ no fixture reports: ${uncovered.map((r) => r.id).join(', ')}`); failed++; }
 else console.log(`✓ all ${lintRules.length} lint-enforced rules are covered by a fixture`);
 
+// a Deviations row with a path makes the finding a warning, not an error (NX-MIG-04)
+const deviated = lint.find((f) => f.id === 'NX-DRZ-08' && f.file === 'modules/orders/infra/order.repository.ts');
+if (deviated?.severity === 'warn') console.log('✓ Deviations row downgrades NX-DRZ-08 on order.repository.ts to a warning');
+else { console.log(`✗ expected NX-DRZ-08 on order.repository.ts to be a warning via the Deviations row; got ${deviated?.severity}`); failed++; }
+const notDeviated = lint.find((f) => f.id === 'NX-DRZ-08' && f.file !== 'modules/orders/infra/order.repository.ts');
+if (notDeviated && notDeviated.severity !== 'error') { console.log(`✗ NX-DRZ-08 elsewhere must stay an error`); failed++; }
+
 // structural checks
 const checks = JSON.parse(run(['check']));
 const expectedChecks = readFileSync(path.join(here, 'expected-checks.txt'), 'utf8').split('\n').filter((l) => l && !l.startsWith('#')).map((l) => l.split(/\s+/));

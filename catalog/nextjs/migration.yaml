@@ -18,6 +18,6 @@ rules:
     tool: migrating-file
   - id: NX-MIG-04
     severity: error
-    rule: "Every deviation from these rules is an entry in the project's `ARCHITECTURE.md` ([template](../templates/ARCHITECTURE.md)): decision, where enforced, where recorded. Add the entry before you deviate."
+    rule: "Every deviation from these rules is a row in the project's `ARCHITECTURE.md` Deviations table: rule id, the files or globs it covers in backticks, why, until when. Lint and `conventions check` report findings of that rule on those paths as warnings, so the same mistake anywhere else still fails; a rule disabled in source without a row fails. Add the row before you deviate."
     mechanism: check
     tool: deviations

@@ -5,3 +5,4 @@ valid:
 invalid:
   - "export type OrderResponse = { id: string };"
   - "export interface OrderPayload { id: string }"
+  - "export type OrderData<T> = { rows: T[] };"

@@ -4,10 +4,10 @@ import { files, finding, adopted } from './util.mjs';
 export async function legacy(project) {
   const out = [];
   if (!project.header || !adopted(project, 'NX-MIG-03')) return out;
-  const { legacy: rows } = project.arch.parseTables(project.markdown);
+  const rows = project.legacyRows;
   for (const g of project.header.legacy) {
-    const base = g.replace(/\/?\*\*.*$/, '').replace(/\/!\(.*$/, '');
-    if (!rows.some((r) => r.folder.replace(/\/$/, '') === base.replace(/\/$/, '') || r.folder === g)) {
+    const base = g.replace(/\/?\*\*.*$/, '').replace(/\/!\(.*$/, '').replace(/\/$/, '');
+    if (!rows.some((r) => r.folder.replace(/\/\*\*$/, '').replace(/\/$/, '') === base || r.folder === g)) {
       out.push(finding(project, 'NX-MIG-03', `legacy glob '${g}' has no row in the Legacy table of ARCHITECTURE.md`, { file: 'ARCHITECTURE.md', check: 'legacy-table' }));
     }
   }

@@ -5,3 +5,4 @@ valid:
 invalid:
   - "export const payOrderAction = 1;"
   - "function doAction() {}"
+  - "export async function payOrderAction(input: Input): Promise<void> {}"

@@ -10,7 +10,7 @@ rules:
     severity: error
     rule: No `as` cast across a layer boundary. If the types don't line up, add a mapper in `infra/` or fix the schema. `as` is allowed only in `*.mapper.ts`, `lib/db/`, brand constructors (`domain/*-id.ts`) and `as const`.
     mechanism: eslint
-    tool: "@typescript-eslint/consistent-type-assertions"
+    tool: "nx-ts/consistent-type-assertions"
   - id: NX-TYPE-03
     severity: guidance
     rule: "Validate at the edge once: action input, webhook payload, env, external API responses, database function results. Inside the module, trust the types."

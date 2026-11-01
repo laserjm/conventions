@@ -41,7 +41,7 @@ describe('architecture header', () => {
   });
   it('parses the Deviations and Legacy tables', () => {
     const t = parseTables(md);
-    assert.deepEqual(t.deviations, [{ rule: 'NX-NAME-02', deviation: 'snake_case in lib/legacy', why: 'generated', until: '1.0' }]);
+    assert.deepEqual(t.deviations, [{ rule: 'NX-NAME-02', deviation: 'snake_case in lib/legacy', why: 'generated', until: '1.0', paths: [] }]);
     assert.deepEqual(t.legacy, [{ folder: 'lib/server/', module: 'modules/orders', status: 'migrating' }]);
   });
   it('bumps only the conventions version', () => {
