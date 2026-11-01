@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { loadProject, changedFiles, resolveFrom } from '../project.mjs';
 import { print, exitCode } from '../report.mjs';
+import { applyPolicy } from '../policy.mjs';
 
 const ID = /\b([A-Z]{2}-[A-Z]+-\d{2})\b/;
 
@@ -34,7 +35,10 @@ async function runEslint(project, targets) {
   const out = [];
   for (const r of results) {
     for (const m of r.messages) {
+      if (!m.ruleId && /Unused eslint-disable directive/.test(m.message)) continue;
       const id = ID.exec(m.message)?.[1] ?? ESLINT_IDS[m.ruleId] ?? (m.fatal ? 'PARSE' : 'ESLINT');
+      // findings of other plugins (framework presets) belong to `eslint .`, not to the conventions; a missing rule definition is a config problem and stays
+      if (id === 'ESLINT' && !/Definition for rule/.test(m.message)) continue;
       out.push({ id, severity: m.severity === 2 ? 'error' : 'warn', file: path.relative(project.appRoot, r.filePath), line: m.line, message: m.message, tool: m.ruleId ?? 'eslint' });
     }
   }
@@ -44,8 +48,8 @@ async function runEslint(project, targets) {
 const ESLINT_IDS = {
   'boundaries/no-unknown-files': 'NX-STR-02',
   'import-x/no-cycle': 'NX-LAYER-09',
-  '@typescript-eslint/naming-convention': 'NX-NAME-02',
-  '@typescript-eslint/consistent-type-assertions': 'NX-TYPE-02',
+  'nx-ts/naming-convention': 'NX-NAME-02',
+  'nx-ts/consistent-type-assertions': 'NX-TYPE-02',
 };
 
 function runAstGrep(project, targets) {
@@ -68,8 +72,8 @@ function runLsLint(project) {
   let raw = '';
   try { execFileSync(bin, ['--config', config], { cwd: project.appRoot, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }); }
   catch (e) { raw = (e.stdout?.toString() ?? '') + (e.stderr?.toString() ?? ''); }
-  return raw.split('\n').filter((l) => / failed for /.test(l)).map((l) => {
-    const file = l.split(' failed for ')[0].trim();
+  return raw.split('\n').filter((l) => / failed for /.test(l)).map((l) => l.split(' failed for ')[0].trim()).filter((file) => !file.split('/').some((seg) => seg.startsWith('.'))).map((file) => {
+    const l = raw.split('\n').find((x) => x.startsWith(file + ' failed for ')) ?? file;
     const id = /^modules\/[^/]+\/[^/]+\.tsx?$/.test(file) ? 'NX-STR-02' : /^app\//.test(file) ? 'NX-NAME-11' : /\.(test|spec|integration\.test)\.tsx?$/.test(file) ? 'NX-NAME-70' : 'NX-NAME-01';
     return { id, severity: 'error', file, message: `${id}: ${l.trim()}`, tool: 'ls-lint' };
   });
@@ -85,23 +89,4 @@ function resolveBin(dir, pkg, name) {
     } catch { /* next */ }
   }
   return name;
-}
-
-function applyPolicy(project, findings) {
-  const rules = project.catalogue.rules;
-  const chosen = project.header?.rulesets?.length ? new Set(project.header.rulesets) : undefined;
-  const exempt = new Set(project.manifest.legacyExempt ?? []);
-  const legacy = (project.header?.legacy ?? []).map(globToRegex);
-  return findings.filter((f) => {
-    const rule = rules.find((r) => r.id === f.id);
-    if (!rule) return true;
-    if (chosen && !chosen.has(rule.group)) return false;
-    if (f.file && exempt.has(rule.group) && legacy.some((re) => re.test(f.file))) return false;
-    return true;
-  });
-}
-
-function globToRegex(glob) {
-  const src = glob.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\\\(!\\\(([^)]*)\\\)\\\)/g, '(?!$1)[^/]+').replace(/\*\*\//g, '(?:.*/)?').replace(/\*\*/g, '.*').replace(/\*/g, '[^/]*').replace(/!\\\(([^)]*)\\\)/g, '(?!(?:$1)(?:/|$))[^/]+');
-  return new RegExp(`^${src}(/|$)`);
 }

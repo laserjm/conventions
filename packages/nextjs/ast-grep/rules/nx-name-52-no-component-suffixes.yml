@@ -5,8 +5,10 @@ message: "NX-NAME-52: no Component, View or Widget suffix and no Container/Prese
 files: ["**/*.tsx"]
 rule:
   any:
-    - pattern: export function $NAME($$$PARAMS) { $$$BODY }
-    - pattern: export const $NAME = $INIT
-    - pattern: export default function $NAME($$$PARAMS) { $$$BODY }
+    - kind: function_declaration
+      inside: { kind: export_statement }
+    - kind: variable_declarator
+      inside: { kind: lexical_declaration, inside: { kind: export_statement } }
+  has: { field: name, pattern: $NAME }
 constraints:
   NAME: { regex: '(Component|View|Widget|Container|Presenter)$' }

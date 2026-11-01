@@ -9,7 +9,7 @@ rules:
     severity: error
     rule: Types, interfaces and components are `PascalCase`; functions and variables `camelCase`; module-level constants may be `SCREAMING_SNAKE_CASE`. No `I` prefix on interfaces, no `Impl` suffix.
     mechanism: eslint
-    tool: "@typescript-eslint/naming-convention"
+    tool: "nx-ts/naming-convention"
   - id: NX-NAME-03
     severity: error
     rule: In `application/<use-case>.ts` and in component files the file exports exactly one value whose name is the camelCase/PascalCase of the file name. Other files (`actions.ts`, `queries.ts`, `contracts.ts`, `ports.ts`, `errors.ts`, `events.ts`, entity files) export several things by design.

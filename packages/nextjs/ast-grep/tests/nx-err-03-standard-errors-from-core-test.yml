@@ -4,3 +4,4 @@ valid:
 invalid:
   - "export type NotFound = { _tag: 'NotFound'; entity: string };"
   - "interface Forbidden { _tag: 'Forbidden' }"
+  - "type Unexpected<T> = { _tag: 'Unexpected'; cause: T };"

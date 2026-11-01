@@ -4,6 +4,9 @@ severity: error
 message: "NX-DRZ-02: '$NAME' is inferred from the table: `type <Noun>Row = InferSelectModel<typeof <table>>`, never hand-written."
 files: ["**/modules/*/infra/**/*.ts"]
 rule:
-  pattern: type $NAME = { $$$FIELDS }
+  kind: type_alias_declaration
+  all:
+    - has: { field: name, pattern: $NAME }
+    - has: { field: value, kind: object_type }
 constraints:
   NAME: { regex: 'Row$' }

@@ -40,7 +40,9 @@ lint-enforced rule fires, and the reference module proves the rules are satisfia
 ## Use in a project
 
 ```sh
-npm i -D @conventions/nextjs @conventions/cli     # from the GitHub Packages registry, or the release tarballs
+# from the release tarballs (install both in one command, the profile depends on the cli)
+V=0.2.1; R=https://github.com/laserjm/conventions/releases/download/v$V
+npm i -D -E $R/conventions-nextjs-$V.tgz $R/conventions-cli-$V.tgz
 npx conventions init --profile nextjs             # ARCHITECTURE.md, eslint.config.mjs, CI, CLAUDE.md, AGENTS.md
 npx conventions lint && npx conventions check
 ```
@@ -49,7 +51,7 @@ npx conventions lint && npx conventions check
 project configures the conventions:
 
 ```yaml
-conventions: 0.2.0
+conventions: 0.2.1
 profile: nextjs
 bindings: [drizzle, supabase, zod, next-safe-action]
 app-root: .                      # or src
@@ -98,6 +100,7 @@ pnpm test          # build, catalogue + docs, rule tests, CLI tests, reference m
 pnpm catalog       # after editing catalog/**: regenerates rules/ and the doc tables
 ```
 
-Release: bump `version` in the root, `packages/*/package.json` and `.claude-plugin/*.json`,
-add the CHANGELOG entry, `pnpm catalog`, tag `v<version>`, publish both packages
-(`pnpm -r publish`) and attach the packed tarballs to the release for projects that install by URL.
+Release: bump `version` in the root, `packages/*/package.json`, `.claude-plugin/*.json` and the
+examples' `ARCHITECTURE.md` headers, add the CHANGELOG entry, `pnpm catalog`, `pnpm test`, then
+tag `v<version>` and push the tag. The release workflow packs both packages and attaches the
+tarballs to the GitHub release.

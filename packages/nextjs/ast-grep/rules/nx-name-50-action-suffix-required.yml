@@ -5,8 +5,10 @@ message: "NX-NAME-50: every export of actions.ts ends in 'Action' (revalidate<No
 files: ["**/modules/*/actions.ts"]
 rule:
   any:
-    - pattern: export const $NAME = $INIT
-    - pattern: export async function $NAME($$$PARAMS) { $$$BODY }
-    - pattern: export function $NAME($$$PARAMS) { $$$BODY }
+    - kind: function_declaration
+      inside: { kind: export_statement }
+    - kind: variable_declarator
+      inside: { kind: lexical_declaration, inside: { kind: export_statement } }
+  has: { field: name, pattern: $NAME }
 constraints:
   NAME: { not: { regex: '(Action$|^revalidate[A-Z])' } }

@@ -6,3 +6,25 @@ snapshots:
       style: primary
       start: 7
       end: 56
+    - source: OrderRow
+      style: secondary
+      start: 12
+      end: 20
+    - source: "{ id: string; tenantId: string }"
+      style: secondary
+      start: 23
+      end: 55
+  "type OrderRow = { readonly id: string };":
+    labels:
+    - source: "type OrderRow = { readonly id: string };"
+      style: primary
+      start: 0
+      end: 40
+    - source: OrderRow
+      style: secondary
+      start: 5
+      end: 13
+    - source: "{ readonly id: string }"
+      style: secondary
+      start: 16
+      end: 39

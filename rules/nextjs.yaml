@@ -1,6 +1,6 @@
 # Generated from catalog/nextjs/*.yaml by scripts/build-catalog.mjs — do not edit by hand.
 profile: nextjs
-version: 0.2.0
+version: 0.2.1
 rulesets: [auth, cache, cross-module, database, drizzle, errors, layers, migration, naming, next-safe-action, rich, structure, supabase, testing, types, zod]
 rules:
   - id: NX-AUTH-01
@@ -305,6 +305,7 @@ rules:
     tool: "boundaries/element-types"
     doc: docs/nextjs/architecture.md#layer-rules
     rule: "Imports follow the table above. `domain/` imports nothing outside its module except `@conventions/nextjs/core`."
+    note: "A project migrating from 0.1 may still hold copies of lib/result.ts and lib/errors.ts; domain/ and application/ may import those two files until they are deleted (NX-ERR-03 reports the copy)."
   - id: NX-LAYER-02
     group: layers
     table: layers
@@ -378,7 +379,7 @@ rules:
     mechanism: eslint
     tool: "boundaries/element-types"
     doc: docs/nextjs/architecture.md#layer-rules
-    rule: "Code that predates the modules is declared as the `legacy` element in the ESLint config. Legacy code keeps the imports it has but reaches a module only through `index.ts`/`server.ts`. No new feature lands in legacy; a folder leaves the list when its module is done. Legacy globs are anchored at the app root, so `components/**` is never a module's `components/`. Lint applies only the layer rules to legacy code; naming, cast and env rules start when the folder leaves the list."
+    rule: "Code that predates the modules is declared as the `legacy` element in the ESLint config. Legacy code keeps the imports it has but reaches a module only through `index.ts`/`server.ts`. No new feature lands in legacy; a folder leaves the list when its module is done. Legacy globs are anchored at the app root, so `components/**` is never a module's `components/`. Lint applies only the layer rules to legacy code; naming, cast and env rules start when the folder leaves the list. Tooling outside the app (`scripts/`, `*.config.*`) may import legacy code and module APIs."
   - id: NX-LAYER-11
     group: layers
     table: layers
@@ -418,7 +419,7 @@ rules:
     mechanism: check
     tool: "deviations"
     doc: docs/nextjs/architecture.md#refactoring-playbook-for-existing-projects
-    rule: "Every deviation from these rules is an entry in the project's `ARCHITECTURE.md` ([template](../templates/ARCHITECTURE.md)): decision, where enforced, where recorded. Add the entry before you deviate."
+    rule: "Every deviation from these rules is a row in the project's `ARCHITECTURE.md` Deviations table: rule id, the files or globs it covers in backticks, why, until when. Lint and `conventions check` report findings of that rule on those paths as warnings, so the same mistake anywhere else still fails; a rule disabled in source without a row fails. Add the row before you deviate."
   - id: NX-NAME-30
     group: naming
     table: naming-application
@@ -474,6 +475,7 @@ rules:
     tool: "nx-name-61-dto-suffix-only"
     doc: docs/nextjs/naming.md#contracts-types-contractsts-lib
     rule: "`Dto` is the only suffix for shapes that cross the wire. `Payload`, `Request`, `Response`, `Data`, `Info` are not used. `Input` is for use case arguments. Domain types have no suffix."
+    note: "Checked in contracts.ts, where wire shapes live; a port or domain type may use a noun like Request."
   - id: NX-NAME-62
     group: naming
     table: naming-contracts
@@ -558,7 +560,7 @@ rules:
     table: naming-general
     severity: error
     mechanism: eslint
-    tool: "@typescript-eslint/naming-convention"
+    tool: "nx-ts/naming-convention"
     doc: docs/nextjs/naming.md#general-rules
     rule: "Types, interfaces and components are `PascalCase`; functions and variables `camelCase`; module-level constants may be `SCREAMING_SNAKE_CASE`. No `I` prefix on interfaces, no `Impl` suffix."
   - id: NX-NAME-03
@@ -958,7 +960,7 @@ rules:
     table: types
     severity: error
     mechanism: eslint
-    tool: "@typescript-eslint/consistent-type-assertions"
+    tool: "nx-ts/consistent-type-assertions"
     doc: docs/nextjs/architecture.md#type-safety-chain
     rule: "No `as` cast across a layer boundary. If the types don't line up, add a mapper in `infra/` or fix the schema. `as` is allowed only in `*.mapper.ts`, `lib/db/`, brand constructors (`domain/*-id.ts`) and `as const`."
   - id: NX-TYPE-03

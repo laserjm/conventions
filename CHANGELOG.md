@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.2.1 — fixes from the first 0.2.0 dry run (screenerhub2)
+
+- ast-grep rules match declarations by node kind: a use case, action, component or type with a
+  return type, a type annotation or generics is no longer invisible (NX-LAYER-07, NX-NAME-50/52,
+  NX-NSA-02, NX-NAME-20/61, NX-ERR-03, NX-DRZ-02).
+- Deviations rows apply to every tool: the files or globs named in backticks in the Deviation
+  column turn findings of that rule into warnings in `conventions lint` and `conventions check`.
+  A project no longer needs per-rule ESLint override blocks (NX-MIG-04).
+- `conventions check`: a disable comment for a non-convention rule (`react-hooks/…`, `@next/…`)
+  is ignored; a bare disable is reported; a Legacy row may carry prose after the folder.
+- Header keys `migrations:` and `inventory:` for monorepos whose SQL and inventory live outside
+  the app; `conventions init` writes the CI workflow at the repository root with
+  `working-directory` set to the app.
+- Tooling (`scripts/`, `*.config.*`) may import legacy code and module APIs (NX-LAYER-10).
+- NX-NAME-61 is checked in `contracts.ts` only.
+- `conventions lint` ignores hidden folders (`.next`) in ls-lint output.
+- Release workflow: pushing `v<version>` packs both packages and attaches the tarballs.
+
+
 ## 0.2.0 — rebuild: every rule names its tool
 
 Breaking: the lint package is now `@conventions/nextjs` (was `@conventions/eslint-plugin-nextjs`)

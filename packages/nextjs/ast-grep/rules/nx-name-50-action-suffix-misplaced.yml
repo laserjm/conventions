@@ -5,10 +5,8 @@ message: "NX-NAME-50: '$NAME' ends in 'Action' but is declared outside actions.t
 ignores: ["**/modules/*/actions.ts"]
 rule:
   any:
-    - pattern: export const $NAME = $INIT
-    - pattern: export async function $NAME($$$PARAMS) { $$$BODY }
-    - pattern: export function $NAME($$$PARAMS) { $$$BODY }
-    - pattern: const $NAME = $INIT
-    - pattern: function $NAME($$$PARAMS) { $$$BODY }
+    - kind: function_declaration
+    - kind: variable_declarator
+  has: { field: name, pattern: $NAME }
 constraints:
   NAME: { regex: 'Action$' }

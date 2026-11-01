@@ -20,7 +20,9 @@ export async function loadProject(cwd, { profile } = {}) {
   const manifest = JSON.parse(readFileSync(path.join(pkgRoot, 'profile.json'), 'utf8'));
   const catalogue = YAML.parse(readFileSync(path.join(pkgRoot, 'rules', `${profileName}.yaml`), 'utf8'));
   const appRoot = path.resolve(appDir, header?.appRoot ?? '.');
-  return { cwd, appDir, appRoot, file: found?.file, header, markdown: found ? readFileSync(found.file, 'utf8') : '', profile: profileName, pkgRoot, pkg, manifest, catalogue, arch };
+  const markdown = found ? readFileSync(found.file, 'utf8') : '';
+  const tables = arch.parseTables(markdown);
+  return { cwd, appDir, appRoot, file: found?.file, header, markdown, deviations: tables.deviations, legacyRows: tables.legacy, profile: profileName, pkgRoot, pkg, manifest, catalogue, arch };
 }
 
 export function resolveFrom(dir, spec) {

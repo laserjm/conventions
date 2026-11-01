@@ -4,3 +4,4 @@ valid:
 invalid:
   - "export type OrderModel = { id: string };"
   - "export interface OrderEntity { id: string }"
+  - "export type OrderModel<T> = { id: T };"

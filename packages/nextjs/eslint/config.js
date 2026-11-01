@@ -17,6 +17,8 @@ import { findArchitecture } from '@conventions/cli/architecture';
  * @property {string} [cwd]                where to look for ARCHITECTURE.md; default process.cwd()
  */
 
+// typescript-eslint is registered as `nx-ts`, not `@typescript-eslint`: a framework preset (next/typescript)
+// registers its own copy under the standard name, and ESLint refuses two plugins under one name.
 /** ESLint rule → ruleset, so `rulesets:` in the header can switch a group off. */
 export const RULE_GROUPS = {
   'boundaries/element-types': 'layers',
@@ -24,16 +26,16 @@ export const RULE_GROUPS = {
   'boundaries/no-unknown-files': 'structure',
   'import-x/no-cycle': 'layers',
   'nextjs/actions-use-commands': 'layers',
-  '@typescript-eslint/naming-convention': 'naming',
+  'nx-ts/naming-convention': 'naming',
   'nextjs/use-case-export-name': 'naming',
-  '@typescript-eslint/consistent-type-assertions': 'types',
+  'nx-ts/consistent-type-assertions': 'types',
   'nextjs/tag-matches-type-name': 'errors',
 };
 
 /** Rules legacy code is exempt from (NX-LAYER-10): everything but the layer rules. */
 export const LEGACY_EXEMPT = [
-  '@typescript-eslint/naming-convention',
-  '@typescript-eslint/consistent-type-assertions',
+  'nx-ts/naming-convention',
+  'nx-ts/consistent-type-assertions',
   'nextjs/use-case-export-name',
   'nextjs/tag-matches-type-name',
 ];
@@ -50,7 +52,7 @@ const CACHE = ['unstable_cache', 'cacheTag', 'cacheLife', 'unstable_cacheTag', '
 
 const MODULE_INTERNAL = ['domain', 'application', 'infra', 'components', 'contracts', 'commands', 'actions', 'queries'];
 const MODULE_API = ['module-index', 'module-server'];
-const ALL = [...MODULE_INTERNAL, ...MODULE_API, 'lib-db', 'lib', 'ui-primitives', 'app', 'root', 'tooling', 'legacy'];
+const ALL = [...MODULE_INTERNAL, ...MODULE_API, 'lib-core', 'lib-db', 'lib', 'ui-primitives', 'app', 'root', 'tooling', 'legacy'];
 const except = (...types) => ALL.filter((t) => !types.includes(t));
 
 /**
@@ -82,6 +84,8 @@ export function createConfig(plugin, options = {}) {
     { type: 'commands', pattern: p('modules/*/commands.ts'), capture: ['module'], mode: 'file' }, // optional (NX-LAYER-11)
     { type: 'actions', pattern: p('modules/*/actions.ts'), capture: ['module'], mode: 'file' },
     { type: 'queries', pattern: p('modules/*/queries.ts'), capture: ['module'], mode: 'file' },
+    // copies of the 0.1 helpers; domain/ and application/ may still import them (NX-ERR-03 asks for their removal)
+    { type: 'lib-core', pattern: [p('lib/result.ts'), p('lib/errors.ts')], mode: 'file' },
     { type: 'lib-db', pattern: p('lib/db') },
     { type: 'lib', pattern: p('lib') },
     { type: 'ui-primitives', pattern: p('components/ui') },
@@ -95,29 +99,31 @@ export function createConfig(plugin, options = {}) {
     default: 'disallow',
     message: 'NX-LAYER-01: ${file.type} may not import ${dependency.type} (${dependency.source}). See docs/nextjs/architecture.md#layer-rules',
     rules: [
-      { from: 'domain', allow: [same('domain')] },
-      { from: 'application', allow: [same('application'), same('domain')] },
+      { from: 'domain', allow: [same('domain'), 'lib-core'] },
+      { from: 'application', allow: [same('application'), same('domain'), 'lib-core'] },
       // types from own contracts and from another module's public API (the event a handler receives, NX-XMOD-02)
       { from: 'application', allow: [same('contracts'), other('module-index')], importKind: 'type' },
-      { from: 'infra', allow: [same('infra'), same('application'), same('domain'), same('contracts'), 'lib-db', 'lib', other('module-index')] },
-      { from: 'contracts', allow: [same('domain'), 'lib', other('module-index')] },
-      { from: 'actions', allow: [same('commands'), same('application'), same('infra'), same('contracts'), same('domain'), same('queries'), 'lib', other('module-index'), other('module-server')] },
-      { from: 'queries', allow: [same('application'), same('infra'), same('contracts'), same('domain'), 'lib', other('module-index'), other('module-server')] },
-      { from: 'components', allow: [same('components'), same('actions'), same('contracts'), same('domain'), 'lib', 'ui-primitives', other('module-index')] },
-      { from: 'commands', allow: [same('application'), same('infra'), same('contracts'), same('domain'), 'lib', other('module-index'), other('module-server')] },
-      { from: 'module-index', allow: [same('domain'), same('contracts'), same('components'), same('actions')] },
+      { from: 'infra', allow: [same('infra'), same('application'), same('domain'), same('contracts'), 'lib-db', 'lib', 'lib-core', other('module-index')] },
+      { from: 'contracts', allow: [same('domain'), 'lib', 'lib-core', other('module-index')] },
+      { from: 'actions', allow: [same('commands'), same('application'), same('infra'), same('contracts'), same('domain'), same('queries'), 'lib', 'lib-core', other('module-index'), other('module-server')] },
+      { from: 'queries', allow: [same('application'), same('infra'), same('contracts'), same('domain'), 'lib', 'lib-core', other('module-index'), other('module-server')] },
+      { from: 'components', allow: [same('components'), same('actions'), same('contracts'), same('domain'), 'lib', 'lib-core', 'ui-primitives', other('module-index')] },
+      { from: 'commands', allow: [same('application'), same('infra'), same('contracts'), same('domain'), 'lib', 'lib-core', other('module-index'), other('module-server')] },
+      { from: 'module-index', allow: [same('domain'), same('contracts'), same('components'), same('actions'), 'lib-core'] },
       { from: 'module-index', allow: [same('application')], importKind: 'type' }, // use-case types; commands.ts runs it (NX-NAME-12)
-      { from: 'module-server', allow: [same('queries'), same('commands'), same('actions'), same('module-index'), same('domain'), same('contracts'), 'lib'] },
-      { from: 'app', allow: ['app', 'module-index', 'module-server', 'ui-primitives', 'lib'] },
-      { from: 'root', allow: ['module-index', 'module-server', 'lib'] },
-      { from: 'tooling', allow: ['tooling', 'lib', 'lib-db'] },
-      { from: 'lib-db', allow: ['lib-db', 'lib'] },
-      { from: 'lib', allow: ['lib', 'lib-db'] },
-      { from: 'ui-primitives', allow: ['ui-primitives', 'lib'] },
-      { from: 'legacy', allow: ['legacy', 'app', 'root', 'lib', 'lib-db', 'ui-primitives', 'module-index', 'module-server'] },
+      { from: 'module-server', allow: [same('queries'), same('commands'), same('actions'), same('module-index'), same('domain'), same('contracts'), 'lib', 'lib-core'] },
+      { from: 'app', allow: ['app', 'module-index', 'module-server', 'ui-primitives', 'lib', 'lib-core'] },
+      { from: 'root', allow: ['module-index', 'module-server', 'lib', 'lib-core'] },
+      // scripts and configs drive the app from outside: module APIs, lib, and legacy code while it exists
+      { from: 'tooling', allow: ['tooling', 'lib', 'lib-core', 'lib-db', 'module-index', 'module-server', 'legacy'] },
+      { from: 'lib-core', allow: ['lib-core'] },
+      { from: 'lib-db', allow: ['lib-db', 'lib', 'lib-core'] },
+      { from: 'lib', allow: ['lib', 'lib-db', 'lib-core'] },
+      { from: 'ui-primitives', allow: ['ui-primitives', 'lib', 'lib-core'] },
+      { from: 'legacy', allow: ['legacy', 'app', 'root', 'lib', 'lib-core', 'lib-db', 'ui-primitives', 'module-index', 'module-server'] },
       // ---- specific messages; the last matching rule wins, so these come after the allows ----
       { from: [...MODULE_INTERNAL, ...MODULE_API], disallow: MODULE_INTERNAL.map(other), message: 'NX-LAYER-04: another module is reached only through its index.ts or server.ts (${file.type} imported ${dependency.source}).' },
-      { from: ['lib', 'lib-db', 'ui-primitives'], disallow: [...MODULE_INTERNAL, ...MODULE_API], message: 'NX-STR-05: lib/ and components/ui are cross-cutting and import nothing from modules/ (${dependency.source}).' },
+      { from: ['lib', 'lib-core', 'lib-db', 'ui-primitives'], disallow: [...MODULE_INTERNAL, ...MODULE_API], message: 'NX-STR-05: lib/ and components/ui are cross-cutting and import nothing from modules/ (${dependency.source}).' },
       { from: ['app', 'root', 'tooling'], disallow: MODULE_INTERNAL, message: 'NX-STR-03: app/ holds routes only and reaches a module through index.ts or server.ts (${dependency.source}).' },
       { from: 'legacy', disallow: MODULE_INTERNAL, message: 'NX-LAYER-10: legacy code reaches a module only through index.ts or server.ts (${dependency.source}).' },
       { from: 'module-index', disallow: [same('queries'), same('commands'), same('infra')], message: 'NX-LAYER-05: index.ts is browser-safe; export server-only reads and commands from server.ts, never infra/ (${dependency.source}).' },
@@ -163,7 +169,7 @@ export function createConfig(plugin, options = {}) {
       name: 'conventions/nextjs/base',
       files: ['**/*.ts', '**/*.tsx', '**/*.mts'],
       languageOptions: { parser: tsParser, parserOptions: { ecmaVersion: 'latest', sourceType: 'module', ecmaFeatures: { jsx: true } } },
-      plugins: { '@typescript-eslint': tsPlugin, boundaries, 'import-x': importX, nextjs: plugin },
+      plugins: { 'nx-ts': tsPlugin, boundaries, 'import-x': importX, nextjs: plugin },
       settings: {
         'import/resolver': { typescript: { alwaysTryTypes: true, project: tsconfig } },
         'import-x/resolver': { typescript: { alwaysTryTypes: true, project: tsconfig } },
@@ -178,8 +184,8 @@ export function createConfig(plugin, options = {}) {
         'boundaries/external': ['error', external], // NX-LAYER-02, -03, NX-CACHE-01/04, NX-DRZ-01, NX-NSA-05, NX-SB-08, NX-ZOD-01
         'boundaries/no-unknown-files': 'error', // NX-STR-02: every file belongs to a known place
         'import-x/no-cycle': ['error', { ignoreExternal: true, maxDepth: 6 }], // NX-LAYER-09
-        '@typescript-eslint/naming-convention': namingConvention, // NX-NAME-02
-        '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'never' }], // NX-TYPE-02
+        'nx-ts/naming-convention': namingConvention, // NX-NAME-02
+        'nx-ts/consistent-type-assertions': ['error', { assertionStyle: 'never' }], // NX-TYPE-02
         'nextjs/use-case-export-name': 'error', // NX-NAME-03
         'nextjs/tag-matches-type-name': 'error', // NX-ERR-02, NX-NAME-22, NX-NAME-62
         'nextjs/actions-use-commands': 'error', // NX-LAYER-11
@@ -189,7 +195,7 @@ export function createConfig(plugin, options = {}) {
     {
       name: 'conventions/nextjs/mappers',
       files: ['**/*.mapper.ts', p('lib/db/**/*.ts'), p('modules/*/domain/*-id.ts')],
-      rules: { '@typescript-eslint/consistent-type-assertions': 'off' },
+      rules: { 'nx-ts/consistent-type-assertions': 'off' },
     },
     // ---- tests: exempt from layer rules, not from naming (NX-TEST-07) ------------------------
     {
@@ -199,7 +205,7 @@ export function createConfig(plugin, options = {}) {
         'boundaries/element-types': 'off',
         'boundaries/external': 'off',
         'boundaries/no-unknown-files': 'off',
-        '@typescript-eslint/consistent-type-assertions': 'off',
+        'nx-ts/consistent-type-assertions': 'off',
         'nextjs/use-case-export-name': 'off',
       },
     },

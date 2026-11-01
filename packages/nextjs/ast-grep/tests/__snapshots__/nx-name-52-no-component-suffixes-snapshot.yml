@@ -2,13 +2,61 @@ id: nx-name-52-no-component-suffixes
 snapshots:
   export const OrderListContainer = () => <div />;:
     labels:
-    - source: export const OrderListContainer = () => <div />;
+    - source: OrderListContainer = () => <div />
       style: primary
+      start: 13
+      end: 47
+    - source: export const OrderListContainer = () => <div />;
+      style: secondary
       start: 0
       end: 48
+    - source: const OrderListContainer = () => <div />;
+      style: secondary
+      start: 7
+      end: 48
+    - source: OrderListContainer
+      style: secondary
+      start: 13
+      end: 31
+  "export default function OrderWidget() { return <div />; }":
+    labels:
+    - source: function OrderWidget() { return <div />; }
+      style: primary
+      start: 15
+      end: 57
+    - source: export default function OrderWidget() { return <div />; }
+      style: secondary
+      start: 0
+      end: 57
+    - source: OrderWidget
+      style: secondary
+      start: 24
+      end: 35
   "export function OrderCardComponent() { return <div />; }":
     labels:
-    - source: export function OrderCardComponent() { return <div />; }
+    - source: function OrderCardComponent() { return <div />; }
       style: primary
+      start: 7
+      end: 56
+    - source: export function OrderCardComponent() { return <div />; }
+      style: secondary
       start: 0
       end: 56
+    - source: OrderCardComponent
+      style: secondary
+      start: 16
+      end: 34
+  "export function OrderCardView(props: Props): JSX.Element { return <div />; }":
+    labels:
+    - source: "function OrderCardView(props: Props): JSX.Element { return <div />; }"
+      style: primary
+      start: 7
+      end: 76
+    - source: "export function OrderCardView(props: Props): JSX.Element { return <div />; }"
+      style: secondary
+      start: 0
+      end: 76
+    - source: OrderCardView
+      style: secondary
+      start: 16
+      end: 29

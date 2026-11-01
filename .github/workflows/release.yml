@@ -1,0 +1,30 @@
+name: release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - name: the tag is the version
+        run: |
+          v="${GITHUB_REF_NAME#v}"
+          for p in packages/nextjs packages/cli; do
+            test "$(node -p "require('./$p/package.json').version")" = "$v" || { echo "$p is not at $v"; exit 1; }
+          done
+      - name: pack both packages (projects install the two tarballs in one command)
+        run: |
+          mkdir -p /tmp/packs
+          pnpm --filter @conventions/nextjs pack --pack-destination /tmp/packs
+          pnpm --filter @conventions/cli pack --pack-destination /tmp/packs
+      - name: GitHub release with the tarballs
+        env: { GH_TOKEN: '${{ github.token }}' }
+        run: gh release create "$GITHUB_REF_NAME" /tmp/packs/*.tgz --verify-tag --generate-notes

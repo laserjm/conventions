@@ -1,7 +1,7 @@
 # Architecture (violations fixture)
 
 ```yaml
-conventions: 0.2.0
+conventions: 0.2.1
 profile: nextjs
 bindings: [drizzle, supabase, zod, next-safe-action]
 app-root: .
@@ -16,6 +16,7 @@ and must be reported for each id by `conventions lint`; a file without the comme
 
 | Rule | Deviation | Why | Until |
 | --- | --- | --- | --- |
+| NX-DRZ-08 | raw SQL in `modules/orders/infra/order.repository.ts` | proves a Deviations row turns the finding into a warning (check.mjs asserts it) | never |
 
 ## Legacy
 

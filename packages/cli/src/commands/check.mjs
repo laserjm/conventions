@@ -1,11 +1,13 @@
 import { loadProject, changedFiles } from '../project.mjs';
 import { checks } from '../checks/index.mjs';
 import { print, exitCode } from '../report.mjs';
+import { applyPolicy } from '../policy.mjs';
 
 export async function check({ cwd, changed, json }) {
   const project = await loadProject(cwd);
   let findings = [];
   for (const c of checks) findings.push(...(await c(project)));
+  findings = applyPolicy(project, findings);
   if (changed) {
     const list = changedFiles(project.appRoot);
     if (list) {

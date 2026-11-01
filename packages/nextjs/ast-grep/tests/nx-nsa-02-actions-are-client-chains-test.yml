@@ -4,3 +4,4 @@ valid:
   - "export const signInAction = actionClient.inputSchema(s).action(f);"
 invalid:
   - "export const payOrderAction = async (input) => payOrder(input);"
+  - "export const payOrderAction: SafeAction = async (input) => payOrder(input);"

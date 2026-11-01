@@ -2,6 +2,7 @@
 // eslint.config.mjs, CLAUDE.md/AGENTS.md pointers, the CI workflow, package.json scripts.
 import { existsSync, readFileSync, writeFileSync, mkdirSync, cpSync } from 'node:fs';
 import path from 'node:path';
+import { execSync } from 'node:child_process';
 import { resolveFrom, UsageError } from '../project.mjs';
 
 export async function init({ cwd, profile, appRoot = '.', force = false }) {
@@ -27,7 +28,13 @@ export async function init({ cwd, profile, appRoot = '.', force = false }) {
   put('eslint.config.mjs', t('eslint.config.mjs'));
   put('CLAUDE.md', t('CLAUDE.md'));
   put('AGENTS.md', t('AGENTS.md'));
-  put('.github/workflows/conventions.yml', t('conventions.yml'));
+  // CI lives at the repository root; in a monorepo the job runs in the app's folder
+  const top = gitTop(cwd);
+  const appRel = path.relative(top, cwd).split(path.sep).join('/');
+  const workflow = t('conventions.yml').replace('{{workingDirectory}}', appRel ? `\n    defaults:\n      run:\n        working-directory: ${appRel}` : '');
+  const wfPath = path.join(top, '.github/workflows/conventions.yml');
+  if (existsSync(wfPath) && !force) kept.push(path.relative(cwd, wfPath));
+  else { mkdirSync(path.dirname(wfPath), { recursive: true }); writeFileSync(wfPath, workflow); written.push(path.relative(cwd, wfPath)); }
   put(path.join(manifest.inventory), t('db-inventory.md'));
   for (const s of manifest.starters ?? []) {
     const target = path.join(appRoot, s);
@@ -45,4 +52,9 @@ export async function init({ cwd, profile, appRoot = '.', force = false }) {
   console.log(`conventions ${profile} ${pkg.version}\n  written: ${written.join(', ') || '—'}\n  kept:    ${kept.join(', ') || '—'}`);
   console.log(`\nNext: fill the ARCHITECTURE.md header (bindings, app-root, legacy), then \`conventions lint && conventions check\`.`);
   return 0;
+}
+
+function gitTop(cwd) {
+  try { return execSync('git rev-parse --show-toplevel', { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); }
+  catch { return cwd; }
 }
