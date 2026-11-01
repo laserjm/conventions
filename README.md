@@ -32,11 +32,16 @@ scripts/build-catalog.py   regenerates rules/*.yaml from the doc tables
 
 ## Use in a project
 
+The lint package is not on npm; install it from a release tag of this repo. This needs pnpm
+(npm cannot install a package from a subdirectory of a git repo).
+
 ```sh
-pnpm add -D @conventions/eslint-plugin-nextjs@0.1.0      # pin exactly
+# pin exactly: the tag is the version
+pnpm add -D "github:laserjm/conventions#v0.1.0&path:/packages/eslint-plugin-nextjs" eslint typescript
 cp -r node_modules/@conventions/eslint-plugin-nextjs/templates/lib/* lib/
 cp -r node_modules/@conventions/eslint-plugin-nextjs/templates/tests/* tests/
-cp <conventions>/docs/templates/ARCHITECTURE.md ARCHITECTURE.md   # fill the header
+curl -fsSL https://raw.githubusercontent.com/laserjm/conventions/v0.1.0/docs/templates/ARCHITECTURE.md \
+  -o ARCHITECTURE.md   # fill the header
 ```
 
 ```js
@@ -45,14 +50,23 @@ import conventions from '@conventions/eslint-plugin-nextjs';
 export default [...conventions.createConfig({ appRoot: '.', legacy: ['lib/server/**'] })];
 ```
 
-Install the skill: `claude plugin marketplace add <this repo>` then `claude plugin install conventions`.
+Working on the rules and a project side by side: `pnpm add -D link:../conventions/packages/eslint-plugin-nextjs`
+picks up local edits without a release. Switch back to the tag before you commit.
+
+Install the skill (it reads the catalogue from the installed lint package, so install that first):
+
+```sh
+claude plugin marketplace add laserjm/conventions
+claude plugin install conventions@conventions
+```
 
 Existing project: follow the refactoring playbook in `docs/nextjs/architecture.md` — guardrails
 first with everything declared `legacy`, then one module at a time.
 
 ## Keeping projects in sync
 
-- Projects pin an exact version. Renovate opens the bump PR; it is never auto-merged.
+- Projects pin an exact version (a `v<semver>` tag of this repo). Renovate opens the bump PR;
+  it is never auto-merged.
 - Semver: new `warn`/`review` rule or clarification → minor; rule flipped to `error`, new `error`
   rule, renamed file/folder → major; wording or report-less fix → patch.
 - `ARCHITECTURE.md` header records `conventions: <version>`, so the skill knows which rules apply.

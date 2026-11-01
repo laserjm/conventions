@@ -6,8 +6,10 @@ the convention ID it enforces; look the ID up in `docs/nextjs/*.md`.
 ## Install
 
 ```sh
-pnpm add -D @conventions/eslint-plugin-nextjs eslint typescript
+pnpm add -D "github:laserjm/conventions#v0.1.0&path:/packages/eslint-plugin-nextjs" eslint typescript
 ```
+
+Not published to npm; the git tag is the version. See the repo README for the full setup.
 
 `eslint.config.mjs`:
 
