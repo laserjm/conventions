@@ -1,4 +1,5 @@
-// Event handler in the receiving module (NX-XMOD-02). Imports the event type through the other module's index (NX-LAYER-04).
+// Event handler in the receiving module (NX-XMOD-02). The event type comes from the publisher's
+// index.ts, type-only: application/ may name another module's public types, never call it (NX-LAYER-01, -04).
 import type { OrderPaid } from '@/modules/orders/index';
 import { ok, type Result } from '@/lib/result';
 

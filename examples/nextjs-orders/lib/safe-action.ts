@@ -1,24 +1,26 @@
 // Shipped by @conventions/eslint-plugin-nextjs (binding: next-safe-action) — NX-NSA-01, NX-NSA-03.
-import { createSafeActionClient } from 'next-safe-action';
+import 'server-only';
+import { createSafeActionClient, returnServerError } from 'next-safe-action';
 import { randomUUID } from 'node:crypto';
-import type { Requester } from '@/lib/errors';
+import { signedOut, type SignedOut, type Unexpected } from '@/lib/errors';
 import { getRequester } from '@/lib/auth/requester';
 
-/** Actions anyone may call (sign-in, public forms). */
+/** Actions anyone may call (sign-in, public forms). A thrown error is a bug: logged, the caller gets a trace id. */
 export const actionClient = createSafeActionClient({
-  handleServerError(error) {
+  handleServerError(error): SignedOut | Unexpected {
     const traceId = randomUUID();
     console.error('[action]', traceId, error);
-    return { _tag: 'Unexpected' as const, traceId };
+    return { _tag: 'Unexpected', traceId };
   },
 });
 
-/** Actions that need a signed-in member. `ctx.requester` is the Requester (NX-AUTH-01). */
+/**
+ * Actions that need a signed-in member. The caller is signed in once, here (NX-AUTH-01).
+ * A visitor without a session gets `serverError: { _tag: 'SignedOut' }` and the action does
+ * not run, so `ctx.requester` is never null inside an action.
+ */
 export const memberActionClient = actionClient.use(async ({ next }) => {
-  const requester: Requester | null = await getRequester();
-  if (!requester) {
-    // Returned, not thrown: the client switches on `_tag` (NX-ERR-02).
-    return next({ ctx: { requester: null as Requester | null, signedOut: true } });
-  }
-  return next({ ctx: { requester, signedOut: false } });
+  const requester = await getRequester();
+  if (!requester) returnServerError(signedOut());
+  return next({ ctx: { requester } });
 });

@@ -35,7 +35,7 @@ document.
 | --- | --- | --- |
 | Module folder | business noun, `kebab-case`; plural when it names a collection of aggregates | `orders/`, `price-lists/`, `billing/`, `catalog/` |
 | Layer folders | fixed: `domain/`, `application/`, `infra/` | |
-| Module-root files | fixed: `actions.ts`, `queries.ts`, `components/`, `contracts.ts`, `index.ts`, `server.ts` | |
+| Module-root files | fixed: `actions.ts`, `queries.ts`, `commands.ts` (optional), `components/`, `contracts.ts`, `index.ts`, `server.ts` | |
 | Route segment folders | `kebab-case`, plural for collections, `[param]` dynamic | `app/orders/[orderId]/` |
 | Route groups | `(kebab-case)` describing layout or audience | `(app)/`, `(marketing)/` |
 | Private route folders | `_kebab-case` | `_components/` |
@@ -47,7 +47,7 @@ document.
 | --- | --- | --- | --- |
 | NX-NAME-10 | error | A module name is a business noun, never a technical one: not `api`, `utils`, `common`, `shared`. | review |
 | NX-NAME-11 | error | Dynamic route params are `camelCase` and end in `Id` when they are ids: `[orderId]`. | eslint:check-file (folder) |
-| NX-NAME-12 | error | `index.ts` exports use cases (as functions), contract schemas, domain types, actions and browser-safe components. `server.ts` re-exports `queries.ts`. Neither re-exports `infra/`. | eslint:nextjs/no-server-exports-from-index |
+| NX-NAME-12 | error | `index.ts` exports contract schemas, domain types and values, use-case types, actions and browser-safe components; never a use-case function, whose `Deps` only `commands.ts` can wire. `server.ts` re-exports `queries.ts` and `commands.ts`. Neither re-exports `infra/`. | eslint:nextjs/no-server-exports-from-index |
 
 ## Domain layer (`domain/`)
 
@@ -127,6 +127,7 @@ Infra names carry the technology; the port they implement carries the business n
 | --- | --- | --- | --- |
 | Server action | `actions.ts` | `<useCase>Action` | `payOrderAction` |
 | Cached query | `queries.ts` | `<verb><Noun>` | `getOrder(id)` |
+| Command (wired use case) | `commands.ts`, exported via `server.ts` | the use case's name, `(requester, input)` | `payOrder(requester, input)` |
 | Cache tags | `queries.ts` | `<NOUN>_TAGS = { all: '<nouns>', one: (id) => \`<noun>:${id}\` }` | `ORDER_TAGS` |
 | Revalidation helper | `actions.ts`, exported via `index.ts` | `revalidate<Noun>(id)` | `revalidateOrder` |
 | Component | `components/<noun>-<role>.tsx` | `<Noun><Role>`, props `<Component>Props` | `OrderCard`, `OrderCardProps` |
@@ -140,7 +141,7 @@ Component role vocabulary (second word): `List`, `Table`, `Card`, `Row`, `Form`,
 
 | ID | Sev | Rule | Enforcement |
 | --- | --- | --- | --- |
-| NX-NAME-50 | error | Every export of `actions.ts` ends in `Action` (except `revalidate<Noun>`); nothing outside `actions.ts` ends in `Action`. | eslint:nextjs/action-suffix |
+| NX-NAME-50 | error | Every export of `actions.ts` ends in `Action` (except `revalidate<Noun>`); nothing outside `actions.ts` ends in `Action`. Type exports are ignored; `index.ts` and `server.ts` re-export the module's own actions under their names. | eslint:nextjs/action-suffix |
 | NX-NAME-51 | warn | Component role from the vocabulary above before inventing one. | review |
 | NX-NAME-52 | error | No `Component`, `View`, `Widget` suffix. No `Container`/`Presenter` split. | review |
 | NX-NAME-53 | warn | Handler props `on<Event>`; handlers inside a component `handle<Event>`. Boolean props adjectives without `is` (`disabled`, `open`); state keeps `is` (`isOpen`). | review |
@@ -196,6 +197,7 @@ Component role vocabulary (second word): `List`, `Table`, `Card`, `Row`, `Form`,
 | infra | adapter | `infra/stripe.payment-gateway.ts` | `stripePaymentGateway` |
 | ui | action | `actions.ts` | `payOrderAction`, `revalidateOrder` |
 | ui | query | `queries.ts` | `getOrder`, `ORDER_TAGS` |
+| ui | command | `commands.ts` | `payOrder` |
 | ui | component | `components/order-card.tsx` | `OrderCard`, `OrderCardProps` |
 | ui | page | `app/(app)/orders/[orderId]/page.tsx` | `OrderPage` |
 | contracts | input schema | `contracts.ts` | `payOrderInputSchema` → `PayOrderInput` |

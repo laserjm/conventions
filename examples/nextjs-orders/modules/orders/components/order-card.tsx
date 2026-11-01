@@ -13,11 +13,22 @@ const ERROR_COPY: Record<string, string> = {
   PaymentTooLow: 'The payment does not cover the order total.',
   Forbidden: 'You cannot pay this order.',
   NotFound: 'This order no longer exists.',
+  Conflict: 'This order changed in the meantime. Reload and try again.',
 };
+
+// NX-NSA-04: what the action client returns instead of running the action.
+const SERVER_ERROR_COPY = {
+  SignedOut: 'Your session ended. Sign in again to pay.',
+  Unexpected: 'Something went wrong. Try again in a moment.',
+} as const;
 
 export function OrderCard({ order, canPay, tenantId }: OrderCardProps) {
   const { execute, result, isPending } = useAction(payOrderAction);
-  const error = result.data && !result.data.ok ? ERROR_COPY[result.data.error._tag] : undefined;
+  const error = result.serverError
+    ? SERVER_ERROR_COPY[result.serverError._tag]
+    : result.data && !result.data.ok
+      ? ERROR_COPY[result.data.error._tag]
+      : undefined;
 
   function handlePay() {
     execute({ tenantId, orderId: order.id, payment: { cents: order.totalCents, currency: 'EUR' } });

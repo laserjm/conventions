@@ -24,6 +24,10 @@ export function isQueriesFile(filename) {
   return /\/modules\/[^/]+\/queries\.tsx?$/.test(normalize(filename));
 }
 
+export function isCommandsFile(filename) {
+  return /\/modules\/[^/]+\/commands\.tsx?$/.test(normalize(filename));
+}
+
 /** application/<verb>-<noun>.ts — not ports/errors/events/index, not tests or fakes. */
 export function useCaseFile(filename) {
   const f = normalize(filename);

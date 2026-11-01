@@ -28,6 +28,7 @@ export function createConfig(options = {}) {
     { type: 'contracts', pattern: p('modules/*/contracts.ts'), capture: ['module'], mode: 'file' },
     { type: 'module-index', pattern: p('modules/*/index.ts'), capture: ['module'], mode: 'file' },
     { type: 'module-server', pattern: p('modules/*/server.ts'), capture: ['module'], mode: 'file' },
+    { type: 'commands', pattern: p('modules/*/commands.ts'), capture: ['module'], mode: 'file' }, // optional (NX-LAYER-11)
     { type: 'ui', pattern: [p('modules/*/actions.ts'), p('modules/*/queries.ts')], capture: ['module'], mode: 'file' },
     { type: 'ui', pattern: p('modules/*/components'), capture: ['module'] },
     { type: 'module-other', pattern: p('modules/*'), capture: ['module'] }, // any other file in a module is a mistake
@@ -52,11 +53,17 @@ export function createConfig(options = {}) {
       { from: 'domain', allow: [same('domain'), 'lib-core'] },
       { from: 'application', allow: [same('application'), same('domain'), 'lib-core'] },
       { from: 'application', allow: [same('contracts')], importKind: 'type' },
+      // an event handler names the event it receives from the publisher's public API (NX-XMOD-02)
+      { from: 'application', allow: [other('module-index')], importKind: 'type' },
       { from: 'infra', allow: [same('infra'), same('application'), same('domain'), same('contracts'), 'lib-core', 'lib-db', 'lib'] },
       { from: 'contracts', allow: [same('domain'), 'lib-core', 'lib'] },
-      { from: 'ui', allow: [same('ui'), same('application'), same('infra'), same('contracts'), same('domain'), 'lib-core', 'lib', 'ui-primitives', other('module-index'), other('module-server')] },
-      { from: 'module-index', allow: [same('domain'), same('application'), same('contracts'), same('ui'), 'lib-core'] },
-      { from: 'module-server', allow: [same('domain'), same('application'), same('contracts'), same('ui'), same('module-index'), 'lib-core'] },
+      { from: 'ui', allow: [same('ui'), same('commands'), same('application'), same('infra'), same('contracts'), same('domain'), 'lib-core', 'lib', 'ui-primitives', other('module-index'), other('module-server')] },
+      // commands.ts wires use cases to infra, policy and clock (NX-LAYER-11)
+      { from: 'commands', allow: [same('application'), same('infra'), same('contracts'), same('domain'), 'lib-core', 'lib', other('module-index'), other('module-server')] },
+      { from: 'module-index', allow: [same('domain'), same('contracts'), same('ui'), 'lib-core'] },
+      // a use case needs its Deps wired; index.ts names its types, commands.ts runs it (NX-NAME-12)
+      { from: 'module-index', allow: [same('application')], importKind: 'type' },
+      { from: 'module-server', allow: [same('domain'), same('application'), same('contracts'), same('ui'), same('commands'), same('module-index'), 'lib-core'] },
       { from: 'app', allow: ['app', 'module-index', 'module-server', 'ui-primitives', 'lib', 'lib-core'] },
       { from: 'lib-core', allow: ['lib-core'] },
       { from: 'lib-db', allow: ['lib-db', 'lib-core', 'lib'] },
@@ -74,14 +81,14 @@ export function createConfig(options = {}) {
       { from: 'application', disallow: [...FRAMEWORK, ...ORM, ...PLATFORM, ...ACTION_CLIENT, ...extraServerOnly] },
       { from: 'application', disallow: SCHEMA, importKind: 'value' },
       // NX-LAYER-03 / NX-DRZ-01: only infra and lib/db touch the ORM
-      { from: ['ui', 'app', 'contracts', 'module-index', 'module-server', 'lib', 'ui-primitives'], disallow: ORM },
+      { from: ['ui', 'commands', 'app', 'contracts', 'module-index', 'module-server', 'lib', 'ui-primitives'], disallow: ORM },
       // NX-CACHE-01 / NX-CACHE-04: caching only in queries.ts, revalidation only in actions.ts
-      { from: ['infra', 'contracts', 'module-index', 'ui-primitives', 'lib'], disallow: ['next/cache'] },
+      { from: ['infra', 'commands', 'contracts', 'module-index', 'ui-primitives', 'lib'], disallow: ['next/cache'] },
       { from: 'app', disallow: ['next/cache'] },
       // NX-NSA-05: action client only in lib/safe-action.ts and actions.ts (ui) — components use /hooks
-      { from: ['app', 'infra', 'contracts', 'module-index', 'module-server', 'ui-primitives'], disallow: ACTION_CLIENT },
+      { from: ['app', 'infra', 'commands', 'contracts', 'module-index', 'module-server', 'ui-primitives'], disallow: ACTION_CLIENT },
       // NX-SB-08: platform client only in lib (auth/storage) and infra
-      { from: ['app', 'ui', 'contracts', 'module-index', 'module-server', 'ui-primitives'], disallow: PLATFORM },
+      { from: ['app', 'ui', 'commands', 'contracts', 'module-index', 'module-server', 'ui-primitives'], disallow: PLATFORM },
     ],
   };
 
@@ -131,9 +138,10 @@ export function createConfig(options = {}) {
     {
       name: 'conventions/nextjs/module-layout',
       files: [p('modules/*/*.ts'), p('modules/*/*.tsx')],
-      ignores: [p('modules/*/{actions,queries,contracts,index,server}.ts'), p('modules/*/MIGRATING.md')],
+      // a test sits next to the file it tests: commands.integration.test.ts (NX-STR-06)
+      ignores: [p('modules/*/{actions,queries,commands,contracts,index,server}.ts'), p('modules/*/*.{test,spec}.{ts,tsx}'), p('modules/*/MIGRATING.md')],
       rules: {
-        'check-file/filename-naming-convention': ['error', { [p('modules/*/*.{ts,tsx}')]: '@(actions|queries|contracts|index|server)' }, { errorMessage: 'NX-STR-02: a module root holds only actions.ts, queries.ts, contracts.ts, index.ts, server.ts (and the layer folders).' }],
+        'check-file/filename-naming-convention': ['error', { [p('modules/*/*.{ts,tsx}')]: '@(actions|queries|commands|contracts|index|server)' }, { errorMessage: 'NX-STR-02: a module root holds only actions.ts, queries.ts, commands.ts, contracts.ts, index.ts, server.ts (and the layer folders).' }],
       },
     },
     // ---- domain + application: no throw, no vendor (NX-LAYER-08) ---------------------------

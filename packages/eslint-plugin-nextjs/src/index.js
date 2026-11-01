@@ -29,6 +29,7 @@ export function createConfig(options = {}) {
         'nextjs/no-server-exports-from-index': 'error',
         'nextjs/schema-suffix': 'error',
         'nextjs/require-server-only': 'error',
+        'nextjs/actions-use-commands': 'error',
       },
     },
     {

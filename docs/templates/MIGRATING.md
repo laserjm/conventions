@@ -16,7 +16,7 @@ Target structure: rich / anemic (delete one). Owning ADR: `docs/adr/00xx-….md`
 
 - [x] `index.ts`, `server.ts`, `contracts.ts` exist
 - [ ] reads moved to `queries.ts`
-- [ ] writes ported to use cases
+- [ ] writes ported to use cases, wired in `commands.ts`; legacy callers use them via `server.ts`
 - [ ] invariants in `domain/`
 - [ ] routes import only `index.ts`/`server.ts`
 - [ ] folder removed from `legacy` in `eslint.config.mjs`

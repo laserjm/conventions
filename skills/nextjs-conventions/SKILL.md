@@ -33,7 +33,9 @@ Do not restate the rules from memory. Open the catalogue entry by ID.
    - NX-XMOD-01: direct call vs event.
 3. **New module checklist**: `index.ts` (browser-safe) + `server.ts` (`server-only`) +
    `contracts.ts`; `infra/<noun>.repository.ts` as a plain object with tenant id first;
-   `domain/` and `application/` only when NX-RICH-01 says so; unit test with
+   `domain/` and `application/` only when NX-RICH-01 says so; with the first write use case,
+   `commands.ts` (`server-only`) wires it as `<useCase>(requester, input)`, `actions.ts`
+   calls it and `server.ts` re-exports it (NX-LAYER-11); unit test with
    `InMemory<Noun>Repository`; integration test proving tenant isolation.
 4. **Deviating?** Add the `ARCHITECTURE.md` entry (decision · enforced by · recorded in)
    in the same change. Half-migrated module → `MIGRATING.md`.
