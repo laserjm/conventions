@@ -2,7 +2,7 @@
 
 <!-- conventions header: read by tooling and by the conventions skill. Keep the keys. -->
 ```yaml
-conventions: 0.1.0
+conventions: 0.1.1
 profile: nextjs
 bindings: [drizzle, supabase, zod, next-safe-action]
 app-root: .            # or src

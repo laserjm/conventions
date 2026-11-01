@@ -20,7 +20,7 @@ if dups:
 def y(s):
     return '"' + s.replace('\\', '\\\\').replace('"', '\\"') + '"'
 out = ['# Generated from the rule tables in docs/nextjs/**.md by scripts/build-catalog.py — do not edit by hand.',
-       'profile: nextjs', 'version: 0.1.0', 'rules:']
+       'profile: nextjs', 'version: 0.1.1', 'rules:']
 for rid, sev, rule, enf, f, section in rows:
     anchor = re.sub(r'[^a-z0-9 -]', '', section.lower()).replace(' ', '-')
     out += [f'  - id: {rid}', f'    severity: {sev}', f'    enforcement: {y(enf)}', f'    doc: {f}#{anchor}', f'    rule: {y(rule)}']

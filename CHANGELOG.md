@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.1.1
+
+- Skill `nextjs-conventions` installs with `npx skills add https://github.com/laserjm/conventions/tree/v0.1.1 --skill nextjs-conventions`:
+  the `description` frontmatter is a block scalar, so strict YAML parsers accept it.
+- Skill works when installed outside this repo: it finds the catalogue from the app's folder
+  (monorepos included) and reads the prose and reference module at the pinned tag. New
+  workflow step for projects with `legacy` code.
+- README: setup split into greenfield and brownfield, with a monorepo note. Brownfield merges
+  the helpers and `ARCHITECTURE.md` instead of copying over them and replaces a hand-written
+  `eslint-plugin-boundaries` config.
+- Releases attach the lint package as a tarball, so npm projects install it by URL; pnpm keeps
+  the `github:` tag form.
+
 ## 0.1.0 — initial release
 
 - Profile `nextjs`: architecture, naming and testing rules with IDs (129 rules, 39 lint-enforced).

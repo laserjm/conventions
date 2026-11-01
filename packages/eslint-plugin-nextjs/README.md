@@ -6,10 +6,15 @@ the convention ID it enforces; look the ID up in `docs/nextjs/*.md`.
 ## Install
 
 ```sh
-pnpm add -D "github:laserjm/conventions#v0.1.0&path:/packages/eslint-plugin-nextjs" eslint typescript
+# npm
+npm i -D -E https://github.com/laserjm/conventions/releases/download/v0.1.1/conventions-eslint-plugin-nextjs-0.1.1.tgz
+# pnpm
+pnpm add -D "github:laserjm/conventions#v0.1.1&path:/packages/eslint-plugin-nextjs"
 ```
 
-Not published to npm; the git tag is the version. See the repo README for the full setup.
+Not published to npm; each release of the repo attaches the tarball, and the tag is the
+version. In a monorepo, install it into the app's package. The repo README has the full setup,
+separately for greenfield and brownfield projects.
 
 `eslint.config.mjs`:
 
@@ -26,7 +31,9 @@ export default [
 ];
 ```
 
-Copy the shipped helpers once and keep them in sync with the package version:
+Greenfield: copy the shipped helpers once and keep them in sync with the package version.
+Brownfield: the project usually has some of them already; diff and merge instead
+(`diff -r node_modules/@conventions/eslint-plugin-nextjs/templates/lib lib`).
 
 ```sh
 cp -r node_modules/@conventions/eslint-plugin-nextjs/templates/lib/* lib/

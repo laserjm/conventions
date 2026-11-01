@@ -1,6 +1,6 @@
 # Generated from the rule tables in docs/nextjs/**.md by scripts/build-catalog.py — do not edit by hand.
 profile: nextjs
-version: 0.1.0
+version: 0.1.1
 rules:
   - id: NX-STR-01
     severity: error

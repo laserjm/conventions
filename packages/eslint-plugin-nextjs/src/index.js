@@ -4,7 +4,7 @@ import { createConfig as createBaseConfig } from './config.js';
 export { rules };
 
 const plugin = {
-  meta: { name: '@conventions/eslint-plugin-nextjs', version: '0.1.0' },
+  meta: { name: '@conventions/eslint-plugin-nextjs', version: '0.1.1' },
   rules,
   configs: {},
 };

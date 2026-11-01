@@ -278,6 +278,9 @@ A module gets a `domain/` layer only when it has invariants. Otherwise it is a C
 Strangler-style, one module at a time. The old and new structure coexist until the last
 module moves.
 
+The repository README ("Use in a project" → Brownfield) gives the commands for step 1. A new
+project skips this section: it starts with the config as shipped and no `legacy` element.
+
 1. **Guardrails first.** Install the ESLint config with the existing code declared as
    `legacy` (NX-LAYER-10). Add `lib/result.ts`, `lib/errors.ts`, `lib/db/transaction.ts`,
    `lib/db/errors.ts`, `lib/safe-action.ts` from the conventions.
