@@ -1,0 +1,10 @@
+id: nx-err-03-standard-errors-from-core
+language: typescript
+severity: error
+message: "NX-ERR-03: $NAME is a standard error; import it from '@conventions/nextjs/core' instead of redefining it (NX-NAME-33)."
+rule:
+  any:
+    - pattern: type $NAME = $$$BODY
+    - pattern: interface $NAME { $$$BODY }
+constraints:
+  NAME: { regex: '^(ValidationFailed|SignedOut|Forbidden|NotFound|Conflict|Unexpected)$' }

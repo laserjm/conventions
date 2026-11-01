@@ -1,3 +1,3 @@
-// expect: boundaries/element-types
-import type { Order } from '@/modules/orders/index';
-export type Wrapped = { order: Order };
+// expect: NX-STR-05
+import { OrderId } from '@/modules/orders/index';
+export const usesModule = OrderId;

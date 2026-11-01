@@ -1,0 +1,27 @@
+# docs/nextjs/naming.md — table "naming-application". Edit here; docs tables and rules/nextjs.yaml are generated.
+group: naming
+rules:
+  - id: NX-NAME-30
+    severity: guidance
+    rule: "Command verbs: `create`, `update`, `delete`, `cancel`, `approve`, `submit`, `assign`, `archive`, or the business verb (`shipOrder`)."
+    mechanism: agent
+  - id: NX-NAME-31
+    severity: guidance
+    rule: "Query verbs: `get` (one, errors when missing), `find` (one, may be null), `list`, `search`, `count`, `exists`. Repositories use the same vocabulary plus `save` (insert or update); no `create`/`update` split."
+    mechanism: agent
+  - id: NX-NAME-32
+    severity: error
+    rule: Dependencies are one object typed `<UseCase>Deps`, never positional (`defineUseCase` admits no other shape).
+    mechanism: tsc
+    tool: defineUseCase
+  - id: NX-NAME-33
+    severity: error
+    rule: "`NotFound`, `Forbidden`, `SignedOut`, `Conflict`, `Unexpected` come from `@conventions/nextjs/core`; the domain does not know about requesters or lookups."
+    mechanism: ast-grep
+    tool: nx-err-03-standard-errors-from-core
+    reportedAs: NX-ERR-03
+  - id: NX-NAME-34
+    severity: error
+    rule: "Tenant-owned repository methods take the tenant id first, typed `TenantId`: `findById(tenantId, id)`. Shared-data methods take no tenant id."
+    mechanism: tsc
+    tool: TenantId

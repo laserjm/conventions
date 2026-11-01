@@ -1,0 +1,1035 @@
+# Generated from catalog/nextjs/*.yaml by scripts/build-catalog.mjs — do not edit by hand.
+profile: nextjs
+version: 0.2.0
+rulesets: [auth, cache, cross-module, database, drizzle, errors, layers, migration, naming, next-safe-action, rich, structure, supabase, testing, types, zod]
+rules:
+  - id: NX-AUTH-01
+    group: auth
+    table: auth
+    severity: error
+    mechanism: ast-grep
+    tool: "nx-auth-01-session-read-outside-edge"
+    doc: docs/nextjs/architecture.md#authorization-tenancy
+    rule: "`Requester` is produced in `lib/safe-action.ts` (actions) and in `queries.ts` (reads). Nothing else reads the session: `commands.ts` receives the requester from its caller."
+  - id: NX-AUTH-02
+    group: auth
+    table: auth
+    severity: guidance
+    mechanism: agent
+    checklist: true
+    doc: docs/nextjs/architecture.md#authorization-tenancy
+    rule: "Authorization decisions live in the use case, which receives `requester` in `Deps` and returns `err({ _tag: 'Forbidden' })`. An action that skips the application layer checks `requester` itself; that is the only business `if` allowed in an action."
+  - id: NX-AUTH-03
+    group: auth
+    table: auth
+    severity: error
+    mechanism: check
+    tool: "tenant-isolation-test"
+    doc: docs/nextjs/architecture.md#authorization-tenancy
+    rule: "Tenant isolation is enforced in the repository: every method on tenant-owned data takes the tenant id as its first argument and names it in the query. The repository's integration test proves another tenant's rows can be neither read nor changed."
+  - id: NX-AUTH-04
+    group: auth
+    table: auth
+    severity: guidance
+    mechanism: agent
+    doc: docs/nextjs/architecture.md#authorization-tenancy
+    rule: "Database row policies, where the platform offers them, are a second net for tenant isolation. A permission rule is never written there."
+  - id: NX-AUTH-05
+    group: auth
+    table: auth
+    severity: error
+    mechanism: tsc
+    tool: "TenantId"
+    doc: docs/nextjs/architecture.md#authorization-tenancy
+    rule: "Shared data (registries, templates, lookups) is read without a requester; its repository methods take no tenant id. Tenant-owned methods take a `TenantId` first, so the port makes the distinction visible and the compiler refuses a plain string."
+  - id: NX-AUTH-06
+    group: auth
+    table: auth
+    severity: error
+    mechanism: tsc
+    tool: "systemRequester"
+    doc: docs/nextjs/architecture.md#authorization-tenancy
+    rule: "System callers (scheduled runs, workers, delivery jobs) use the same repositories as users and name their tenant explicitly through `systemRequester(tenantId, name)`. There is no bypass path."
+  - id: NX-AUTH-07
+    group: auth
+    table: auth
+    severity: warn
+    mechanism: ast-grep
+    tool: "nx-auth-07-roles-in-components"
+    doc: docs/nextjs/architecture.md#authorization-tenancy
+    rule: "Components never decide permissions; they receive booleans like `can.editOrder` computed server-side in `queries.ts`."
+  - id: NX-CACHE-01
+    group: cache
+    table: cache
+    severity: error
+    mechanism: eslint
+    tool: "boundaries/external"
+    doc: docs/nextjs/architecture.md#caching-revalidation
+    rule: "Caching primitives (`unstable_cache`, `\"use cache\"`, `cacheTag`) appear only in `queries.ts`; `revalidate*` appears only in `actions.ts`."
+  - id: NX-CACHE-02
+    group: cache
+    table: cache
+    severity: error
+    mechanism: ast-grep
+    tool: "nx-cache-02-no-inline-cache-tags"
+    doc: docs/nextjs/architecture.md#caching-revalidation
+    rule: "Tags are constants exported from `queries.ts` (`ORDER_TAGS = { all: 'orders', one: (id) => \\`order:${id}\\` }`). Tag strings are never typed inline."
+  - id: NX-CACHE-03
+    group: cache
+    table: cache
+    severity: guidance
+    mechanism: agent
+    checklist: true
+    doc: docs/nextjs/architecture.md#caching-revalidation
+    rule: "One `all` tag per aggregate for lists, one `one(id)` tag for detail views. Nothing finer until a measured need."
+  - id: NX-CACHE-04
+    group: cache
+    table: cache
+    severity: error
+    mechanism: eslint
+    tool: "boundaries/external"
+    doc: docs/nextjs/architecture.md#caching-revalidation
+    rule: "Revalidation happens in the action after the use case returns `ok`. Use cases and repositories never import `revalidate*`."
+  - id: NX-CACHE-05
+    group: cache
+    table: cache
+    severity: error
+    mechanism: ast-grep
+    tool: "nx-cache-05-no-foreign-tags"
+    doc: docs/nextjs/architecture.md#caching-revalidation
+    rule: "A write that affects another module's reads calls that module's exported `revalidate<Noun>(id)` from its `index.ts`, never its tag strings."
+  - id: NX-CACHE-06
+    group: cache
+    table: cache
+    severity: guidance
+    mechanism: agent
+    doc: docs/nextjs/architecture.md#caching-revalidation
+    rule: "`revalidatePath` only for routes without a natural aggregate."
+  - id: NX-XMOD-01
+    group: cross-module
+    table: cross-module
+    severity: guidance
+    mechanism: agent
+    checklist: true
+    doc: docs/nextjs/architecture.md#cross-module-communication
+    rule: "Two mechanisms: a **direct call** through the other module's `index.ts`/`server.ts` when A needs B's answer now; a **domain event** when A only needs to inform B. Start with direct calls; introduce events at the second subscriber or when the call would cross a transaction boundary."
+  - id: NX-XMOD-02
+    group: cross-module
+    table: cross-module
+    severity: guidance
+    mechanism: agent
+    checklist: true
+    doc: docs/nextjs/architecture.md#cross-module-communication
+    rule: "Events are collected by the use case through an `EventCollector` port and dispatched after commit via `lib/events.ts` by whoever ran the use case: the module's `commands.ts` when it has one, otherwise the action. Handlers live in the receiving module: `modules/billing/application/on-order-paid.ts`, which imports the event type (types only) from the publisher's `index.ts`, is wired in `modules/billing/commands.ts` and is reached through `modules/billing/server.ts`."
+  - id: NX-XMOD-03
+    group: cross-module
+    table: cross-module
+    severity: error
+    mechanism: check
+    tool: "inventory"
+    doc: docs/nextjs/architecture.md#cross-module-communication
+    rule: "A database trigger is never an event bus."
+  - id: NX-DB-01
+    group: database
+    table: database
+    severity: error
+    mechanism: ci
+    tool: "schema-drift"
+    doc: docs/nextjs/architecture.md#database
+    rule: "One schema source of truth, declared in `ARCHITECTURE.md`: **code-first** (ORM definitions generate migrations) or **migrations-first** (migrations are hand-written, ORM definitions are generated by introspection). Generated files are never edited; CI fails on drift."
+  - id: NX-DB-02
+    group: database
+    table: database
+    severity: error
+    mechanism: check
+    tool: "inventory"
+    doc: docs/nextjs/architecture.md#database
+    rule: "A database function or trigger is allowed only in categories A–E and has an inventory row: name, category, caller, wrapping repository method, test. A migration that adds one adds the row."
+  - id: NX-DB-03
+    group: database
+    table: database
+    severity: guidance
+    mechanism: agent
+    checklist: true
+    doc: docs/nextjs/architecture.md#database
+    rule: "No business rule inside database code: no pricing, no status decisions, no notifications. Category A/B code takes already-validated input and performs the write or read."
+  - id: NX-DB-04
+    group: database
+    table: database
+    severity: guidance
+    mechanism: agent
+    checklist: true
+    doc: docs/nextjs/architecture.md#database
+    rule: "Not a valid reason for database code: \"easier in SQL\", \"the platform makes it convenient\", \"to avoid N+1\" (use a join or CTE), \"to enforce permissions\"."
+  - id: NX-DB-05
+    group: database
+    table: database
+    severity: guidance
+    mechanism: agent
+    checklist: true
+    doc: docs/nextjs/architecture.md#database
+    rule: "A constraint the database refuses becomes a tagged error in the repository (`Conflict` or a domain error), translated with `lib/db/errors.ts`. Nothing above `infra/` sees a driver error."
+  - id: NX-DB-06
+    group: database
+    table: database
+    severity: error
+    mechanism: ast-grep
+    tool: "nx-db-06-transactions-only-in-infra"
+    doc: docs/nextjs/architecture.md#database
+    rule: "Transactions: `lib/db/client.ts` builds `withTransaction` with `createTransactionRunner` from `@conventions/nextjs/drizzle`; only `infra/` calls it. A use case that needs several writes in one transaction receives a `UnitOfWork` port that the module's `infra/` implements."
+  - id: NX-DB-07
+    group: database
+    table: database
+    severity: guidance
+    mechanism: agent
+    checklist: true
+    doc: docs/nextjs/architecture.md#database
+    rule: "Every repository statement runs inside a transaction with a statement timeout. Interactive and system callers have different budgets; the numbers live in the binding."
+  - id: NX-DB-08
+    group: database
+    table: database
+    severity: guidance
+    mechanism: agent
+    checklist: true
+    doc: docs/nextjs/architecture.md#database
+    rule: "On tenant-owned tables the only triggers are `updated_at` and audit. No trigger changes another table's business data (category D excepted, with inventory row)."
+  - id: NX-DB-09
+    group: database
+    table: database
+    severity: guidance
+    mechanism: agent
+    doc: docs/nextjs/architecture.md#database
+    rule: "Views are fine for read models (category B); they are typed through the ORM."
+  - id: NX-DRZ-01
+    group: drizzle
+    table: drizzle
+    severity: error
+    mechanism: eslint
+    tool: "boundaries/external"
+    reportedAs: NX-LAYER-03
+    doc: docs/nextjs/bindings/drizzle.md#rules
+    rule: "Only `lib/db/**` and `modules/*/infra/**` import `drizzle-orm`."
+  - id: NX-DRZ-02
+    group: drizzle
+    table: drizzle
+    severity: error
+    mechanism: ast-grep
+    tool: "nx-drz-02-no-hand-written-row-types"
+    doc: docs/nextjs/bindings/drizzle.md#rules
+    rule: "Row types are inferred in `infra/` with `InferSelectModel` / `InferInsertModel` as `<Noun>Row` / `New<Noun>Row`. Never hand-written."
+  - id: NX-DRZ-03
+    group: drizzle
+    table: drizzle
+    severity: error
+    mechanism: ci
+    tool: "schema-drift"
+    doc: docs/nextjs/bindings/drizzle.md#rules
+    rule: "**Migrations-first** projects: `drizzle-kit pull` writes `lib/db/schema.ts` and `relations.ts`; nothing runs `generate`, `push` or `migrate`; a CI job fails when the generated files drift. Generated identifiers are kept as emitted (`orders`, not `ordersTable`) — NX-NAME-08."
+  - id: NX-DRZ-04
+    group: drizzle
+    table: drizzle
+    severity: guidance
+    mechanism: agent
+    checklist: true
+    doc: docs/nextjs/bindings/drizzle.md#rules
+    rule: "**Code-first** projects: tables are `export const <nouns>Table = pgTable('<nouns>', …)`, enums `<noun>StatusEnum = pgEnum('<noun>_status', …)`; migrations come from `drizzle-kit generate --name <verb>-<what>`."
+  - id: NX-DRZ-05
+    group: drizzle
+    table: drizzle
+    severity: guidance
+    mechanism: agent
+    checklist: true
+    doc: docs/nextjs/bindings/drizzle.md#rules
+    rule: "`createTransactionRunner` sets `statement_timeout` per caller class: interactive callers 8 s, system callers 5 min (defaults; the project may pass its own and records it in `ARCHITECTURE.md`). A nested `withTransaction` joins the outer transaction and its timeout; `statementTimeout` overrides the budget for tests and maintenance only."
+  - id: NX-DRZ-06
+    group: drizzle
+    table: drizzle
+    severity: error
+    mechanism: ast-grep
+    tool: "nx-db-06-transactions-only-in-infra"
+    reportedAs: NX-DB-06
+    doc: docs/nextjs/bindings/drizzle.md#rules
+    rule: "The `UnitOfWork` port is implemented in `infra/unit-of-work.ts` by delegating to `withTransaction` from `lib/db/client.ts`. Use cases never see the Drizzle transaction object."
+  - id: NX-DRZ-07
+    group: drizzle
+    table: drizzle
+    severity: guidance
+    mechanism: agent
+    doc: docs/nextjs/bindings/drizzle.md#rules
+    rule: "Read models (category B) that are views are declared with `pgView` so they are typed."
+  - id: NX-DRZ-08
+    group: drizzle
+    table: drizzle
+    severity: warn
+    mechanism: ast-grep
+    tool: "nx-drz-08-no-raw-sql-in-repository"
+    doc: docs/nextjs/bindings/drizzle.md#rules
+    rule: "A repository runs no raw SQL except to call a category A/B function; the call is wrapped by exactly one method and its result parsed with a contract schema."
+  - id: NX-ERR-01
+    group: errors
+    table: errors
+    severity: error
+    mechanism: tsc
+    tool: "defineUseCase"
+    doc: docs/nextjs/architecture.md#errors
+    rule: "Use cases return `Result`, never throw: `defineUseCase` types the return as `Promise<Result<Output, Error>>`. Actions translate `Result` into the action client's result shape."
+  - id: NX-ERR-02
+    group: errors
+    table: errors
+    severity: error
+    mechanism: eslint
+    tool: "nextjs/tag-matches-type-name"
+    doc: docs/nextjs/architecture.md#errors
+    rule: "Errors are tagged unions; `_tag` equals the TypeScript type name. The action switches exhaustively."
+  - id: NX-ERR-03
+    group: errors
+    table: errors
+    severity: error
+    mechanism: ast-grep
+    tool: "nx-err-03-standard-errors-from-core"
+    doc: docs/nextjs/architecture.md#errors
+    rule: "`SignedOut`, `Forbidden`, `NotFound`, `Conflict`, `Unexpected` come from `@conventions/nextjs/core`, never redefined per module."
+  - id: NX-ERR-04
+    group: errors
+    table: errors
+    severity: warn
+    mechanism: ast-grep
+    tool: "nx-err-04-tag-in-jsx"
+    doc: docs/nextjs/architecture.md#errors
+    rule: "The raw `_tag` never appears in the UI; the client maps tags to copy with an exhaustive map."
+  - id: NX-LAYER-01
+    group: layers
+    table: layers
+    severity: error
+    mechanism: eslint
+    tool: "boundaries/element-types"
+    doc: docs/nextjs/architecture.md#layer-rules
+    rule: "Imports follow the table above. `domain/` imports nothing outside its module except `@conventions/nextjs/core`."
+  - id: NX-LAYER-02
+    group: layers
+    table: layers
+    severity: error
+    mechanism: eslint
+    tool: "boundaries/external"
+    doc: docs/nextjs/architecture.md#layer-rules
+    rule: "`domain/` and `application/` import no framework or vendor package (`react`, `next/*`, the ORM, the contract-schema library at runtime). Type-only imports from `contracts.ts` are allowed in `application/`."
+    note: "fetch() in domain/ or application/ is reported by ast-grep rule nx-layer-02-no-fetch-in-pure-layers."
+  - id: NX-LAYER-03
+    group: layers
+    table: layers
+    severity: error
+    mechanism: eslint
+    tool: "boundaries/external"
+    doc: docs/nextjs/architecture.md#layer-rules
+    rule: "Only `infra/` and `lib/db` import the ORM and `lib/db`."
+  - id: NX-LAYER-04
+    group: layers
+    table: layers
+    severity: error
+    mechanism: eslint
+    tool: "boundaries/element-types"
+    doc: docs/nextjs/architecture.md#layer-rules
+    rule: "Another module is reached only through its `index.ts` or `server.ts`. Never import another module's `domain/`, `application/`, `infra/`, `contracts.ts` or ui files."
+  - id: NX-LAYER-05
+    group: layers
+    table: layers
+    severity: error
+    mechanism: eslint
+    tool: "boundaries/element-types"
+    doc: docs/nextjs/architecture.md#layer-rules
+    rule: "`index.ts` is safe to import from a client component: it never re-exports `infra/`, `queries.ts` or `commands.ts`, and `components/` never import them either. Server-only reads and commands are exported from `server.ts`; `server.ts`, `queries.ts` and `commands.ts` are marked `server-only`."
+    note: "The server-only import is checked by ast-grep rule nx-layer-05-require-server-only."
+  - id: NX-LAYER-06
+    group: layers
+    table: layers
+    severity: warn
+    mechanism: ast-grep
+    tool: "nx-layer-06-business-if-in-action"
+    doc: docs/nextjs/architecture.md#layer-rules
+    rule: "Skipping the application layer: an action or query may call a repository directly when it needs no orchestration — a plain read, a single write with validation only, no business decision. The moment it needs a transaction, a domain function, a second repository or an `if` about business state, extract a use case. Test: if you'd want to unit-test it without Next, it's a use case."
+  - id: NX-LAYER-07
+    group: layers
+    table: layers
+    severity: error
+    mechanism: ast-grep
+    tool: "nx-layer-07-use-define-use-case"
+    doc: docs/nextjs/architecture.md#layer-rules
+    rule: "A use case is declared with `defineUseCase<Input, Output, Error, Deps>(async (input, deps) => …)` from `@conventions/nextjs/core`; the helper fixes the signature. Dependencies arrive as one object typed `<UseCase>Deps`; no global singletons inside `application/`."
+  - id: NX-LAYER-08
+    group: layers
+    table: layers
+    severity: error
+    mechanism: ast-grep
+    tool: "nx-layer-08-no-throw-in-pure-layers"
+    doc: docs/nextjs/architecture.md#layer-rules
+    rule: "Errors cross layer boundaries as values (`Result`), never as thrown exceptions. `throw` is reserved for bugs and does not appear in `domain/` or `application/`."
+  - id: NX-LAYER-09
+    group: layers
+    table: layers
+    severity: error
+    mechanism: eslint
+    tool: "import-x/no-cycle"
+    doc: docs/nextjs/architecture.md#layer-rules
+    rule: "If two modules import each other, merge them or extract a third."
+  - id: NX-LAYER-10
+    group: layers
+    table: layers
+    severity: error
+    mechanism: eslint
+    tool: "boundaries/element-types"
+    doc: docs/nextjs/architecture.md#layer-rules
+    rule: "Code that predates the modules is declared as the `legacy` element in the ESLint config. Legacy code keeps the imports it has but reaches a module only through `index.ts`/`server.ts`. No new feature lands in legacy; a folder leaves the list when its module is done. Legacy globs are anchored at the app root, so `components/**` is never a module's `components/`. Lint applies only the layer rules to legacy code; naming, cast and env rules start when the folder leaves the list."
+  - id: NX-LAYER-11
+    group: layers
+    table: layers
+    severity: error
+    mechanism: eslint
+    tool: "nextjs/actions-use-commands"
+    doc: docs/nextjs/architecture.md#layer-rules
+    rule: "`commands.ts` is optional: it appears with the module's first write use case, so anemic modules have none. It wires each use case to its repositories, unit of work, policy and clock and exports it under the use case's name, taking the `Requester` the caller signed in as its first argument: `payOrder(requester, input)`. It holds no business rule, reads no session and revalidates nothing. Once it exists, `actions.ts` calls it and imports no value from its own `application/` or `infra/`; `server.ts` re-exports it for workers, other modules and tests."
+  - id: NX-MIG-01
+    group: migration
+    table: migration
+    severity: guidance
+    mechanism: agent
+    checklist: true
+    doc: docs/nextjs/architecture.md#refactoring-playbook-for-existing-projects
+    rule: "No new database code may be added during the transition unless it passes NX-DB-02/03, even in untouched modules."
+  - id: NX-MIG-02
+    group: migration
+    table: migration
+    severity: guidance
+    mechanism: agent
+    checklist: true
+    doc: docs/nextjs/architecture.md#refactoring-playbook-for-existing-projects
+    rule: "No new code imports a legacy helper that a module already replaced."
+  - id: NX-MIG-03
+    group: migration
+    table: migration
+    severity: error
+    mechanism: check
+    tool: "migrating-file"
+    doc: docs/nextjs/architecture.md#refactoring-playbook-for-existing-projects
+    rule: "A half-migrated module carries a `MIGRATING.md` ([template](../templates/MIGRATING.md)) listing what still bypasses it."
+  - id: NX-MIG-04
+    group: migration
+    table: migration
+    severity: error
+    mechanism: check
+    tool: "deviations"
+    doc: docs/nextjs/architecture.md#refactoring-playbook-for-existing-projects
+    rule: "Every deviation from these rules is an entry in the project's `ARCHITECTURE.md` ([template](../templates/ARCHITECTURE.md)): decision, where enforced, where recorded. Add the entry before you deviate."
+  - id: NX-NAME-30
+    group: naming
+    table: naming-application
+    severity: guidance
+    mechanism: agent
+    doc: docs/nextjs/naming.md#application-layer-application
+    rule: "Command verbs: `create`, `update`, `delete`, `cancel`, `approve`, `submit`, `assign`, `archive`, or the business verb (`shipOrder`)."
+  - id: NX-NAME-31
+    group: naming
+    table: naming-application
+    severity: guidance
+    mechanism: agent
+    doc: docs/nextjs/naming.md#application-layer-application
+    rule: "Query verbs: `get` (one, errors when missing), `find` (one, may be null), `list`, `search`, `count`, `exists`. Repositories use the same vocabulary plus `save` (insert or update); no `create`/`update` split."
+  - id: NX-NAME-32
+    group: naming
+    table: naming-application
+    severity: error
+    mechanism: tsc
+    tool: "defineUseCase"
+    doc: docs/nextjs/naming.md#application-layer-application
+    rule: "Dependencies are one object typed `<UseCase>Deps`, never positional (`defineUseCase` admits no other shape)."
+  - id: NX-NAME-33
+    group: naming
+    table: naming-application
+    severity: error
+    mechanism: ast-grep
+    tool: "nx-err-03-standard-errors-from-core"
+    reportedAs: NX-ERR-03
+    doc: docs/nextjs/naming.md#application-layer-application
+    rule: "`NotFound`, `Forbidden`, `SignedOut`, `Conflict`, `Unexpected` come from `@conventions/nextjs/core`; the domain does not know about requesters or lookups."
+  - id: NX-NAME-34
+    group: naming
+    table: naming-application
+    severity: error
+    mechanism: tsc
+    tool: "TenantId"
+    doc: docs/nextjs/naming.md#application-layer-application
+    rule: "Tenant-owned repository methods take the tenant id first, typed `TenantId`: `findById(tenantId, id)`. Shared-data methods take no tenant id."
+  - id: NX-NAME-60
+    group: naming
+    table: naming-contracts
+    severity: error
+    mechanism: ast-grep
+    tool: "nx-name-60-schema-suffix"
+    doc: docs/nextjs/naming.md#contracts-types-contractsts-lib
+    rule: "A contract schema is `camelCase` + `Schema`; its inferred type is the same name in `PascalCase` without the suffix."
+  - id: NX-NAME-61
+    group: naming
+    table: naming-contracts
+    severity: error
+    mechanism: ast-grep
+    tool: "nx-name-61-dto-suffix-only"
+    doc: docs/nextjs/naming.md#contracts-types-contractsts-lib
+    rule: "`Dto` is the only suffix for shapes that cross the wire. `Payload`, `Request`, `Response`, `Data`, `Info` are not used. `Input` is for use case arguments. Domain types have no suffix."
+  - id: NX-NAME-62
+    group: naming
+    table: naming-contracts
+    severity: error
+    mechanism: eslint
+    tool: "nextjs/tag-matches-type-name"
+    reportedAs: NX-ERR-02
+    doc: docs/nextjs/naming.md#contracts-types-contractsts-lib
+    rule: "A tagged union's discriminant is always `_tag` and its value equals the type name."
+  - id: NX-NAME-20
+    group: naming
+    table: naming-domain
+    severity: error
+    mechanism: ast-grep
+    tool: "nx-name-20-no-domain-suffixes"
+    doc: docs/nextjs/naming.md#domain-layer-domain
+    rule: "No `Model`, `Entity`, `Domain`, `VO` suffix. The folder says it is domain."
+  - id: NX-NAME-21
+    group: naming
+    table: naming-domain
+    severity: guidance
+    mechanism: agent
+    doc: docs/nextjs/naming.md#domain-layer-domain
+    rule: "Behaviour functions are business verbs: `applyPayment`, `cancel`. Not `updateStatus`, not `setPaid`."
+  - id: NX-NAME-22
+    group: naming
+    table: naming-domain
+    severity: error
+    mechanism: eslint
+    tool: "nextjs/tag-matches-type-name"
+    reportedAs: NX-ERR-02
+    doc: docs/nextjs/naming.md#domain-layer-domain
+    rule: "Errors are named for the fact that blocks the action (`OrderAlreadyPaid`), not the attempt. `_tag` equals the type name."
+  - id: NX-NAME-23
+    group: naming
+    table: naming-domain
+    severity: guidance
+    mechanism: agent
+    checklist: true
+    doc: docs/nextjs/naming.md#domain-layer-domain
+    rule: "Events are past tense; commands are never defined in `domain/`."
+  - id: NX-NAME-24
+    group: naming
+    table: naming-domain
+    severity: guidance
+    mechanism: agent
+    doc: docs/nextjs/naming.md#domain-layer-domain
+    rule: "No `value-objects/` subfolder until a module has more than five."
+  - id: NX-NAME-10
+    group: naming
+    table: naming-folders
+    severity: error
+    mechanism: check
+    tool: "module-name"
+    doc: docs/nextjs/naming.md#folders-modules
+    rule: "A module name is a business noun, never a technical one: not `api`, `utils`, `common`, `shared`."
+  - id: NX-NAME-11
+    group: naming
+    table: naming-folders
+    severity: error
+    mechanism: ls-lint
+    doc: docs/nextjs/naming.md#folders-modules
+    rule: "Dynamic route params are `camelCase` and end in `Id` when they are ids: `[orderId]`."
+  - id: NX-NAME-12
+    group: naming
+    table: naming-folders
+    severity: error
+    mechanism: eslint
+    tool: "boundaries/element-types"
+    reportedAs: NX-LAYER-05
+    doc: docs/nextjs/naming.md#folders-modules
+    rule: "`index.ts` exports contract schemas, domain types and values, use-case types, actions and browser-safe components; never a use-case function, whose `Deps` only `commands.ts` can wire. `server.ts` re-exports `queries.ts` and `commands.ts`. Neither re-exports `infra/`."
+  - id: NX-NAME-01
+    group: naming
+    table: naming-general
+    severity: error
+    mechanism: ls-lint
+    doc: docs/nextjs/naming.md#general-rules
+    rule: "Files and folders are `kebab-case`. Route folders follow Next conventions: `(group)`, `[param]`, `_private`."
+  - id: NX-NAME-02
+    group: naming
+    table: naming-general
+    severity: error
+    mechanism: eslint
+    tool: "@typescript-eslint/naming-convention"
+    doc: docs/nextjs/naming.md#general-rules
+    rule: "Types, interfaces and components are `PascalCase`; functions and variables `camelCase`; module-level constants may be `SCREAMING_SNAKE_CASE`. No `I` prefix on interfaces, no `Impl` suffix."
+  - id: NX-NAME-03
+    group: naming
+    table: naming-general
+    severity: error
+    mechanism: eslint
+    tool: "nextjs/use-case-export-name"
+    doc: docs/nextjs/naming.md#general-rules
+    rule: "In `application/<use-case>.ts` and in component files the file exports exactly one value whose name is the camelCase/PascalCase of the file name. Other files (`actions.ts`, `queries.ts`, `contracts.ts`, `ports.ts`, `errors.ts`, `events.ts`, entity files) export several things by design."
+  - id: NX-NAME-04
+    group: naming
+    table: naming-general
+    severity: guidance
+    mechanism: agent
+    doc: docs/nextjs/naming.md#general-rules
+    rule: "Singular for a thing, plural for a collection: `order.ts` holds `Order`; `orders` table; `OrderRepository`."
+  - id: NX-NAME-05
+    group: naming
+    table: naming-general
+    severity: guidance
+    mechanism: agent
+    doc: docs/nextjs/naming.md#general-rules
+    rule: "No abbreviations except universal ones (`id`, `url`, `db`, `dto`, `ui`, `env`)."
+  - id: NX-NAME-06
+    group: naming
+    table: naming-general
+    severity: guidance
+    mechanism: agent
+    doc: docs/nextjs/naming.md#general-rules
+    rule: "Booleans read as predicates: `isPaid`, `hasItems`, `canShip`."
+  - id: NX-NAME-07
+    group: naming
+    table: naming-general
+    severity: guidance
+    mechanism: agent
+    checklist: true
+    doc: docs/nextjs/naming.md#general-rules
+    rule: "Names say what, not how; prefer the ubiquitous language of the business over technical synonyms."
+  - id: NX-NAME-08
+    group: naming
+    table: naming-general
+    severity: guidance
+    mechanism: agent
+    checklist: true
+    doc: docs/nextjs/naming.md#general-rules
+    rule: "Generated code keeps the generator's names. Naming rules apply to hand-written code only."
+  - id: NX-NAME-40
+    group: naming
+    table: naming-infra
+    severity: guidance
+    mechanism: agent
+    checklist: true
+    doc: docs/nextjs/naming.md#infra-layer-infra-and-database
+    rule: "A repository file is named after the aggregate, not the table."
+  - id: NX-NAME-41
+    group: naming
+    table: naming-infra
+    severity: guidance
+    mechanism: agent
+    checklist: true
+    doc: docs/nextjs/naming.md#infra-layer-infra-and-database
+    rule: "Mappers are the only place that knows both `OrderRow` and `Order`."
+  - id: NX-NAME-42
+    group: naming
+    table: naming-infra
+    severity: guidance
+    mechanism: agent
+    doc: docs/nextjs/naming.md#infra-layer-infra-and-database
+    rule: "Adapter files start with the external system so they sort together."
+  - id: NX-NAME-43
+    group: naming
+    table: naming-infra
+    severity: guidance
+    mechanism: agent
+    doc: docs/nextjs/naming.md#infra-layer-infra-and-database
+    rule: "Postgres naming as above; a SQL linter in the binding may enforce it."
+  - id: NX-NAME-70
+    group: naming
+    table: naming-tests
+    severity: error
+    mechanism: ls-lint
+    doc: docs/nextjs/naming.md#tests
+    rule: "Test file suffixes as above; test files are exempt from layer rules."
+  - id: NX-NAME-71
+    group: naming
+    table: naming-tests
+    severity: guidance
+    mechanism: agent
+    doc: docs/nextjs/naming.md#tests
+    rule: "Test names describe behaviour: `it('rejects payment on an already paid order')`."
+  - id: NX-NAME-72
+    group: naming
+    table: naming-tests
+    severity: guidance
+    mechanism: agent
+    doc: docs/nextjs/naming.md#tests
+    rule: "`InMemory` for hand-written doubles with behaviour, `Stub` for canned answers, `Mock` only when assertions are made on calls."
+  - id: NX-NAME-50
+    group: naming
+    table: naming-ui
+    severity: error
+    mechanism: ast-grep
+    tool: "nx-name-50-action-suffix-required"
+    doc: docs/nextjs/naming.md#ui-layer-actionsts-queriests-components-app
+    rule: "Every export of `actions.ts` ends in `Action` (except `revalidate<Noun>`); nothing outside `actions.ts` ends in `Action`. Type exports are ignored; `index.ts` and `server.ts` re-export the module's own actions under their names."
+    note: "The reverse — an Action suffix outside actions.ts — is nx-name-50-action-suffix-misplaced."
+  - id: NX-NAME-51
+    group: naming
+    table: naming-ui
+    severity: guidance
+    mechanism: agent
+    doc: docs/nextjs/naming.md#ui-layer-actionsts-queriests-components-app
+    rule: "Component role from the vocabulary above before inventing one."
+  - id: NX-NAME-52
+    group: naming
+    table: naming-ui
+    severity: error
+    mechanism: ast-grep
+    tool: "nx-name-52-no-component-suffixes"
+    doc: docs/nextjs/naming.md#ui-layer-actionsts-queriests-components-app
+    rule: "No `Component`, `View`, `Widget` suffix. No `Container`/`Presenter` split."
+  - id: NX-NAME-53
+    group: naming
+    table: naming-ui
+    severity: guidance
+    mechanism: agent
+    doc: docs/nextjs/naming.md#ui-layer-actionsts-queriests-components-app
+    rule: "Handler props `on<Event>`; handlers inside a component `handle<Event>`. Boolean props adjectives without `is` (`disabled`, `open`); state keeps `is` (`isOpen`)."
+  - id: NX-NSA-01
+    group: next-safe-action
+    table: next-safe-action
+    severity: error
+    mechanism: ast-grep
+    tool: "nx-nsa-01-no-action-client-creation"
+    doc: docs/nextjs/bindings/next-safe-action.md#
+    rule: "`lib/safe-action.ts` exports `actionClient` (no identity) and `memberActionClient` (signs the caller in once, puts `requester` in `ctx`, or ends the call with `SignedOut`), both from `createActionClients()` in `@conventions/nextjs/next-safe-action`. Nothing else creates a client."
+  - id: NX-NSA-02
+    group: next-safe-action
+    table: next-safe-action
+    severity: error
+    mechanism: ast-grep
+    tool: "nx-nsa-02-actions-are-client-chains"
+    doc: docs/nextjs/bindings/next-safe-action.md#
+    rule: "Every export of `actions.ts` is `memberActionClient.inputSchema(xInputSchema).action(...)` or `actionClient...`, named `<useCase>Action` (NX-NAME-50)."
+  - id: NX-NSA-03
+    group: next-safe-action
+    table: next-safe-action
+    severity: error
+    mechanism: ast-grep
+    tool: "nx-nsa-01-no-action-client-creation"
+    reportedAs: NX-NSA-01
+    doc: docs/nextjs/bindings/next-safe-action.md#
+    rule: "`createActionClients()` maps a thrown error to `Unexpected` with a trace id and logs it; tagged errors returned via `Result` pass through as `serverError` carrying `_tag`."
+  - id: NX-NSA-04
+    group: next-safe-action
+    table: next-safe-action
+    severity: guidance
+    mechanism: agent
+    checklist: true
+    doc: docs/nextjs/bindings/next-safe-action.md#
+    rule: "The client reads results with `useAction` / `useOptimisticAction` and maps `serverError._tag` to copy with an exhaustive record (NX-ERR-04)."
+  - id: NX-NSA-05
+    group: next-safe-action
+    table: next-safe-action
+    severity: error
+    mechanism: eslint
+    tool: "boundaries/external"
+    doc: docs/nextjs/bindings/next-safe-action.md#
+    rule: "`next-safe-action` is imported only in `lib/safe-action.ts`, `modules/*/actions.ts` and client components (`/hooks`)."
+  - id: NX-RICH-01
+    group: rich
+    table: rich
+    severity: error
+    mechanism: check
+    tool: "rich-shape"
+    doc: docs/nextjs/architecture.md#when-to-go-rich-vs-anemic
+    rule: "Anemic module shape: `contracts.ts` + `queries.ts` + `actions.ts` + `index.ts` + `server.ts` + `infra/<noun>.repository.ts`. No `domain/`, no `application/`, no `commands.ts` until promotion."
+  - id: NX-RICH-02
+    group: rich
+    table: rich
+    severity: guidance
+    mechanism: agent
+    checklist: true
+    doc: docs/nextjs/architecture.md#when-to-go-rich-vs-anemic
+    rule: "Promotion: the moment an action contains an `if` about business state, or a second action needs the same calculation, extract a use case and a `domain/` file."
+  - id: NX-RICH-03
+    group: rich
+    table: rich
+    severity: error
+    mechanism: ast-grep
+    tool: "nx-rich-03-no-domain-classes"
+    doc: docs/nextjs/architecture.md#when-to-go-rich-vs-anemic
+    rule: "\"Rich\" means plain types and pure functions, not classes: `applyPayment(order, payment): Result<Order, OrderError>`."
+  - id: NX-RICH-04
+    group: rich
+    table: rich
+    severity: guidance
+    mechanism: agent
+    checklist: true
+    doc: docs/nextjs/architecture.md#when-to-go-rich-vs-anemic
+    rule: "Reads go `queries.ts → repository`. A read use case exists only when the read carries authorization or derivation logic (`can.*` flags)."
+  - id: NX-STR-01
+    group: structure
+    table: structure
+    severity: guidance
+    mechanism: agent
+    checklist: true
+    doc: docs/nextjs/architecture.md#structure
+    rule: "All paths are relative to the app root aliased `@/`. Whether the app root is `src/` is a project choice recorded in `ARCHITECTURE.md`."
+  - id: NX-STR-02
+    group: structure
+    table: structure
+    severity: error
+    mechanism: ls-lint
+    doc: docs/nextjs/architecture.md#structure
+    rule: "Each feature lives in `modules/<x>/`. Layer folders are `domain/`, `application/`, `infra/`; ui-layer files are `actions.ts`, `queries.ts`, `components/`; plus `commands.ts` (optional), `contracts.ts`, `index.ts`, `server.ts`. No other names; a test file sits next to the file it tests."
+    note: "A file or folder in a module that is not one of these is also reported by ESLint (boundaries/no-unknown-files)."
+  - id: NX-STR-03
+    group: structure
+    table: structure
+    severity: error
+    mechanism: eslint
+    tool: "boundaries/element-types"
+    doc: docs/nextjs/architecture.md#structure
+    rule: "`app/` contains routes only: pages, layouts, route handlers and route-local `_components/`."
+  - id: NX-STR-04
+    group: structure
+    table: structure
+    severity: warn
+    mechanism: check
+    tool: "route-local-components"
+    doc: docs/nextjs/architecture.md#structure
+    rule: "UI used by exactly one route lives in `app/.../_components/`; UI reused across routes or needing the module's types lives in `modules/<x>/components/`; design-system primitives live in `components/ui/` and are never feature-aware. Start in `_components/`; move when a second route needs it."
+  - id: NX-STR-05
+    group: structure
+    table: structure
+    severity: error
+    mechanism: eslint
+    tool: "boundaries/element-types"
+    doc: docs/nextjs/architecture.md#structure
+    rule: "`lib/` is cross-cutting and imports nothing from `modules/`."
+  - id: NX-STR-06
+    group: structure
+    table: structure
+    severity: error
+    mechanism: ast-grep
+    tool: "nx-str-06-testing-only-in-tests"
+    doc: docs/nextjs/architecture.md#structure
+    rule: "Test infrastructure lives in `tests/{browser,support,factories}/`. Test files (`*.test.ts`, `*.spec.ts`, `__fakes__/`) are exempt from layer rules; nothing else imports `@conventions/nextjs/testing`."
+  - id: NX-STR-07
+    group: structure
+    table: structure
+    severity: error
+    mechanism: check
+    tool: "module-complete"
+    doc: docs/nextjs/architecture.md#structure
+    rule: "Every module has `index.ts` and `server.ts`; `server.ts` may be empty. `conventions check` reports a module that lacks one."
+  - id: NX-SB-01
+    group: supabase
+    table: supabase
+    severity: guidance
+    mechanism: agent
+    checklist: true
+    doc: docs/nextjs/bindings/supabase.md#rules
+    rule: "Supabase migrations are the only schema source (`supabase migration new`, `supabase/migrations/`). The project is **migrations-first** (NX-DB-01, NX-DRZ-03)."
+  - id: NX-SB-02
+    group: supabase
+    table: supabase
+    severity: guidance
+    mechanism: agent
+    checklist: true
+    doc: docs/nextjs/bindings/supabase.md#rules
+    rule: "The app connects with the ORM as the database owner through the transaction pooler. Row policies therefore do **not** apply to app queries; tenant isolation is enforced in the repository (NX-AUTH-03). Row policies guard only the Data API (NX-AUTH-04)."
+  - id: NX-SB-03
+    group: supabase
+    table: supabase
+    severity: guidance
+    mechanism: agent
+    checklist: true
+    doc: docs/nextjs/bindings/supabase.md#rules
+    rule: "`Requester` is built from `supabase.auth.getUser()` in `lib/safe-action.ts` and `lib/auth/requester.ts`. `tenantId` is the user's id until shared workspaces exist, when it becomes the workspace id; `roles` is empty until roles exist."
+  - id: NX-SB-04
+    group: supabase
+    table: supabase
+    severity: error
+    mechanism: check
+    tool: "inventory"
+    doc: docs/nextjs/bindings/supabase.md#rules
+    rule: "`handle_new_user` on `auth.users` is a category D hook (NX-DB-02): it provisions the account row and its defaults however a user appears. It is the only trigger allowed to write business rows."
+  - id: NX-SB-05
+    group: supabase
+    table: supabase
+    severity: error
+    mechanism: check
+    tool: "inventory"
+    doc: docs/nextjs/bindings/supabase.md#rules
+    rule: "Queue claims (`claim_*`, `finalize_*`) are category A; `SECURITY DEFINER` helpers used by policies or `CHECK` constraints (`is_iana_timezone`) are category C; read-model functions for the Data API are category B. All have inventory rows."
+  - id: NX-SB-06
+    group: supabase
+    table: supabase
+    severity: error
+    mechanism: ci
+    tool: "pgtap"
+    doc: docs/nextjs/bindings/supabase.md#rules
+    rule: "Database tests (policies, constraints, category A–E functions) are written with pgTAP in `supabase/tests/` and run in CI against the local stack (NX-TEST-04)."
+  - id: NX-SB-07
+    group: supabase
+    table: supabase
+    severity: error
+    mechanism: ast-grep
+    tool: "nx-test-03-integration-tests-skip-loudly"
+    reportedAs: NX-TEST-03
+    doc: docs/nextjs/bindings/supabase.md#rules
+    rule: "Integration tests use `describeIntegration()` from `@conventions/nextjs/testing`, whose default probe is `supabase status`."
+  - id: NX-SB-08
+    group: supabase
+    table: supabase
+    severity: error
+    mechanism: eslint
+    tool: "boundaries/external"
+    doc: docs/nextjs/bindings/supabase.md#rules
+    rule: "The Supabase JS client is used for Auth and Storage only; data access goes through the ORM. A module that needs the Data API (realtime, edge) records it in `ARCHITECTURE.md`."
+  - id: NX-TEST-01
+    group: testing
+    table: testing
+    severity: error
+    mechanism: check
+    tool: "use-case-test"
+    doc: docs/nextjs/testing.md#
+    rule: "Every use case has a unit test next to it, run with in-memory fakes for its ports. No database, no Next."
+  - id: NX-TEST-02
+    group: testing
+    table: testing
+    severity: error
+    mechanism: check
+    tool: "repository-test"
+    doc: docs/nextjs/testing.md#
+    rule: "Every repository has an integration test (`*.integration.test.ts`) against a real database. For tenant-owned data it proves another tenant's rows can be neither read nor changed (NX-AUTH-03)."
+  - id: NX-TEST-03
+    group: testing
+    table: testing
+    severity: error
+    mechanism: ast-grep
+    tool: "nx-test-03-integration-tests-skip-loudly"
+    doc: docs/nextjs/testing.md#
+    rule: "Integration tests run in the normal test command and use `describeIntegration()` from `@conventions/nextjs/testing`, which skips with a message when no local database stack is running. They never silently pass."
+  - id: NX-TEST-04
+    group: testing
+    table: testing
+    severity: guidance
+    mechanism: agent
+    checklist: true
+    doc: docs/nextjs/testing.md#
+    rule: "Database code in categories A–E (NX-DB-02) has a database-level test; the binding names the tool."
+  - id: NX-TEST-05
+    group: testing
+    table: testing
+    severity: guidance
+    mechanism: agent
+    doc: docs/nextjs/testing.md#
+    rule: "Browser tests cover user goals, not components: one `tests/browser/<flow>.spec.ts` per critical flow."
+  - id: NX-TEST-06
+    group: testing
+    table: testing
+    severity: guidance
+    mechanism: agent
+    checklist: true
+    doc: docs/nextjs/testing.md#
+    rule: "Domain functions are tested by example tables, not by mocking: `applyPayment` with a paid order returns `OrderAlreadyPaid`."
+  - id: NX-TEST-07
+    group: testing
+    table: testing
+    severity: error
+    mechanism: ast-grep
+    tool: "nx-str-06-testing-only-in-tests"
+    reportedAs: NX-STR-06
+    doc: docs/nextjs/testing.md#
+    rule: "Test files and `__fakes__/` are exempt from layer import rules but not from naming rules."
+  - id: NX-TEST-08
+    group: testing
+    table: testing
+    severity: guidance
+    mechanism: agent
+    doc: docs/nextjs/testing.md#
+    rule: "Test data comes from factories (`tests/factories/<noun>.ts`, `anOrder({ status: 'paid' })`), not from inline literals repeated across tests."
+  - id: NX-TYPE-01
+    group: types
+    table: types
+    severity: guidance
+    mechanism: agent
+    checklist: true
+    doc: docs/nextjs/architecture.md#type-safety-chain
+    rule: "One source of truth per shape (table above). If you write the same type twice by hand, one of them is already wrong."
+  - id: NX-TYPE-02
+    group: types
+    table: types
+    severity: error
+    mechanism: eslint
+    tool: "@typescript-eslint/consistent-type-assertions"
+    doc: docs/nextjs/architecture.md#type-safety-chain
+    rule: "No `as` cast across a layer boundary. If the types don't line up, add a mapper in `infra/` or fix the schema. `as` is allowed only in `*.mapper.ts`, `lib/db/`, brand constructors (`domain/*-id.ts`) and `as const`."
+  - id: NX-TYPE-03
+    group: types
+    table: types
+    severity: guidance
+    mechanism: agent
+    checklist: true
+    doc: docs/nextjs/architecture.md#type-safety-chain
+    rule: "Validate at the edge once: action input, webhook payload, env, external API responses, database function results. Inside the module, trust the types."
+  - id: NX-TYPE-04
+    group: types
+    table: types
+    severity: guidance
+    mechanism: agent
+    checklist: true
+    doc: docs/nextjs/architecture.md#type-safety-chain
+    rule: "Forms use the same contract schema as the action. Client and server disagree on nothing."
+  - id: NX-TYPE-05
+    group: types
+    table: types
+    severity: guidance
+    mechanism: agent
+    doc: docs/nextjs/architecture.md#type-safety-chain
+    rule: "Ids and money are branded primitives (`type OrderId = string & { __brand: 'OrderId' }`)."
+  - id: NX-TYPE-06
+    group: types
+    table: types
+    severity: error
+    mechanism: ast-grep
+    tool: "nx-type-06-lazy-db-client"
+    doc: docs/nextjs/architecture.md#type-safety-chain
+    rule: "Importing a module never requires infrastructure configuration. `lib/env.ts` validates at build everything modules read; connection secrets are validated on first use in `lib/db/client.ts`."
+  - id: NX-ZOD-01
+    group: zod
+    table: zod
+    severity: error
+    mechanism: eslint
+    tool: "boundaries/external"
+    doc: docs/nextjs/bindings/zod.md#
+    rule: "`zod` is imported in `contracts.ts`, `lib/env.ts`, `infra/` (external payloads, function results), `app/api/**` (webhooks) and `components/` (forms via resolver). Never in `domain/`; in `application/` only as `import type`."
+  - id: NX-ZOD-02
+    group: zod
+    table: zod
+    severity: error
+    mechanism: ast-grep
+    tool: "nx-name-60-schema-suffix"
+    reportedAs: NX-NAME-60
+    doc: docs/nextjs/bindings/zod.md#
+    rule: "Every `z.*` schema declaration is `camelCase` + `Schema`; its type is `z.infer<typeof xSchema>` named `X` (NX-NAME-60)."
+  - id: NX-ZOD-03
+    group: zod
+    table: zod
+    severity: guidance
+    mechanism: agent
+    checklist: true
+    doc: docs/nextjs/bindings/zod.md#
+    rule: "Branded ids: `orderIdSchema = z.string().transform(OrderId)` in `contracts.ts`; the `OrderId` constructor lives in `domain/order-id.ts`."
+  - id: NX-ZOD-04
+    group: zod
+    table: zod
+    severity: guidance
+    mechanism: agent
+    checklist: true
+    doc: docs/nextjs/bindings/zod.md#
+    rule: "Forms use the action's input schema through `@hookform/resolvers/zod` (NX-TYPE-04). A separate `<noun>FormSchema` exists only when the form shape differs from the action input."
+  - id: NX-ZOD-05
+    group: zod
+    table: zod
+    severity: error
+    mechanism: ast-grep
+    tool: "nx-zod-05-env-outside-env-readers"
+    doc: docs/nextjs/bindings/zod.md#
+    rule: "`lib/env.ts` uses `@t3-oss/env-nextjs` or plain `z.object(...).parse(process.env)`; either way it is the only reader of `process.env` besides `lib/db/client.ts`. Tooling outside the app (`*.config.*`, `scripts/`) reads its own."

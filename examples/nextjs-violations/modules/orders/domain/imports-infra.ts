@@ -1,3 +1,3 @@
-// expect: boundaries/element-types
+// expect: NX-LAYER-01
 import { orderRepository } from '../infra/order.repository';
-export const x = orderRepository;
+export const r = orderRepository;

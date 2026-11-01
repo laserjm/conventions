@@ -1,0 +1,14 @@
+id: nx-name-50-action-suffix-misplaced
+language: typescript
+severity: error
+message: "NX-NAME-50: '$NAME' ends in 'Action' but is declared outside actions.ts; only server actions carry the suffix."
+ignores: ["**/modules/*/actions.ts"]
+rule:
+  any:
+    - pattern: export const $NAME = $INIT
+    - pattern: export async function $NAME($$$PARAMS) { $$$BODY }
+    - pattern: export function $NAME($$$PARAMS) { $$$BODY }
+    - pattern: const $NAME = $INIT
+    - pattern: function $NAME($$$PARAMS) { $$$BODY }
+constraints:
+  NAME: { regex: 'Action$' }

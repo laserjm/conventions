@@ -1,0 +1,14 @@
+id: nx-name-52-no-component-suffixes
+snapshots:
+  export const OrderListContainer = () => <div />;:
+    labels:
+    - source: export const OrderListContainer = () => <div />;
+      style: primary
+      start: 0
+      end: 48
+  "export function OrderCardComponent() { return <div />; }":
+    labels:
+    - source: export function OrderCardComponent() { return <div />; }
+      style: primary
+      start: 0
+      end: 56

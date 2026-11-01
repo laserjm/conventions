@@ -1,0 +1,17 @@
+name: conventions
+on: [push, pull_request]
+jobs:
+  conventions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm ci
+      - name: lint (eslint + ast-grep + ls-lint, rule ids in every message)
+        run: npx conventions lint
+      - name: structural checks (modules, tests, header, deviations, inventory)
+        run: npx conventions check
+      - run: npx tsc --noEmit
+      # migrations-first projects (NX-DB-01, NX-DRZ-03): the generated schema must not drift
+      # - run: npx drizzle-kit pull && git diff --exit-code lib/db/schema.ts lib/db/relations.ts

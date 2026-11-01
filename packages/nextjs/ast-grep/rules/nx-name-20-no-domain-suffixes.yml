@@ -1,0 +1,11 @@
+id: nx-name-20-no-domain-suffixes
+language: typescript
+severity: error
+message: "NX-NAME-20: no Model, Entity, Domain or VO suffix on '$NAME'; the folder says it is domain."
+files: ["**/modules/*/domain/**/*.ts"]
+rule:
+  any:
+    - pattern: type $NAME = $$$BODY
+    - pattern: interface $NAME { $$$BODY }
+constraints:
+  NAME: { regex: '(Model|Entity|Domain|VO)$' }

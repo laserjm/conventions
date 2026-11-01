@@ -1,0 +1,5 @@
+id: nx-auth-07-roles-in-components
+valid:
+  - "const x = <button disabled={!can.edit} />;"
+invalid:
+  - "const x = <button disabled={!requester.roles.includes('admin')} />;"

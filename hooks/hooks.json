@@ -1,0 +1,16 @@
+{
+  "description": "Lint every file the agent writes and run the structural checks before it stops, so findings come back with rule ids while the change is still open.",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [{ "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/lint-file.mjs\"", "timeout": 60 }]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [{ "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/check-changed.mjs\"", "timeout": 120 }]
+      }
+    ]
+  }
+}

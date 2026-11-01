@@ -1,5 +1,2 @@
-// expect: @typescript-eslint/naming-convention
-import type { Order } from '../domain/order';
-export interface IOrderRepository {
-  findById(tenantId: string, id: string): Promise<Order | null>;
-}
+// expect: NX-NAME-02
+export interface IOrderRepository { findById(id: string): Promise<unknown> }

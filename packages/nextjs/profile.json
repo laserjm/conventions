@@ -1,0 +1,84 @@
+{
+  "profile": "nextjs",
+  "package": "@conventions/nextjs",
+  "language": "typescript",
+  "sourceGlobs": [
+    "app/**",
+    "modules/**",
+    "lib/**",
+    "components/**",
+    "*.ts"
+  ],
+  "modules": "modules/*",
+  "module": {
+    "required": [
+      "index.ts",
+      "server.ts"
+    ],
+    "layers": [
+      "domain",
+      "application",
+      "infra"
+    ],
+    "rootFiles": [
+      "actions.ts",
+      "queries.ts",
+      "commands.ts",
+      "contracts.ts",
+      "index.ts",
+      "server.ts"
+    ],
+    "useCases": "application/*.ts",
+    "useCaseExclude": [
+      "ports.ts",
+      "errors.ts",
+      "events.ts",
+      "index.ts"
+    ],
+    "unitTestSuffix": ".test.ts",
+    "repositories": "infra/*.repository.ts",
+    "integrationTestSuffix": ".integration.test.ts",
+    "tenantParam": "tenantId",
+    "tenantIsolationHelper": "assertTenantIsolation",
+    "bannedNames": [
+      "api",
+      "utils",
+      "util",
+      "common",
+      "shared",
+      "helpers",
+      "core",
+      "misc",
+      "lib",
+      "services",
+      "types"
+    ],
+    "tenantIsolationMethods": [
+      "findById",
+      "save"
+    ]
+  },
+  "routeLocalComponents": "app/**/_components/*",
+  "migrations": "supabase/migrations/*.sql",
+  "inventory": "docs/architecture/db-inventory.md",
+  "lint": {
+    "eslint": true,
+    "astGrep": "ast-grep/sgconfig.yml",
+    "lsLint": "ls-lint.yml"
+  },
+  "legacyExempt": [
+    "naming",
+    "types",
+    "cache",
+    "errors",
+    "zod",
+    "drizzle",
+    "next-safe-action"
+  ],
+  "starters": [
+    "lib/safe-action.ts",
+    "lib/env.ts",
+    "lib/db/client.ts",
+    "lib/auth/requester.ts"
+  ]
+}

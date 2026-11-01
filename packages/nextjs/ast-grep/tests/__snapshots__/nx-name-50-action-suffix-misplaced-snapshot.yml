@@ -1,0 +1,14 @@
+id: nx-name-50-action-suffix-misplaced
+snapshots:
+  export const payOrderAction = 1;:
+    labels:
+    - source: export const payOrderAction = 1;
+      style: primary
+      start: 0
+      end: 32
+  "function doAction() {}":
+    labels:
+    - source: function doAction() {}
+      style: primary
+      start: 0
+      end: 22

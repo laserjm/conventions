@@ -1,0 +1,9 @@
+id: nx-drz-02-no-hand-written-row-types
+language: typescript
+severity: error
+message: "NX-DRZ-02: '$NAME' is inferred from the table: `type <Noun>Row = InferSelectModel<typeof <table>>`, never hand-written."
+files: ["**/modules/*/infra/**/*.ts"]
+rule:
+  pattern: type $NAME = { $$$FIELDS }
+constraints:
+  NAME: { regex: 'Row$' }

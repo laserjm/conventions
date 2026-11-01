@@ -1,0 +1,10 @@
+id: nx-nsa-02-actions-are-client-chains
+language: typescript
+severity: error
+message: "NX-NSA-02: every action is `memberActionClient.inputSchema(xInputSchema).action(…)` or `actionClient…`; '$NAME' is not."
+files: ["**/modules/*/actions.ts"]
+rule:
+  pattern: export const $NAME = $INIT
+constraints:
+  NAME: { regex: 'Action$' }
+  INIT: { not: { regex: '^(memberActionClient|actionClient)\b' } }

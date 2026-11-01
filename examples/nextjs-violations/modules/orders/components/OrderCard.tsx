@@ -1,4 +1,2 @@
-// expect: check-file/filename-naming-convention
-export function OrderCard() {
-  return null;
-}
+// expect: NX-NAME-01
+export function OrderCard() { return <div />; }

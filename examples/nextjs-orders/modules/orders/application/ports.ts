@@ -1,11 +1,12 @@
-// Ports carry the business name (NX-NAME-30/31/34). Tenant-owned methods take the tenant id first.
+// Ports carry the business name (NX-NAME-30/31/34). Tenant-owned methods take the TenantId first.
+import type { TenantId } from '@conventions/nextjs/core';
 import type { Order } from '../domain/order';
 import type { OrderEvent } from '../domain/events';
 import type { OrderId } from '../domain/order-id';
 
 export type OrderRepository = {
-  findById(tenantId: string, id: OrderId): Promise<Order | null>;
-  save(tenantId: string, order: Order): Promise<void>;
+  findById(tenantId: TenantId, id: OrderId): Promise<Order | null>;
+  save(tenantId: TenantId, order: Order): Promise<void>;
 };
 
 export type Clock = { now(): Date };

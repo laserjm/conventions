@@ -1,0 +1,14 @@
+id: nx-name-61-dto-suffix-only
+snapshots:
+  "export interface OrderPayload { id: string }":
+    labels:
+    - source: "interface OrderPayload { id: string }"
+      style: primary
+      start: 7
+      end: 44
+  "export type OrderResponse = { id: string };":
+    labels:
+    - source: "type OrderResponse = { id: string };"
+      style: primary
+      start: 7
+      end: 43

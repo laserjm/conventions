@@ -1,0 +1,22 @@
+# docs/nextjs/naming.md — table "naming-ui". Edit here; docs tables and rules/nextjs.yaml are generated.
+group: naming
+rules:
+  - id: NX-NAME-50
+    severity: error
+    rule: Every export of `actions.ts` ends in `Action` (except `revalidate<Noun>`); nothing outside `actions.ts` ends in `Action`. Type exports are ignored; `index.ts` and `server.ts` re-export the module's own actions under their names.
+    mechanism: ast-grep
+    tool: nx-name-50-action-suffix-required
+    note: The reverse — an Action suffix outside actions.ts — is nx-name-50-action-suffix-misplaced.
+  - id: NX-NAME-51
+    severity: guidance
+    rule: Component role from the vocabulary above before inventing one.
+    mechanism: agent
+  - id: NX-NAME-52
+    severity: error
+    rule: No `Component`, `View`, `Widget` suffix. No `Container`/`Presenter` split.
+    mechanism: ast-grep
+    tool: nx-name-52-no-component-suffixes
+  - id: NX-NAME-53
+    severity: guidance
+    rule: Handler props `on<Event>`; handlers inside a component `handle<Event>`. Boolean props adjectives without `is` (`disabled`, `open`); state keeps `is` (`isOpen`).
+    mechanism: agent

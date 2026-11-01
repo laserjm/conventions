@@ -1,0 +1,23 @@
+# docs/nextjs/architecture.md — table "migration". Edit here; docs tables and rules/nextjs.yaml are generated.
+group: migration
+rules:
+  - id: NX-MIG-01
+    severity: guidance
+    rule: No new database code may be added during the transition unless it passes NX-DB-02/03, even in untouched modules.
+    mechanism: agent
+    checklist: true
+  - id: NX-MIG-02
+    severity: guidance
+    rule: No new code imports a legacy helper that a module already replaced.
+    mechanism: agent
+    checklist: true
+  - id: NX-MIG-03
+    severity: error
+    rule: A half-migrated module carries a `MIGRATING.md` ([template](../templates/MIGRATING.md)) listing what still bypasses it.
+    mechanism: check
+    tool: migrating-file
+  - id: NX-MIG-04
+    severity: error
+    rule: "Every deviation from these rules is an entry in the project's `ARCHITECTURE.md` ([template](../templates/ARCHITECTURE.md)): decision, where enforced, where recorded. Add the entry before you deviate."
+    mechanism: check
+    tool: deviations

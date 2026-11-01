@@ -1,0 +1,24 @@
+id: nx-cache-02-no-inline-cache-tags
+snapshots:
+  cache.revalidateTag('orders');:
+    labels:
+    - source: cache.revalidateTag('orders')
+      style: primary
+      start: 0
+      end: 29
+    - source: revalidateTag
+      style: secondary
+      start: 6
+      end: 19
+  "cacheTag(`order:${id}`);":
+    labels:
+    - source: cacheTag(`order:${id}`)
+      style: primary
+      start: 0
+      end: 23
+  revalidateTag('orders');:
+    labels:
+    - source: revalidateTag('orders')
+      style: primary
+      start: 0
+      end: 23

@@ -1,0 +1,15 @@
+# docs/nextjs/naming.md — table "naming-tests". Edit here; docs tables and rules/nextjs.yaml are generated.
+group: naming
+rules:
+  - id: NX-NAME-70
+    severity: error
+    rule: Test file suffixes as above; test files are exempt from layer rules.
+    mechanism: ls-lint
+  - id: NX-NAME-71
+    severity: guidance
+    rule: "Test names describe behaviour: `it('rejects payment on an already paid order')`."
+    mechanism: agent
+  - id: NX-NAME-72
+    severity: guidance
+    rule: "`InMemory` for hand-written doubles with behaviour, `Stub` for canned answers, `Mock` only when assertions are made on calls."
+    mechanism: agent

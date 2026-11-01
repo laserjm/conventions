@@ -1,0 +1,10 @@
+id: nx-name-60-schema-suffix
+valid:
+  - "export const payOrderInputSchema = z.object({});"
+  - "const emailSchema = z.string().email();"
+  - "function f() { const local = z.string(); return local; }"
+  - "const notZod = y.object({});"
+  - "export const env = z.object({ A: z.string() }).parse(process.env);"
+invalid:
+  - "export const payOrderInput = z.object({});"
+  - "const PayOrderSchema = z.object({}).strict();"

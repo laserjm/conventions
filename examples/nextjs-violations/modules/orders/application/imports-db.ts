@@ -1,5 +1,3 @@
-// expect: boundaries/element-types
+// expect: NX-LAYER-03, NX-LAYER-07
 import { db } from '@/lib/db/client';
-export async function importsDb() {
-  return db;
-}
+export const importsDb = db;

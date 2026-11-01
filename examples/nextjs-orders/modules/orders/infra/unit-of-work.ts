@@ -1,4 +1,4 @@
-import { withTransaction } from '@/lib/db/transaction';
+import { withTransaction } from '@/lib/db/client';
 import type { UnitOfWork } from '../application/ports';
 
 export const unitOfWork: UnitOfWork = {

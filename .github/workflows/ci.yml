@@ -9,11 +9,17 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: pnpm }
       - run: pnpm install --frozen-lockfile
-      - name: custom rule unit tests
-        run: pnpm --filter @conventions/eslint-plugin-nextjs test
-      - name: reference module passes the config
-        run: pnpm --filter @conventions/example-nextjs-orders lint
-      - name: every violation fixture fails for the expected rule
-        run: pnpm --filter @conventions/example-nextjs-violations check
-      - name: catalogue is in sync with the docs
-        run: python3 scripts/build-catalog.py && git diff --exit-code rules/
+      - name: build the runtime package
+        run: pnpm build
+      - name: catalogue is valid and docs tables are in sync
+        run: node scripts/build-catalog.mjs && git diff --exit-code rules/ docs/ packages/*/rules/
+      - name: ESLint rule unit tests and ast-grep rule tests
+        run: pnpm --filter @conventions/nextjs test
+      - name: CLI tests
+        run: pnpm --filter @conventions/cli test
+      - name: reference module passes lint, check, tsc and its unit tests
+        run: pnpm --filter @conventions/example-nextjs-orders test
+      - name: every violation fixture fails for its rule ids; every lint-enforced rule has a fixture
+        run: pnpm --filter @conventions/example-nextjs-violations test
+      - name: packages pack
+        run: pnpm --filter @conventions/nextjs pack --pack-destination /tmp && pnpm --filter @conventions/cli pack --pack-destination /tmp

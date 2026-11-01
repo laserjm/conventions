@@ -1,0 +1,6 @@
+id: nx-nsa-02-actions-are-client-chains
+valid:
+  - "export const payOrderAction = memberActionClient.inputSchema(s).action(f);"
+  - "export const signInAction = actionClient.inputSchema(s).action(f);"
+invalid:
+  - "export const payOrderAction = async (input) => payOrder(input);"

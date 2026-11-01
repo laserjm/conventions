@@ -1,0 +1,12 @@
+id: nx-name-52-no-component-suffixes
+language: tsx
+severity: error
+message: "NX-NAME-52: no Component, View or Widget suffix and no Container/Presenter split; name the component <Noun><Role> ('$NAME')."
+files: ["**/*.tsx"]
+rule:
+  any:
+    - pattern: export function $NAME($$$PARAMS) { $$$BODY }
+    - pattern: export const $NAME = $INIT
+    - pattern: export default function $NAME($$$PARAMS) { $$$BODY }
+constraints:
+  NAME: { regex: '(Component|View|Widget|Container|Presenter)$' }

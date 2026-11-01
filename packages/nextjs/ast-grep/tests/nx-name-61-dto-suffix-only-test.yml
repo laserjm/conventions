@@ -1,0 +1,7 @@
+id: nx-name-61-dto-suffix-only
+valid:
+  - "export type OrderSummaryDto = { id: string };"
+  - "export type PayOrderInput = { id: string };"
+invalid:
+  - "export type OrderResponse = { id: string };"
+  - "export interface OrderPayload { id: string }"

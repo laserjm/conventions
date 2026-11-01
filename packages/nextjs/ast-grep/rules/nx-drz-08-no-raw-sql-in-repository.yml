@@ -1,0 +1,7 @@
+id: nx-drz-08-no-raw-sql-in-repository
+language: typescript
+severity: warning
+message: "NX-DRZ-08: a repository runs no raw SQL except to call a category A/B function, wrapped by exactly one method and parsed with a contract schema."
+files: ["**/modules/*/infra/*.repository.ts"]
+rule:
+  pattern: sql`$$$QUERY`

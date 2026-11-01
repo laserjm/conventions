@@ -1,0 +1,37 @@
+# docs/nextjs/architecture.md — table "auth". Edit here; docs tables and rules/nextjs.yaml are generated.
+group: auth
+rules:
+  - id: NX-AUTH-01
+    severity: error
+    rule: "`Requester` is produced in `lib/safe-action.ts` (actions) and in `queries.ts` (reads). Nothing else reads the session: `commands.ts` receives the requester from its caller."
+    mechanism: ast-grep
+    tool: nx-auth-01-session-read-outside-edge
+  - id: NX-AUTH-02
+    severity: guidance
+    rule: "Authorization decisions live in the use case, which receives `requester` in `Deps` and returns `err({ _tag: 'Forbidden' })`. An action that skips the application layer checks `requester` itself; that is the only business `if` allowed in an action."
+    mechanism: agent
+    checklist: true
+  - id: NX-AUTH-03
+    severity: error
+    rule: "Tenant isolation is enforced in the repository: every method on tenant-owned data takes the tenant id as its first argument and names it in the query. The repository's integration test proves another tenant's rows can be neither read nor changed."
+    mechanism: check
+    tool: tenant-isolation-test
+  - id: NX-AUTH-04
+    severity: guidance
+    rule: Database row policies, where the platform offers them, are a second net for tenant isolation. A permission rule is never written there.
+    mechanism: agent
+  - id: NX-AUTH-05
+    severity: error
+    rule: "Shared data (registries, templates, lookups) is read without a requester; its repository methods take no tenant id. Tenant-owned methods take a `TenantId` first, so the port makes the distinction visible and the compiler refuses a plain string."
+    mechanism: tsc
+    tool: TenantId
+  - id: NX-AUTH-06
+    severity: error
+    rule: System callers (scheduled runs, workers, delivery jobs) use the same repositories as users and name their tenant explicitly through `systemRequester(tenantId, name)`. There is no bypass path.
+    mechanism: tsc
+    tool: systemRequester
+  - id: NX-AUTH-07
+    severity: warn
+    rule: Components never decide permissions; they receive booleans like `can.editOrder` computed server-side in `queries.ts`.
+    mechanism: ast-grep
+    tool: nx-auth-07-roles-in-components

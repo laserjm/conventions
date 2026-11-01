@@ -1,0 +1,5 @@
+id: nx-layer-08-no-throw-in-pure-layers
+valid:
+  - "export function f() { return err({ _tag: 'OrderAlreadyPaid' }); }"
+invalid:
+  - "export function f() { throw new Error('nope'); }"

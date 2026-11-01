@@ -4,18 +4,21 @@
   "version": "0.1.2",
   "type": "module",
   "scripts": {
-    "lint": "eslint .",
+    "lint": "conventions lint",
+    "check": "conventions check",
     "typecheck": "tsc --noEmit",
-    "test": "pnpm lint"
+    "test:unit": "vitest run",
+    "test": "pnpm lint && pnpm check && pnpm typecheck && pnpm test:unit"
   },
   "devDependencies": {
-    "@conventions/eslint-plugin-nextjs": "workspace:*",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@playwright/test": "^1.50.0",
     "vitest": "^3.0.0",
     "eslint": "^9.0.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "@conventions/nextjs": "workspace:*",
+    "@conventions/cli": "workspace:*"
   },
   "dependencies": {
     "drizzle-orm": "^0.44.0",

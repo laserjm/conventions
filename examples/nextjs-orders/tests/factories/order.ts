@@ -1,8 +1,8 @@
-import type { Requester } from '@/lib/errors';
+import { TenantId, type Requester } from '@conventions/nextjs/core';
 import { OrderId, money, type Order } from '@/modules/orders/index';
 
 export function anOrder(overrides: Partial<Order> = {}): Order {
-  return { id: OrderId('ord_1'), tenantId: 'usr_1', status: 'draft', total: money(1000), paidAt: null, ...overrides };
+  return { id: OrderId('ord_1'), tenantId: TenantId('usr_1'), status: 'draft', total: money(1000), paidAt: null, ...overrides };
 }
 
 export function aPaidOrder(overrides: Partial<Order> = {}): Order {
@@ -10,5 +10,5 @@ export function aPaidOrder(overrides: Partial<Order> = {}): Order {
 }
 
 export function aRequester(overrides: Partial<Requester> = {}): Requester {
-  return { userId: 'usr_1', tenantId: 'usr_1', roles: [], ...overrides };
+  return { kind: 'user', userId: 'usr_1', tenantId: TenantId('usr_1'), roles: [], ...overrides };
 }

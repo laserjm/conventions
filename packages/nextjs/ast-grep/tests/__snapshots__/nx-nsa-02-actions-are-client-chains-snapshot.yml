@@ -1,0 +1,8 @@
+id: nx-nsa-02-actions-are-client-chains
+snapshots:
+  export const payOrderAction = async (input) => payOrder(input);:
+    labels:
+    - source: export const payOrderAction = async (input) => payOrder(input);
+      style: primary
+      start: 0
+      end: 63

@@ -1,0 +1,14 @@
+id: nx-name-50-action-suffix-required
+snapshots:
+  "export async function pay() {}":
+    labels:
+    - source: export async function pay() {}
+      style: primary
+      start: 0
+      end: 30
+  export const payOrder = memberActionClient.action(f);:
+    labels:
+    - source: export const payOrder = memberActionClient.action(f);
+      style: primary
+      start: 0
+      end: 53

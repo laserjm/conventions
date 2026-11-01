@@ -1,0 +1,6 @@
+id: nx-err-03-standard-errors-from-core
+valid:
+  - "export type OrderAlreadyPaid = { readonly _tag: 'OrderAlreadyPaid' };"
+invalid:
+  - "export type NotFound = { _tag: 'NotFound'; entity: string };"
+  - "interface Forbidden { _tag: 'Forbidden' }"

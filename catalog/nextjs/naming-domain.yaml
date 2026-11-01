@@ -1,0 +1,27 @@
+# docs/nextjs/naming.md — table "naming-domain". Edit here; docs tables and rules/nextjs.yaml are generated.
+group: naming
+rules:
+  - id: NX-NAME-20
+    severity: error
+    rule: No `Model`, `Entity`, `Domain`, `VO` suffix. The folder says it is domain.
+    mechanism: ast-grep
+    tool: nx-name-20-no-domain-suffixes
+  - id: NX-NAME-21
+    severity: guidance
+    rule: "Behaviour functions are business verbs: `applyPayment`, `cancel`. Not `updateStatus`, not `setPaid`."
+    mechanism: agent
+  - id: NX-NAME-22
+    severity: error
+    rule: Errors are named for the fact that blocks the action (`OrderAlreadyPaid`), not the attempt. `_tag` equals the type name.
+    mechanism: eslint
+    tool: nextjs/tag-matches-type-name
+    reportedAs: NX-ERR-02
+  - id: NX-NAME-23
+    severity: guidance
+    rule: Events are past tense; commands are never defined in `domain/`.
+    mechanism: agent
+    checklist: true
+  - id: NX-NAME-24
+    severity: guidance
+    rule: No `value-objects/` subfolder until a module has more than five.
+    mechanism: agent

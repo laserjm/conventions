@@ -1,0 +1,22 @@
+id: nx-str-06-testing-only-in-tests
+snapshots:
+  "import { describe } from 'vitest';":
+    labels:
+    - source: import { describe } from 'vitest';
+      style: primary
+      start: 0
+      end: 34
+    - source: "'vitest'"
+      style: secondary
+      start: 25
+      end: 33
+  "import { localStack } from '@conventions/nextjs/testing';":
+    labels:
+    - source: import { localStack } from '@conventions/nextjs/testing';
+      style: primary
+      start: 0
+      end: 57
+    - source: "'@conventions/nextjs/testing'"
+      style: secondary
+      start: 27
+      end: 56

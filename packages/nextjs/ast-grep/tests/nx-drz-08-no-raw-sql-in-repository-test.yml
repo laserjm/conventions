@@ -1,0 +1,5 @@
+id: nx-drz-08-no-raw-sql-in-repository
+valid:
+  - "const rows = await db().select().from(orders);"
+invalid:
+  - "const rows = await db().execute(sql`select * from orders`);"

@@ -1,0 +1,27 @@
+id: nx-name-60-schema-suffix
+language: typescript
+severity: error
+message: "NX-NAME-60: '$NAME' is a contract schema; name it camelCase + 'Schema' (NX-ZOD-02)."
+rule:
+  kind: variable_declarator
+  all:
+    - has: { field: name, pattern: $NAME }
+    - inside:
+        kind: lexical_declaration
+        inside:
+          any:
+            - kind: program
+            - { kind: export_statement, inside: { kind: program } }
+    - has:
+        stopBy: end
+        kind: member_expression
+        has: { field: object, pattern: z }
+    - not:
+        has:
+          field: value
+          any:
+            - pattern: $X.parse($$$A)
+            - pattern: $X.safeParse($$$A)
+            - pattern: $X.parseAsync($$$A)
+constraints:
+  NAME: { not: { regex: '^[a-z].*Schema$' } }

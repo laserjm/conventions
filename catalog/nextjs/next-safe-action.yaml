@@ -1,0 +1,29 @@
+# docs/nextjs/bindings/next-safe-action.md — table "next-safe-action". Edit here; docs tables and rules/nextjs.yaml are generated.
+group: next-safe-action
+rules:
+  - id: NX-NSA-01
+    severity: error
+    rule: "`lib/safe-action.ts` exports `actionClient` (no identity) and `memberActionClient` (signs the caller in once, puts `requester` in `ctx`, or ends the call with `SignedOut`), both from `createActionClients()` in `@conventions/nextjs/next-safe-action`. Nothing else creates a client."
+    mechanism: ast-grep
+    tool: nx-nsa-01-no-action-client-creation
+  - id: NX-NSA-02
+    severity: error
+    rule: Every export of `actions.ts` is `memberActionClient.inputSchema(xInputSchema).action(...)` or `actionClient...`, named `<useCase>Action` (NX-NAME-50).
+    mechanism: ast-grep
+    tool: nx-nsa-02-actions-are-client-chains
+  - id: NX-NSA-03
+    severity: error
+    rule: "`createActionClients()` maps a thrown error to `Unexpected` with a trace id and logs it; tagged errors returned via `Result` pass through as `serverError` carrying `_tag`."
+    mechanism: ast-grep
+    tool: nx-nsa-01-no-action-client-creation
+    reportedAs: NX-NSA-01
+  - id: NX-NSA-04
+    severity: guidance
+    rule: The client reads results with `useAction` / `useOptimisticAction` and maps `serverError._tag` to copy with an exhaustive record (NX-ERR-04).
+    mechanism: agent
+    checklist: true
+  - id: NX-NSA-05
+    severity: error
+    rule: "`next-safe-action` is imported only in `lib/safe-action.ts`, `modules/*/actions.ts` and client components (`/hooks`)."
+    mechanism: eslint
+    tool: boundaries/external
