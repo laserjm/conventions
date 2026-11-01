@@ -1,0 +1,23 @@
+{
+  "name": "@conventions/example-nextjs-violations",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "check": "node check.mjs",
+    "test": "node check.mjs"
+  },
+  "devDependencies": {
+    "@conventions/eslint-plugin-nextjs": "workspace:*",
+    "@types/react": "^19.0.0",
+    "eslint": "^9.0.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.44.0",
+    "next": "^15.0.0",
+    "react": "^19.0.0",
+    "server-only": "^0.0.1",
+    "zod": "^4.0.0"
+  }
+}

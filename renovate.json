@@ -1,0 +1,12 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "packageRules": [
+    {
+      "description": "Conventions bumps are reviewed, never auto-merged: a major means new error rules.",
+      "matchPackageNames": ["@conventions/eslint-plugin-nextjs"],
+      "automerge": false,
+      "labels": ["conventions"]
+    }
+  ]
+}

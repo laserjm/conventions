@@ -1,0 +1,12 @@
+{
+  "name": "conventions",
+  "owner": { "name": "Michael" },
+  "plugins": [
+    {
+      "name": "conventions",
+      "source": ".",
+      "description": "Architecture conventions (profile nextjs) — skills that read rules/nextjs.yaml and the lint output.",
+      "version": "0.1.0"
+    }
+  ]
+}

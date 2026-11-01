@@ -1,0 +1,19 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - name: custom rule unit tests
+        run: pnpm --filter @conventions/eslint-plugin-nextjs test
+      - name: reference module passes the config
+        run: pnpm --filter @conventions/example-nextjs-orders lint
+      - name: every violation fixture fails for the expected rule
+        run: pnpm --filter @conventions/example-nextjs-violations check
+      - name: catalogue is in sync with the docs
+        run: python3 scripts/build-catalog.py && git diff --exit-code rules/

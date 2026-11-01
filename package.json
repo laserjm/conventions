@@ -1,0 +1,13 @@
+{
+  "name": "conventions",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Architecture conventions as docs, lint rules and skills — per stack profile",
+  "scripts": {
+    "test": "pnpm -r test",
+    "lint:fixture": "pnpm --filter @conventions/example-nextjs-orders lint",
+    "check:violations": "pnpm --filter @conventions/example-nextjs-violations check"
+  },
+  "packageManager": "pnpm@10.28.0",
+  "engines": { "node": ">=20" }
+}
