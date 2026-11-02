@@ -97,7 +97,7 @@ document.
 | NX-NAME-31 | guidance | Query verbs: `get` (one, errors when missing), `find` (one, may be null), `list`, `search`, `count`, `exists`. Repositories use the same vocabulary plus `save` (insert or update); no `create`/`update` split. | agent |
 | NX-NAME-32 | error | Dependencies are one object typed `<UseCase>Deps`, never positional (`defineUseCase` admits no other shape). | tsc:defineUseCase |
 | NX-NAME-33 | error | `NotFound`, `Forbidden`, `SignedOut`, `Conflict`, `RevisionConflict`, `Unexpected` come from `@conventions/nextjs/core`; the domain does not know about requesters or lookups. | ast-grep:nx-err-03-standard-errors-from-core |
-| NX-NAME-34 | error | Tenant-owned repository methods take the tenant id first, typed `TenantId`: `findById(tenantId, id)`. Shared-data methods take no tenant id. | tsc:TenantId |
+| NX-NAME-34 | error | Repository methods on owned data take the owner's id first: `findById(tenantId, id)` typed `TenantId` under `isolation: tenant`, `findById(ownerId, id)` typed `OwnerId` under `isolation: owner`. Shared-data methods take no owner id. | tsc:TenantId/OwnerId (isolation: tenant, owner) |
 <!-- /rules -->
 
 ## Infra layer (`infra/`) and database

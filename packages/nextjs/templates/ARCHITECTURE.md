@@ -7,6 +7,7 @@ profile: {{profile}}
 bindings: [drizzle, supabase, zod, next-safe-action]
 app-root: {{appRoot}}            # or src
 schema-source: migrations-first  # or code-first
+isolation: {{isolation}}               # who owns a row: tenant (a workspace), owner (the signed-in user) or none
 # rulesets: [structure, layers]  # omit to adopt every ruleset; list some to adopt them one at a time
 legacy: []                       # globs of pre-module code, relative to app-root (NX-LAYER-10), e.g. [lib/server/**, components/!(ui)/**]
 # migrations: ../../supabase/migrations/*.sql   # monorepo: where the SQL migrations are, relative to this file
@@ -32,6 +33,17 @@ Related: `docs/adr/` (why and in what order), `docs/architecture/db-inventory.md
 root; `@/` points there (NX-STR-01).
 **Enforced by.** `tsconfig.json` paths; the `app-root` key above.
 **Recorded in.** This entry.
+
+### Data ownership
+
+**Decision.** `isolation: {{isolation}}` in the header. tenant: a workspace or organisation owns
+its rows; `Requester` is a `TenantRequester` and owned repository methods take a `TenantId`
+first. owner: each signed-in user owns their rows and there are no shared workspaces; it is an
+`OwnerRequester` with `ownerId`, and methods take an `OwnerId` first. none: no owned data; the
+ownership rules (NX-AUTH-03/04/05/08, NX-NAME-34) do not apply. Say here which tables hold owned
+data and, under owner, what would make this a tenant app (shared workspaces).
+**Enforced by.** `conventions check` (`owner-id-type`, `isolation-test`); `tsc` through the brand.
+**Recorded in.** This entry; `lib/auth/requester.ts`.
 
 ## Deviations
 

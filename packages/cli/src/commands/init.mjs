@@ -5,14 +5,18 @@ import path from 'node:path';
 import { execSync } from 'node:child_process';
 import { resolveFrom, UsageError } from '../project.mjs';
 
-export async function init({ cwd, profile, appRoot = '.', force = false }) {
-  if (!profile) throw new UsageError('usage: conventions init --profile <name> [--app-root .]');
+export async function init({ cwd, profile, isolation, appRoot = '.', force = false }) {
+  if (!profile) throw new UsageError('usage: conventions init --profile <name> --isolation <tenant|owner|none> [--app-root .]');
   const pkgName = `@conventions/${profile}`;
   let pkgRoot;
   try { pkgRoot = path.dirname(resolveFrom(cwd, `${pkgName}/profile.json`)); }
   catch { throw new UsageError(`install ${pkgName} first (it ships the profile)`); }
   const pkg = JSON.parse(readFileSync(path.join(pkgRoot, 'package.json'), 'utf8'));
   const manifest = JSON.parse(readFileSync(path.join(pkgRoot, 'profile.json'), 'utf8'));
+  const values = manifest.isolation?.values;
+  if (values && !values.includes(isolation)) {
+    throw new UsageError(`say who owns a row: --isolation ${values.join('|')}\n  tenant: a workspace or organisation owns it (TenantId)\n  owner:  the signed-in user owns it, no shared workspaces (OwnerId)\n  none:   no owned data (an internal tool, shared data only)`);
+  }
   const tpl = path.join(pkgRoot, 'templates');
   const written = [], kept = [];
   const put = (rel, content) => {
@@ -22,7 +26,7 @@ export async function init({ cwd, profile, appRoot = '.', force = false }) {
     writeFileSync(file, content);
     written.push(rel);
   };
-  const t = (name) => readFileSync(path.join(tpl, name), 'utf8').replaceAll('{{version}}', pkg.version).replaceAll('{{profile}}', profile).replaceAll('{{appRoot}}', appRoot);
+  const t = (name) => readFileSync(path.join(tpl, name), 'utf8').replaceAll('{{version}}', pkg.version).replaceAll('{{profile}}', profile).replaceAll('{{appRoot}}', appRoot).replaceAll('{{isolation}}', isolation ?? '');
 
   put('ARCHITECTURE.md', t('ARCHITECTURE.md'));
   put('eslint.config.mjs', t('eslint.config.mjs'));
@@ -38,7 +42,10 @@ export async function init({ cwd, profile, appRoot = '.', force = false }) {
   put(path.join(manifest.inventory), t('db-inventory.md'));
   for (const s of manifest.starters ?? []) {
     const target = path.join(appRoot, s);
-    if (!existsSync(path.join(cwd, target)) || force) { mkdirSync(path.dirname(path.join(cwd, target)), { recursive: true }); cpSync(path.join(pkgRoot, 'starters', s), path.join(cwd, target)); written.push(target); } else kept.push(target);
+    // a starter that differs per isolation ships as <name>.<isolation>.ts
+    const variant = path.join(pkgRoot, 'starters', s.replace(/(\.[a-z]+)$/, `.${isolation}$1`));
+    const source = isolation && existsSync(variant) ? variant : path.join(pkgRoot, 'starters', s);
+    if (!existsSync(path.join(cwd, target)) || force) { mkdirSync(path.dirname(path.join(cwd, target)), { recursive: true }); cpSync(source, path.join(cwd, target)); written.push(target); } else kept.push(target);
   }
   // package.json scripts
   const pj = path.join(cwd, 'package.json');

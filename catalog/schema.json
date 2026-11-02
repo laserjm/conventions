@@ -70,6 +70,13 @@
           "note": {
             "type": "string"
           },
+          "isolation": {
+            "description": "The header `isolation:` values the rule applies under; omitted = all. Rules about owned data apply under tenant and owner only.",
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": { "enum": ["tenant", "owner", "none"] }
+          },
           "reportedAs": {
             "description": "The lint message carries this other rule's id (one tool enforces both). Fixture coverage is checked under that id.",
             "type": "string",

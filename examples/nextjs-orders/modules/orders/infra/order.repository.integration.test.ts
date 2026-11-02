@@ -1,17 +1,18 @@
 import { TenantId } from '@conventions/nextjs/core';
-import { assertTenantIsolation, describeIntegration } from '@conventions/nextjs/testing';
+import { assertIsolation, describeIntegration } from '@conventions/nextjs/testing';
 import { orderRepository } from './order.repository';
 import { OrderId } from '../domain/order-id';
 import { anOrder } from '@/tests/factories/order';
 
-// NX-AUTH-03 / NX-TEST-02: proves another tenant's rows can be neither read nor changed.
+// NX-AUTH-03 / NX-TEST-02 (isolation: tenant): another tenant's rows can be neither read nor changed.
 describeIntegration('orderRepository', () => {
-  assertTenantIsolation({
-    repository: orderRepository,
-    tenantA: TenantId('tenant-a'),
-    tenantB: TenantId('tenant-b'),
-    id: OrderId('ord_iso'),
-    row: (tenantId, id) => anOrder({ id, tenantId }),
-    changed: (tenantId, id) => anOrder({ id, tenantId, status: 'paid' }),
+  const id = OrderId('ord_iso');
+  assertIsolation({
+    name: 'findById, save',
+    ownerA: TenantId('tenant-a'),
+    ownerB: TenantId('tenant-b'),
+    arrange: (tenantId) => orderRepository.save(tenantId, anOrder({ id, tenantId })),
+    read: (tenantId) => orderRepository.findById(tenantId, id),
+    change: (tenantId) => orderRepository.save(tenantId, anOrder({ id, tenantId, status: 'paid' })),
   });
 });

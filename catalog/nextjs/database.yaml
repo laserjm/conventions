@@ -38,7 +38,7 @@ rules:
     checklist: true
   - id: NX-DB-08
     severity: guidance
-    rule: On tenant-owned tables the only triggers are `updated_at` and audit. No trigger changes another table's business data (category D excepted, with inventory row).
+    rule: On tables that hold business data the only triggers are `updated_at` and audit. No trigger changes another table's business data (category D excepted, with inventory row).
     mechanism: agent
     checklist: true
   - id: NX-DB-09

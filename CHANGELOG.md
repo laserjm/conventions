@@ -1,5 +1,64 @@
 # Changelog
 
+## 0.3.0 — not every app has tenants: `isolation:`
+
+Breaking. The ownership rules assumed a tenant. A project now says who owns a row in one new,
+required header key, and the rules, types, checks and helper follow it:
+
+| `isolation:` | A row belongs to | `Requester` | Owned repository methods take first |
+| --- | --- | --- | --- |
+| `tenant` | a workspace or organisation | `TenantRequester` (`tenantId`) | `tenantId: TenantId` |
+| `owner` | the signed-in user; no shared workspaces | `OwnerRequester` (`ownerId`) | `ownerId: OwnerId` |
+| `none` | nobody: shared data only | `Requester` | — |
+
+Core and testing
+
+- `Requester` is `{ kind, userId, roles }`. `TenantRequester` adds `tenantId: TenantId`;
+  `OwnerRequester` adds `ownerId: OwnerId`, a new brand with its constructor `OwnerId(…)`.
+- `systemRequester(name)`, `systemRequester(name, { tenantId })`, `systemRequester(name, { ownerId })`:
+  the name comes first and the owner is named, not positional (NX-AUTH-06). The old
+  `systemRequester(tenantId, name)` no longer compiles.
+- `createActionClients<R>` is generic: `ctx.requester` has the type `getRequester` returns.
+- `assertTenantIsolation` is replaced by `assertIsolation({ ownerA, ownerB, arrange, read, change, name? })`.
+  It takes callbacks, so it fits a repository without `findById`/`save` (`lock…`, `setState`, a
+  list read), and fails a case whose owner cannot read their own row back.
+
+Rules
+
+- The ownership rules say "the owner" and read the same under `tenant` and `owner`. A new
+  catalogue field `isolation` lists the values a rule applies under; under `none`,
+  NX-AUTH-03, -04, -05, -08 and NX-NAME-34 do not apply. `conventions lint` and `check` drop
+  them, `conventions explain` says whether a rule applies here, and the doc tables show it.
+- NX-AUTH-03: a repository is owned when it takes the owner's id (`tenantId`/`ownerId`, or the
+  brand), not when it has `findById` and `save`; its integration test calls `assertIsolation()`.
+  The old test missed every repository with other method names.
+- NX-AUTH-05 is enforced by `conventions check` (`owner-id-type`): the owner's id typed `string`
+  in `application/ports.ts` or `infra/*.repository.ts` is reported. Before, the rule relied on
+  `tsc` and passed silently while the ports took a plain string.
+- NX-AUTH-06, NX-AUTH-08, NX-NAME-34, NX-TEST-02, NX-DB-08, NX-SB-02 and NX-SB-03 reworded
+  for owners. NX-SB-03: shared workspaces in an `owner` app change the header to `tenant`.
+
+Tooling
+
+- `conventions check` reports a header without `isolation:` or with an unknown value (NX-MIG-04).
+- `conventions init --profile nextjs --isolation <tenant|owner|none>`: the flag is required;
+  `lib/auth/requester.ts` is written in the variant for it, and the ARCHITECTURE.md template
+  has the key and a "Data ownership" entry.
+- `profile.json`: `module.tenantParam`, `tenantIsolationHelper` and `tenantIsolationMethods`
+  are replaced by an `isolation` map (per value the parameter and type; the helper; the files
+  where the id must be typed).
+- The reference module's billing repository has a real `invoices` table and an isolation test.
+
+Upgrading from 0.2.3: install both 0.3.0 tarballs, `npx conventions sync`. Then:
+- add `isolation: tenant | owner | none` to the ARCHITECTURE.md header;
+- type `lib/auth/requester.ts` as `TenantRequester` or `OwnerRequester` (`ownerId: OwnerId(claims.sub)`
+  for `owner`), and rename `requester.tenantId` to `requester.ownerId` under `owner`;
+- `systemRequester(tenantId, name)` → `systemRequester(name, { tenantId })` (or `{ ownerId }`);
+- `assertTenantIsolation({ repository, tenantA, tenantB, id, row, changed })` →
+  `assertIsolation({ ownerA, ownerB, arrange: (o) => repository.save(o, row(o, id)), read: (o) => repository.findById(o, id), change: (o) => repository.save(o, changed(o, id)) })`;
+- `conventions check` now reports owner ids typed `string` (NX-AUTH-05) and owned repositories
+  whose test does not call `assertIsolation()` (NX-AUTH-03): brand them, or record a Deviations row.
+
 ## 0.2.3 — rule text and tooling from the screenerhub2 rollout
 
 Errors and database

@@ -3,14 +3,14 @@
 The `nextjs` conventions profile in one package:
 
 - `@conventions/nextjs` — ESLint 9 flat config (`createConfig()`) and three custom rules. typescript-eslint is registered as `nx-ts`, so a framework preset that brings `@typescript-eslint` does not collide.
-- `@conventions/nextjs/core` — `Result`, `ok`, `err`, the standard errors, `TenantId`,
-  `Requester`, `systemRequester`, `defineUseCase`, `defineRepository`, `ConstraintViolation`.
+- `@conventions/nextjs/core` — `Result`, `ok`, `err`, the standard errors, `Requester`,
+  `TenantRequester`/`TenantId`, `OwnerRequester`/`OwnerId` (per the header's `isolation`), `systemRequester`, `defineUseCase`, `defineRepository`, `ConstraintViolation`.
 - `@conventions/nextjs/drizzle` — `createTransactionRunner`, `violatedConstraint`, `postgresErrorCode`.
 - `@conventions/nextjs/next-safe-action` — `createActionClients`.
-- `@conventions/nextjs/testing` — `describeIntegration`, `assertTenantIsolation`, `localStack`.
+- `@conventions/nextjs/testing` — `describeIntegration`, `assertIsolation`, `localStack`.
 - `ast-grep/` rules with tests, `ls-lint.yml`, `profile.json` and `rules/nextjs.yaml`, which
   `@conventions/cli` runs and reads.
-- `starters/` the four files a project owns and adapts; `templates/` what `conventions init` writes.
+- `starters/` the four files a project owns and adapts (`lib/auth/requester.ts` in one variant per `isolation`); `templates/` what `conventions init` writes.
 
 ```js
 // eslint.config.mjs

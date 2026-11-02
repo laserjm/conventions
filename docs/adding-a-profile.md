@@ -10,7 +10,8 @@ a profile adds four things.
 2. **Profile package** `packages/<profile>` published as `@conventions/<profile>`, with
    `profile.json` (the project shape `conventions check` walks: module glob, layer folders,
    use-case and repository globs, test suffixes, migrations and inventory paths, which linters
-   to run) and `rules/<profile>.yaml` (generated). The linters are whatever fits the language;
+   to run, and the `isolation` map: per header value the owner's parameter name and id type,
+   the isolation test helper and the files where the id must be typed) and `rules/<profile>.yaml` (generated). The linters are whatever fits the language;
    the CLI only needs each one to print messages that start with a rule id, or a mapping.
 3. **Reference and fixture** under `examples/`: the reference passes everything; every file of
    the fixture names the ids it must fail with.

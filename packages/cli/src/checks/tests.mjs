@@ -1,7 +1,7 @@
 import path from 'node:path';
-import { dirs, files, finding, adopted, read } from './util.mjs';
+import { dirs, files, finding, adopted } from './util.mjs';
 
-/** NX-TEST-01 unit test per use case, NX-TEST-02 integration test per repository, NX-AUTH-03 tenant isolation. */
+/** NX-TEST-01 unit test per use case, NX-TEST-02 integration test per repository (NX-AUTH-03: ownership.mjs). */
 export async function tests(project) {
   const out = [];
   const m = project.manifest.module;
@@ -16,13 +16,7 @@ export async function tests(project) {
     for (const repo of await files(project.appRoot, [`${dir}/${m.repositories}`])) {
       const test = repo.replace(/\.ts$/, m.integrationTestSuffix);
       const exists = (await files(project.appRoot, [test])).length > 0;
-      if (adopted(project, 'NX-TEST-02') && !exists) { out.push(finding(project, 'NX-TEST-02', `repository ${path.basename(repo)} has no ${path.basename(test)}`, { file: repo, check: 'repository-test' })); continue; }
-      if (!exists || !adopted(project, 'NX-AUTH-03')) continue;
-      const src = read(project.appRoot, repo);
-      const tenantOwned = new RegExp(`\\b${m.tenantParam}\\b`).test(src) && (m.tenantIsolationMethods ?? []).every((name) => src.includes(`${name}(`));
-      if (tenantOwned && !read(project.appRoot, test).includes(`${m.tenantIsolationHelper}(`)) {
-        out.push(finding(project, 'NX-AUTH-03', `${path.basename(test)} must call ${m.tenantIsolationHelper}() from the testing package: the repository takes a ${m.tenantParam}`, { file: test, check: 'tenant-isolation-test' }));
-      }
+      if (adopted(project, 'NX-TEST-02') && !exists) out.push(finding(project, 'NX-TEST-02', `repository ${path.basename(repo)} has no ${path.basename(test)}`, { file: repo, check: 'repository-test' }));
     }
   }
   return out;

@@ -8,6 +8,11 @@ export async function explain({ cwd, id }) {
   console.log(`${r.id}  [${r.group}]  severity: ${r.severity}  enforced by: ${r.mechanism}${r.tool ? ':' + r.tool : ''}`);
   console.log(`\n${r.rule}\n`);
   if (r.note) console.log(`note: ${r.note}\n`);
+  if (r.isolation) {
+    const own = project.header?.isolation;
+    const here = own ? (r.isolation.includes(own) ? ` — applies here (isolation: ${own})` : ` — does not apply here (isolation: ${own})`) : '';
+    console.log(`applies under isolation: ${r.isolation.join(', ')}${here}\n`);
+  }
   console.log(`doc: https://github.com/laserjm/conventions/blob/v${project.pkg.version}/${r.doc}`);
   return 0;
 }

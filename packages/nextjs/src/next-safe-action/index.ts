@@ -3,9 +3,13 @@ import { createSafeActionClient, returnServerError } from 'next-safe-action';
 import { randomUUID } from 'node:crypto';
 import { signedOut, type Requester, type SignedOut, type Unexpected } from '../core/index.js';
 
-export type ActionClientsOptions = {
-  /** Reads the session once per request (NX-AUTH-01); null for a visitor. */
-  getRequester: () => Promise<Requester | null>;
+export type ActionClientsOptions<R extends Requester = Requester> = {
+  /**
+   * Reads the session once per request (NX-AUTH-01); null for a visitor. Its type is the project's
+   * requester (`TenantRequester`, `OwnerRequester` or `Requester`, per the header's `isolation`),
+   * and `ctx.requester` inside an action has that type.
+   */
+  getRequester: () => Promise<R | null>;
   /** Where a thrown error goes before the caller gets a trace id. Default: console.error. */
   log?: (traceId: string, error: unknown) => void;
 };
@@ -16,7 +20,7 @@ export type ActionClientsOptions = {
  * `memberActionClient`: the caller is signed in once, here. A visitor gets
  * `serverError: { _tag: 'SignedOut' }` and the action does not run, so `ctx.requester` is never null.
  */
-export function createActionClients({ getRequester, log }: ActionClientsOptions) {
+export function createActionClients<R extends Requester = Requester>({ getRequester, log }: ActionClientsOptions<R>) {
   const actionClient = createSafeActionClient({
     handleServerError(error): SignedOut | Unexpected {
       const traceId = randomUUID();
@@ -28,7 +32,7 @@ export function createActionClients({ getRequester, log }: ActionClientsOptions)
   const memberActionClient = actionClient.use(async ({ next }) => {
     const requester = await getRequester();
     if (!requester) returnServerError(signedOut());
-    return next({ ctx: { requester: requester as Requester } });
+    return next({ ctx: { requester: requester as R } });
   });
 
   return { actionClient, memberActionClient };

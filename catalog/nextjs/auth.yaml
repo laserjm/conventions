@@ -13,21 +13,25 @@ rules:
     checklist: true
   - id: NX-AUTH-03
     severity: error
-    rule: "Tenant isolation is enforced in the repository: every method on tenant-owned data takes the tenant id as its first argument and names it in the query. The repository's integration test proves another tenant's rows can be neither read nor changed."
+    rule: "Isolation between owners is enforced in the repository: every method on owned data takes the owner's id as its first argument (`tenantId` under `isolation: tenant`, `ownerId` under `isolation: owner`) and names it in the query. The repository's integration test calls `assertIsolation()` from `@conventions/nextjs/testing`, proving another owner's rows can be neither read nor changed."
     mechanism: check
-    tool: tenant-isolation-test
+    tool: isolation-test
+    isolation: [tenant, owner]
   - id: NX-AUTH-04
     severity: guidance
-    rule: Database row policies, where the platform offers them, are a second net for tenant isolation. A permission rule is never written there.
+    rule: Database row policies, where the platform offers them, are a second net for isolation between owners. A permission rule is never written there.
     mechanism: agent
+    isolation: [tenant, owner]
   - id: NX-AUTH-05
     severity: error
-    rule: "Shared data (registries, templates, lookups) is read without a requester; its repository methods take no tenant id. Tenant-owned methods take a `TenantId` first, so the port makes the distinction visible and the compiler refuses a plain string."
-    mechanism: tsc
-    tool: TenantId
+    rule: "Shared data (registries, templates, lookups) is read without a requester; its repository methods take no owner id. Methods on owned data take the owner's id first, typed with its brand (`TenantId` under `isolation: tenant`, `OwnerId` under `isolation: owner`), never `string`: the port makes the distinction visible and the compiler refuses a plain string."
+    mechanism: check
+    tool: owner-id-type
+    note: "`conventions check` reports the owner's id typed `string` in `application/ports.ts` and `infra/*.repository.ts`; once those carry the brand, `tsc` refuses a plain string everywhere else."
+    isolation: [tenant, owner]
   - id: NX-AUTH-06
     severity: error
-    rule: System callers (scheduled runs, workers, delivery jobs) use the same repositories as users and name their tenant explicitly through `systemRequester(tenantId, name)`. There is no bypass path.
+    rule: "System callers (scheduled runs, workers, delivery jobs) use the same repositories as users and identify as `systemRequester(name)`. Under `isolation: tenant` or `owner` they name the owner they work for: `systemRequester(name, { tenantId })` or `systemRequester(name, { ownerId })`. There is no bypass path."
     mechanism: tsc
     tool: systemRequester
   - id: NX-AUTH-07
@@ -37,6 +41,7 @@ rules:
     tool: nx-auth-07-roles-in-components
   - id: NX-AUTH-08
     severity: guidance
-    rule: "A system read that has to find its tenant before it can name one (a queue claim that takes the next job of any tenant, a sweep of expired jobs, the owner of a row found by its ID) is the one repository method that names no tenant. It returns the tenant with every row, is reached only from system callers (never an action or a page), and every read or write that follows names the tenant it returned (NX-AUTH-06). A category A write fenced by a token the claim handed out (attempt number, lease) counts as following the claim. The integration test proves the follow-up methods change nothing when given another tenant's id."
+    rule: "A system read that has to find its owner before it can name one (a queue claim that takes the next job of any owner, a sweep of expired jobs, the owner of a row found by its ID) is the one repository method that names no owner. It returns the owner's id with every row, is reached only from system callers (never an action or a page), and every read or write that follows names the owner it returned (NX-AUTH-06). A category A write fenced by a token the claim handed out (attempt number, lease) counts as following the claim. The integration test proves the follow-up methods change nothing when given another owner's id."
     mechanism: agent
     checklist: true
+    isolation: [tenant, owner]

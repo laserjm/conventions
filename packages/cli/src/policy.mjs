@@ -1,5 +1,7 @@
-// What the project declared: rulesets not adopted, legacy folders (layer rules only) and Deviations
-// rows (findings become warnings). Applied to lint and check findings alike.
+// What the project declared: rulesets not adopted, rules that do not apply under its `isolation:`,
+// legacy folders (layer rules only) and Deviations rows (findings become warnings). Applied to lint
+// and check findings alike.
+import { appliesUnder } from './checks/util.mjs';
 
 /** Converts a glob (`**`, `*`, `{a,b}`, `!(x)`) to a RegExp anchored at the start of a relative path. */
 export function globToRegex(glob) {
@@ -37,6 +39,7 @@ export function applyPolicy(project, findings) {
     const rule = rules.find((r) => r.id === f.id);
     if (rule) {
       if (chosen && !chosen.has(rule.group)) continue;
+      if (!appliesUnder(rule, project.header?.isolation)) continue;
       if (f.file && exempt.has(rule.group) && legacy.some((re) => re.test(f.file))) continue;
     }
     const row = deviations.find((d) => d.rule === f.id && (d.paths.length === 0 || (f.file && matchesAny(f.file, d.paths))));

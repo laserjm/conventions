@@ -57,7 +57,7 @@ A project binds each role to exactly one product in its `ARCHITECTURE.md` header
 ## Structure
 
 Vertical modules (one per bounded context) with a light layering inside each. Routes stay
-thin. `lib/` holds cross-cutting code. `Result`, the standard errors, `TenantId`, `defineUseCase`
+thin. `lib/` holds cross-cutting code. `Result`, the standard errors, `Requester` and the owner ids, `defineUseCase`
 and the transaction and action-client factories come from `@conventions/nextjs`; a project owns
 only the four starters below. Paths are relative to the **app root**, which is
 aliased `@/`; whether the app root is `src/` or the package root is a project choice
@@ -160,28 +160,41 @@ module has no `helpers.ts`, `utils/` or `hooks/`; hooks live in `components/`.
 | NX-LAYER-11 | error | `commands.ts` is optional: it appears with the module's first write use case, so anemic modules have none. It wires each use case to its repositories, unit of work, policy and clock and exports it under the use case's name, taking the `Requester` the caller signed in as its first argument: `payOrder(requester, input)`. It holds no business rule, reads no session and revalidates nothing. Once it exists, `actions.ts` calls it and imports no value from its own `application/` or `infra/`; `server.ts` re-exports it for workers, other modules and tests. | eslint:nextjs/actions-use-commands |
 <!-- /rules -->
 
-## Authorization & tenancy
+## Authorization & data ownership
 
 Authentication (who is this?) happens once, in the action client's middleware and at the
-top of `queries.ts`, producing a `Requester` (`{ userId, tenantId, roles }`). Authorization
-(may they do this?) is a business decision and lives in the use case.
+top of `queries.ts`, producing a `Requester`. Authorization (may they do this?) is a business
+decision and lives in the use case.
 
-System work has no session: it names the tenant it works for (NX-AUTH-06). A worker that
-serves every tenant learns whose job it holds from the claim itself, so the claim, and a
-read like it, is the one method that names no tenant, and returns the tenant it found
-(NX-AUTH-08).
+Who owns a row is the project's choice, made once in the header's `isolation:` key:
+
+| `isolation:` | A row belongs to | `Requester` | Owned repository methods take first |
+| --- | --- | --- | --- |
+| `tenant` | a tenant: a workspace or organisation | `TenantRequester`: `{ kind, userId, tenantId, roles }` | `tenantId: TenantId` |
+| `owner` | the signed-in user; no shared workspaces | `OwnerRequester`: `{ kind, userId, ownerId, roles }` | `ownerId: OwnerId` |
+| `none` | nobody: shared data only (an internal tool) | `Requester`: `{ kind, userId, roles }` | — |
+
+The rules about owned data (NX-AUTH-03, -04, -05, -08, NX-NAME-34) apply under `tenant` and
+`owner` and read the same under both: "the owner" is the tenant or the user. Under `none` they
+do not apply, and `conventions lint`, `check` and `explain` say so. An `owner` app that gets
+shared workspaces changes to `tenant`; that is a migration, recorded in ARCHITECTURE.md.
+
+System work has no session: it names the owner it works for, `systemRequester(name, { ownerId })`
+or `systemRequester(name, { tenantId })` (NX-AUTH-06). A worker that serves every owner learns
+whose job it holds from the claim itself, so the claim, and a read like it, is the one method
+that names no owner, and returns the owner it found (NX-AUTH-08).
 
 <!-- rules: auth -->
 | ID | Sev | Rule | Enforcement |
 | --- | --- | --- | --- |
 | NX-AUTH-01 | error | `Requester` is produced in `lib/safe-action.ts` (actions) and in `queries.ts` (reads). Nothing else reads the session: `commands.ts` receives the requester from its caller. | ast-grep:nx-auth-01-session-read-outside-edge |
 | NX-AUTH-02 | guidance | Authorization decisions live in the use case, which receives `requester` in `Deps` and returns `err({ _tag: 'Forbidden' })`. An action that skips the application layer checks `requester` itself; that is the only business `if` allowed in an action. | agent |
-| NX-AUTH-03 | error | Tenant isolation is enforced in the repository: every method on tenant-owned data takes the tenant id as its first argument and names it in the query. The repository's integration test proves another tenant's rows can be neither read nor changed. | check:tenant-isolation-test |
-| NX-AUTH-04 | guidance | Database row policies, where the platform offers them, are a second net for tenant isolation. A permission rule is never written there. | agent |
-| NX-AUTH-05 | error | Shared data (registries, templates, lookups) is read without a requester; its repository methods take no tenant id. Tenant-owned methods take a `TenantId` first, so the port makes the distinction visible and the compiler refuses a plain string. | tsc:TenantId |
-| NX-AUTH-06 | error | System callers (scheduled runs, workers, delivery jobs) use the same repositories as users and name their tenant explicitly through `systemRequester(tenantId, name)`. There is no bypass path. | tsc:systemRequester |
+| NX-AUTH-03 | error | Isolation between owners is enforced in the repository: every method on owned data takes the owner's id as its first argument (`tenantId` under `isolation: tenant`, `ownerId` under `isolation: owner`) and names it in the query. The repository's integration test calls `assertIsolation()` from `@conventions/nextjs/testing`, proving another owner's rows can be neither read nor changed. | check:isolation-test (isolation: tenant, owner) |
+| NX-AUTH-04 | guidance | Database row policies, where the platform offers them, are a second net for isolation between owners. A permission rule is never written there. | agent (isolation: tenant, owner) |
+| NX-AUTH-05 | error | Shared data (registries, templates, lookups) is read without a requester; its repository methods take no owner id. Methods on owned data take the owner's id first, typed with its brand (`TenantId` under `isolation: tenant`, `OwnerId` under `isolation: owner`), never `string`: the port makes the distinction visible and the compiler refuses a plain string. | check:owner-id-type (isolation: tenant, owner) |
+| NX-AUTH-06 | error | System callers (scheduled runs, workers, delivery jobs) use the same repositories as users and identify as `systemRequester(name)`. Under `isolation: tenant` or `owner` they name the owner they work for: `systemRequester(name, { tenantId })` or `systemRequester(name, { ownerId })`. There is no bypass path. | tsc:systemRequester |
 | NX-AUTH-07 | warn | Components never decide permissions; they receive booleans like `can.editOrder` computed server-side in `queries.ts`. | ast-grep:nx-auth-07-roles-in-components |
-| NX-AUTH-08 | guidance | A system read that has to find its tenant before it can name one (a queue claim that takes the next job of any tenant, a sweep of expired jobs, the owner of a row found by its ID) is the one repository method that names no tenant. It returns the tenant with every row, is reached only from system callers (never an action or a page), and every read or write that follows names the tenant it returned (NX-AUTH-06). A category A write fenced by a token the claim handed out (attempt number, lease) counts as following the claim. The integration test proves the follow-up methods change nothing when given another tenant's id. | agent |
+| NX-AUTH-08 | guidance | A system read that has to find its owner before it can name one (a queue claim that takes the next job of any owner, a sweep of expired jobs, the owner of a row found by its ID) is the one repository method that names no owner. It returns the owner's id with every row, is reached only from system callers (never an action or a page), and every read or write that follows names the owner it returned (NX-AUTH-06). A category A write fenced by a token the claim handed out (attempt number, lease) counts as following the claim. The integration test proves the follow-up methods change nothing when given another owner's id. | agent (isolation: tenant, owner) |
 <!-- /rules -->
 
 ## Type safety chain
@@ -283,7 +296,7 @@ database inventory (`docs/architecture/db-inventory.md`, written by `conventions
 | NX-DB-05 | guidance | A constraint the database refuses becomes a tagged error in the repository (`Conflict` or a domain error), translated with `lib/db/errors.ts`. Nothing above `infra/` sees a driver error. | agent |
 | NX-DB-06 | error | Transactions: `lib/db/client.ts` builds `withTransaction` with `createTransactionRunner` from `@conventions/nextjs/drizzle`; only `infra/` calls it. A use case that needs several writes in one transaction receives a `UnitOfWork` port that the module's `infra/` implements; it runs `fn` with `{ rollbackOnErr: true }`, so an `err` the use case returns after writing leaves nothing behind. | ast-grep:nx-db-06-transactions-only-in-infra |
 | NX-DB-07 | guidance | Every repository statement runs inside a transaction with a statement timeout. Interactive and system callers have different budgets; the numbers live in the binding. | agent |
-| NX-DB-08 | guidance | On tenant-owned tables the only triggers are `updated_at` and audit. No trigger changes another table's business data (category D excepted, with inventory row). | agent |
+| NX-DB-08 | guidance | On tables that hold business data the only triggers are `updated_at` and audit. No trigger changes another table's business data (category D excepted, with inventory row). | agent |
 | NX-DB-09 | guidance | Views are fine for read models (category B); they are typed through the ORM. | agent |
 <!-- /rules -->
 
@@ -349,7 +362,7 @@ for you. Copy into a PR template.
 
 <!-- checklist -->
 - [ ] NX-AUTH-02 Authorization decisions live in the use case, which receives `requester` in `Deps` and returns `err({ _tag
-- [ ] NX-AUTH-08 A system read that has to find its tenant before it can name one (a queue claim that takes the next job of any tenant, a sweep of expired jobs, the owner of a row found by its ID) is the one repository method that names no tenant
+- [ ] NX-AUTH-08 A system read that has to find its owner before it can name one (a queue claim that takes the next job of any owner, a sweep of expired jobs, the owner of a row found by its ID) is the one repository method that names no owner
 - [ ] NX-CACHE-03 One `all` tag per aggregate for lists, one `one(id)` tag for detail views
 - [ ] NX-XMOD-01 Two mechanisms
 - [ ] NX-XMOD-02 Events are collected by the use case through an `EventCollector` port and dispatched after commit via `lib/events.ts` by whoever ran the use case
@@ -357,7 +370,7 @@ for you. Copy into a PR template.
 - [ ] NX-DB-04 Not a valid reason for database code
 - [ ] NX-DB-05 A constraint the database refuses becomes a tagged error in the repository (`Conflict` or a domain error), translated with `lib/db/errors.ts`
 - [ ] NX-DB-07 Every repository statement runs inside a transaction with a statement timeout
-- [ ] NX-DB-08 On tenant-owned tables the only triggers are `updated_at` and audit
+- [ ] NX-DB-08 On tables that hold business data the only triggers are `updated_at` and audit
 - [ ] NX-DRZ-04 **Code-first** projects
 - [ ] NX-DRZ-05 `createTransactionRunner` sets `statement_timeout` per caller class
 - [ ] NX-MIG-01 No new database code may be added during the transition unless it passes NX-DB-02/03, even in untouched modules
@@ -373,7 +386,7 @@ for you. Copy into a PR template.
 - [ ] NX-STR-01 All paths are relative to the app root aliased `@/`
 - [ ] NX-SB-01 Supabase migrations are the only schema source (`supabase migration new`, `supabase/migrations/`)
 - [ ] NX-SB-02 The app connects with the ORM as the database owner through the transaction pooler
-- [ ] NX-SB-03 `Requester` is built from `supabase.auth.getUser()` in `lib/safe-action.ts` and `lib/auth/requester.ts`
+- [ ] NX-SB-03 `Requester` is built from the session in `lib/auth/requester.ts`, which `lib/safe-action.ts` calls
 - [ ] NX-TEST-04 Database code in categories A–E (NX-DB-02) has a database-level test; the binding names the tool
 - [ ] NX-TEST-06 Domain functions are tested by example tables, not by mocking
 - [ ] NX-TYPE-01 One source of truth per shape (table above)
