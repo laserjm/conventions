@@ -8,7 +8,7 @@ rules:
     tool: use-case-test
   - id: NX-TEST-02
     severity: error
-    rule: Every repository has an integration test (`*.integration.test.ts`) against a real database. For tenant-owned data it proves another tenant's rows can be neither read nor changed (NX-AUTH-03).
+    rule: "Every repository has an integration test (`*.integration.test.ts`) against a real database. For owned data (`isolation: tenant` or `owner`) it proves another owner's rows can be neither read nor changed (NX-AUTH-03)."
     mechanism: check
     tool: repository-test
   - id: NX-TEST-03

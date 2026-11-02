@@ -22,6 +22,7 @@ rules:
     reportedAs: NX-ERR-03
   - id: NX-NAME-34
     severity: error
-    rule: "Tenant-owned repository methods take the tenant id first, typed `TenantId`: `findById(tenantId, id)`. Shared-data methods take no tenant id."
+    rule: "Repository methods on owned data take the owner's id first: `findById(tenantId, id)` typed `TenantId` under `isolation: tenant`, `findById(ownerId, id)` typed `OwnerId` under `isolation: owner`. Shared-data methods take no owner id."
     mechanism: tsc
-    tool: TenantId
+    tool: TenantId/OwnerId
+    isolation: [tenant, owner]

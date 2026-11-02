@@ -1,10 +1,11 @@
 # Architecture (violations fixture)
 
 ```yaml
-conventions: 0.2.3
+conventions: 0.3.0
 profile: nextjs
 bindings: [drizzle, supabase, zod, next-safe-action]
 app-root: .
+isolation: tenant
 legacy: [lib/legacy/**, components/legacy/**]
 ```
 

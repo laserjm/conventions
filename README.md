@@ -28,8 +28,8 @@ tool, not a promise; the catalogue build fails when a rule claims one it cannot 
 | `eslint` | boundaries (layers, module entry points, vendor packages per layer), typescript-eslint, three custom rules | 23 |
 | `ast-grep` | syntax rules in YAML with their own test cases: suffixes, `server-only`, no `throw` in pure layers, … | 30 |
 | `ls-lint` | file and folder names, module-root layout | 4 |
-| `tsc` | shapes the core types refuse: `TenantId`, `defineUseCase`, `systemRequester` | 5 |
-| `check` | `conventions check`: modules complete, tests next to use cases and repositories, header version, deviations, database inventory | 13 |
+| `tsc` | shapes the core types refuse: `TenantId`/`OwnerId`, `defineUseCase`, `systemRequester` | 4 |
+| `check` | `conventions check`: modules complete, tests next to use cases and repositories, owner ids typed and isolation tested, header version, deviations, database inventory | 14 |
 | `ci` | a job in the project's workflow: schema drift, pgTAP | 3 |
 | `agent` | judgement: the conventions skill and the reviewer, with a generated checklist | 54 |
 
@@ -42,10 +42,10 @@ lint-enforced rule fires, and the reference module proves the rules are satisfia
 
 ```sh
 # from the release tarballs; app code imports the profile's runtime core, so it is a dependency
-V=0.2.3; R=https://github.com/laserjm/conventions/releases/download/v$V
+V=0.3.0; R=https://github.com/laserjm/conventions/releases/download/v$V
 npm i -E $R/conventions-nextjs-$V.tgz
 npm i -D -E $R/conventions-cli-$V.tgz
-npx conventions init --profile nextjs             # ARCHITECTURE.md, eslint.config.mjs, CI, CLAUDE.md, AGENTS.md
+npx conventions init --profile nextjs --isolation owner   # ARCHITECTURE.md, eslint.config.mjs, CI, CLAUDE.md, AGENTS.md
 npx conventions lint && npx conventions check
 ```
 
@@ -53,19 +53,25 @@ npx conventions lint && npx conventions check
 project configures the conventions:
 
 ```yaml
-conventions: 0.2.3
+conventions: 0.3.0
 profile: nextjs
 bindings: [drizzle, supabase, zod, next-safe-action]
 app-root: .                      # or src
+isolation: owner                 # who owns a row: tenant (a workspace), owner (the signed-in user) or none
 rulesets: [structure, layers]    # optional: adopt rulesets one at a time; omit for all
 legacy: [lib/server/**]          # brownfield: pre-module code keeps its shape (NX-LAYER-10)
 ```
 
 The ESLint config, `conventions lint`, `conventions check` and the skill all read it. Runtime
-helpers are imported, not copied: `@conventions/nextjs/core` (`Result`, errors, `TenantId`,
+helpers are imported, not copied: `@conventions/nextjs/core` (`Result`, errors, `Requester`, `TenantId`/`OwnerId`,
 `defineUseCase`, `defineRepository`), `/drizzle`, `/next-safe-action`, `/testing`. Four
 starters the project owns (`lib/safe-action.ts`, `lib/env.ts`, `lib/db/client.ts`,
-`lib/auth/requester.ts`) are written by `init` when missing.
+`lib/auth/requester.ts`, in the variant for the project's `isolation`) are written by `init`
+when missing.
+
+`isolation:` says who owns a row. Not every app has tenants: in an app where each user's data
+is theirs alone, `isolation: owner` gives an `OwnerRequester` with `ownerId: OwnerId`, and the
+ownership rules read "owner" where a tenant app reads "tenant". `isolation: none` turns them off.
 
 - **Greenfield**: `init`, fill the header, build the first module with the `new-module` skill.
 - **Brownfield**: `init`, list pre-module folders under `legacy:` and in the Legacy table, lint

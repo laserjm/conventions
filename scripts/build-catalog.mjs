@@ -71,7 +71,7 @@ for (const profile of profiles) {
         seen.add(key);
         out.push(line, '| ID | Sev | Rule | Enforcement |', '| --- | --- | --- | --- |');
         for (const r of t.rules) {
-          out.push(`| ${r.id} | ${r.severity} | ${r.rule.replace(/\|/g, '\\|')} | ${enforcementLabel(r)} |`);
+          out.push(`| ${r.id} | ${r.severity} | ${r.rule.replace(/\|/g, '\\|')} | ${enforcementLabel(r)}${r.isolation ? ` (isolation: ${r.isolation.join(', ')})` : ''} |`);
           docAnchor[r.id] = `${rel}#${section}`;
         }
         while (i < lines.length && lines[i] !== '<!-- /rules -->') i++;
@@ -106,6 +106,7 @@ for (const profile of profiles) {
       if (r.tool) lines.push(`    tool: ${yq(r.tool)}`);
       if (r.checklist) lines.push(`    checklist: true`);
       if (r.reportedAs) lines.push(`    reportedAs: ${r.reportedAs}`);
+      if (r.isolation) lines.push(`    isolation: [${r.isolation.join(', ')}]`);
       lines.push(`    doc: ${docAnchor[r.id] ?? ''}`, `    rule: ${yq(r.rule)}`);
       if (r.note) lines.push(`    note: ${yq(r.note)}`);
     }

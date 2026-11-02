@@ -38,8 +38,6 @@
     "unitTestSuffix": ".test.ts",
     "repositories": "infra/*.repository.ts",
     "integrationTestSuffix": ".integration.test.ts",
-    "tenantParam": "tenantId",
-    "tenantIsolationHelper": "assertTenantIsolation",
     "bannedNames": [
       "api",
       "utils",
@@ -52,11 +50,27 @@
       "lib",
       "services",
       "types"
-    ],
-    "tenantIsolationMethods": [
-      "findById",
-      "save"
     ]
+  },
+  "isolation": {
+    "values": [
+      "tenant",
+      "owner",
+      "none"
+    ],
+    "helper": "assertIsolation",
+    "files": [
+      "application/ports.ts",
+      "infra/*.repository.ts"
+    ],
+    "tenant": {
+      "param": "tenantId",
+      "type": "TenantId"
+    },
+    "owner": {
+      "param": "ownerId",
+      "type": "OwnerId"
+    }
   },
   "routeLocalComponents": "app/**/_components/*",
   "migrations": "supabase/migrations/*.sql",

@@ -2,14 +2,14 @@ import 'server-only';
 // The module's write use cases, wired to what they run on (NX-LAYER-11). The caller names the
 // requester it signed in: an action takes it from `ctx`, a worker or a test brings its own.
 // Commands trust their input's type; the action's schema validated it at the edge.
-import { conflict, ConstraintViolation, err, type Requester } from '@conventions/nextjs/core';
+import { conflict, ConstraintViolation, err, type TenantRequester } from '@conventions/nextjs/core';
 import type { PayOrderInput } from './contracts';
 import { payOrder as pay } from './application/pay-order';
 import type { OrderEvent } from './domain/events';
 import { orderRepository } from './infra/order.repository';
 import { unitOfWork } from './infra/unit-of-work';
 
-export async function payOrder(requester: Requester, input: PayOrderInput) {
+export async function payOrder(requester: TenantRequester, input: PayOrderInput) {
   const events: OrderEvent[] = [];
   try {
     const result = await pay(input, {

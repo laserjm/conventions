@@ -20,12 +20,20 @@ export function finding(project, id, message, extra = {}) {
   return { id, severity: extra.severity ?? (rule?.severity === 'warn' ? 'warn' : 'error'), message, ...extra };
 }
 
-/** True when the rule's group is adopted by the project (ARCHITECTURE.md `rulesets:`). */
+/**
+ * True when the rule applies to the project: its group is adopted (ARCHITECTURE.md `rulesets:`)
+ * and it applies under the header's `isolation:` (a rule without `isolation` applies under all).
+ */
 export function adopted(project, id) {
   const rule = project.catalogue.rules.find((r) => r.id === id);
   if (!rule) return true;
   const chosen = project.header?.rulesets;
-  return !chosen || !chosen.length || chosen.includes(rule.group);
+  return (!chosen || !chosen.length || chosen.includes(rule.group)) && appliesUnder(rule, project.header?.isolation);
+}
+
+/** A rule's `isolation` lists the values it applies under; an unset header value keeps every rule. */
+export function appliesUnder(rule, isolation) {
+  return !rule?.isolation || !isolation || rule.isolation.includes(isolation);
 }
 
 /** Absolute matches of a glob that may start with `../`: the static prefix is resolved first. */

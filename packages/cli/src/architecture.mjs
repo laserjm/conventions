@@ -1,5 +1,5 @@
 // Reads the conventions header of a project's ARCHITECTURE.md: the one place a project says
-// which profile, version, bindings, rulesets, app root and legacy folders it uses. ESLint config,
+// which profile, version, bindings, rulesets, isolation, app root and legacy folders it uses. ESLint config,
 // `conventions check` and the skill all read it, so a project touches one file to change them.
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -12,6 +12,7 @@ import YAML from 'yaml';
  * @property {string[]} bindings
  * @property {string} appRoot        folder with app/, modules/, lib/ — relative to ARCHITECTURE.md
  * @property {string} [schemaSource]
+ * @property {string} [isolation]    who owns a row: tenant | owner | none (NX-AUTH-03); required since 0.3.0
  * @property {string[]} [rulesets]   adopted rulesets; undefined = all
  * @property {string[]} legacy       pre-module folders, globs relative to appRoot (NX-LAYER-10)
  * @property {string} [migrations]   glob of SQL migrations, relative to ARCHITECTURE.md (monorepo: ../../supabase/migrations/*.sql)
@@ -51,6 +52,7 @@ export function parseHeader(markdown) {
     bindings: list(raw.bindings),
     appRoot: String(raw['app-root'] ?? raw.appRoot ?? '.'),
     schemaSource: raw['schema-source'] ? String(raw['schema-source']) : undefined,
+    isolation: raw.isolation === undefined || raw.isolation === null ? undefined : String(raw.isolation),
     rulesets: raw.rulesets === undefined ? undefined : list(raw.rulesets),
     legacy: list(raw.legacy),
     migrations: raw.migrations ? String(raw.migrations) : undefined,

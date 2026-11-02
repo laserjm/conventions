@@ -11,8 +11,15 @@ description: >-
 # Next.js conventions
 
 The project's `ARCHITECTURE.md` header names the conventions version, bindings, app root,
-legacy folders and rulesets; its sections record the project's own interpretations and
+isolation, legacy folders and rulesets; its sections record the project's own interpretations and
 deviations. Read it first; it overrides nothing in the core rules but fills every gap they leave.
+
+`isolation:` says who owns a row, and with it which words and types the ownership rules use:
+`tenant` (a workspace owns it; `TenantRequester`, `tenantId: TenantId`), `owner` (the signed-in
+user owns it; `OwnerRequester`, `ownerId: OwnerId`) or `none` (no owned data; NX-AUTH-03/04/05/08
+and NX-NAME-34 do not apply). Where a rule says "the owner", read the tenant or the user. Never
+introduce a `tenantId` into an `owner` or `none` project; `conventions explain` says whether a
+rule applies here.
 
 ## Where the rules live
 
@@ -31,7 +38,7 @@ deviations. Read it first; it overrides nothing in the core rules but fills ever
    write. Fix by reading the rule, never by disabling it: a disabled rule without a Deviations
    row fails `conventions check` (NX-MIG-04).
 2. **Before you finish**: `npx conventions check` (modules complete, tests next to use cases
-   and repositories, tenant-isolation helper used, header version, deviations, database
+   and repositories, owner ids typed and the isolation helper used, header version, deviations, database
    inventory) and `npx tsc --noEmit`. The hook runs the checks on stop.
 3. **Apply the guidance rules yourself.** `conventions explain` shows `enforced by: agent` for
    them; the checklist at the end of `architecture.md` lists the ones that matter most:
@@ -55,11 +62,12 @@ deviations. Read it first; it overrides nothing in the core rules but fills ever
 ## Core API the rules assume
 
 From `@conventions/nextjs/core`: `Result`, `ok`, `err`, the standard errors (`notFound`,
-`forbidden`, `conflict`, …), `TenantId`, `Requester`, `systemRequester`, `defineUseCase`,
+`forbidden`, `conflict`, …), `Requester`, `TenantRequester`/`TenantId` or
+`OwnerRequester`/`OwnerId` (per `isolation`), `systemRequester`, `defineUseCase`,
 `defineRepository`, `ConstraintViolation`. From `@conventions/nextjs/drizzle`:
 `createTransactionRunner`, `violatedConstraint`. From `@conventions/nextjs/next-safe-action`:
 `createActionClients`. From `@conventions/nextjs/testing`: `describeIntegration`,
-`assertTenantIsolation`, `localStack`.
+`assertIsolation`, `localStack`.
 
 ## Naming quick reference
 

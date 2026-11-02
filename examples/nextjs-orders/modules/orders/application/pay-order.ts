@@ -1,12 +1,12 @@
 // Use case: defineUseCase pins (input, deps) => Promise<Result> (NX-LAYER-07, NX-ERR-01). One value export, named after the file (NX-NAME-03).
-import { defineUseCase, err, ok, forbidden, notFound, type Forbidden, type NotFound, type Requester } from '@conventions/nextjs/core';
+import { defineUseCase, err, ok, forbidden, notFound, type Forbidden, type NotFound, type TenantRequester } from '@conventions/nextjs/core';
 import type { PayOrderInput } from '../contracts';
 import { applyPayment } from '../domain/order';
 import type { OrderError } from '../domain/errors';
 import type { Clock, EventCollector, OrderRepository, UnitOfWork } from './ports';
 
 export type PayOrderDeps = {
-  requester: Requester;
+  requester: TenantRequester;
   orders: OrderRepository;
   clock: Clock;
   events: EventCollector;

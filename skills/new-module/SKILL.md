@@ -30,7 +30,9 @@ Rich (state transitions, calculations, two use cases on one entity): everything 
   browser-safe components. Never `infra/`, `queries.ts` or `commands.ts`.
 - `contracts.ts`: `export const <useCase>InputSchema = z.object(…)`,
   `export type <UseCase>Input = z.infer<typeof <useCase>InputSchema>`; DTOs end in `Dto`.
-- `application/ports.ts`: `<Noun>Repository` with tenant-owned methods taking `TenantId` first;
+- `application/ports.ts`: `<Noun>Repository` whose methods on owned data take the owner's id first,
+  per the header's `isolation`: `tenantId: TenantId` (tenant) or `ownerId: OwnerId` (owner); none
+  under `isolation: none`;
   `Clock`, `EventCollector`, `UnitOfWork` as needed.
 - `application/<verb>-<noun>.ts`:
   ```ts
@@ -44,7 +46,8 @@ Rich (state transitions, calculations, two use cases on one entity): everything 
 - `infra/<noun>.repository.ts`: `export const <noun>Repository = defineRepository<<Noun>Repository>({ … })`
   using `db()` from `@/lib/db/client`; a constraint violation becomes
   `throw new ConstraintViolation(violatedConstraint(error), '<nouns>')`.
-- `infra/<noun>.repository.integration.test.ts`: `describeIntegration('<noun>Repository', () => { assertTenantIsolation({ … }); })`.
+- `infra/<noun>.repository.integration.test.ts`: `describeIntegration('<noun>Repository', () => { assertIsolation({ ownerA, ownerB, arrange, read, change }); })`
+  for owned data (`isolation: tenant` or `owner`).
 - `infra/<noun>.mapper.ts`: `type <Noun>Row = InferSelectModel<typeof <nouns>>`, `toDomain`, `toRow`.
 - `commands.ts`: `export async function <verbNoun>(requester: Requester, input: <VerbNoun>Input)` wiring
   the use case to the repository, unit of work, clock and event collector; catches

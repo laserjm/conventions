@@ -8,12 +8,12 @@ rules:
     checklist: true
   - id: NX-SB-02
     severity: guidance
-    rule: The app connects with the ORM as the database owner through the transaction pooler. Row policies therefore do **not** apply to app queries; tenant isolation is enforced in the repository (NX-AUTH-03). Row policies guard only the Data API (NX-AUTH-04).
+    rule: The app connects with the ORM as the database owner through the transaction pooler. Row policies therefore do **not** apply to app queries; isolation between owners is enforced in the repository (NX-AUTH-03). Row policies guard only the Data API (NX-AUTH-04).
     mechanism: agent
     checklist: true
   - id: NX-SB-03
     severity: guidance
-    rule: "`Requester` is built from `supabase.auth.getUser()` in `lib/safe-action.ts` and `lib/auth/requester.ts`. `tenantId` is the user's id until shared workspaces exist, when it becomes the workspace id; `roles` is empty until roles exist."
+    rule: "`Requester` is built from the session in `lib/auth/requester.ts`, which `lib/safe-action.ts` calls. Under `isolation: owner`, `ownerId` is the user's id. Under `isolation: tenant`, `tenantId` is the workspace the user acts in (the user's id while each user is their own tenant). Shared workspaces in an `owner` app change the header to `isolation: tenant`, recorded in ARCHITECTURE.md. `roles` is empty until roles exist."
     mechanism: agent
     checklist: true
   - id: NX-SB-04
