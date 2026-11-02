@@ -20,8 +20,9 @@ jobs:
           for p in packages/nextjs packages/cli; do
             test "$(node -p "require('./$p/package.json').version")" = "$v" || { echo "$p is not at $v"; exit 1; }
           done
-      - name: pack both packages (projects install the two tarballs in one command)
+      - name: pack both packages (the nextjs tarball names the CLI tarball of this release)
         run: |
+          node scripts/pin-release-deps.mjs "${GITHUB_REF_NAME#v}"
           mkdir -p /tmp/packs
           pnpm --filter @conventions/nextjs pack --pack-destination /tmp/packs
           pnpm --filter @conventions/cli pack --pack-destination /tmp/packs

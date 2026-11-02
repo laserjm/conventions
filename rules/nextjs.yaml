@@ -1,6 +1,6 @@
 # Generated from catalog/nextjs/*.yaml by scripts/build-catalog.mjs — do not edit by hand.
 profile: nextjs
-version: 0.2.2
+version: 0.2.3
 rulesets: [auth, cache, cross-module, database, drizzle, errors, layers, migration, naming, next-safe-action, rich, structure, supabase, testing, types, zod]
 rules:
   - id: NX-AUTH-01
@@ -58,6 +58,14 @@ rules:
     tool: "nx-auth-07-roles-in-components"
     doc: docs/nextjs/architecture.md#authorization-tenancy
     rule: "Components never decide permissions; they receive booleans like `can.editOrder` computed server-side in `queries.ts`."
+  - id: NX-AUTH-08
+    group: auth
+    table: auth
+    severity: guidance
+    mechanism: agent
+    checklist: true
+    doc: docs/nextjs/architecture.md#authorization-tenancy
+    rule: "A system read that has to find its tenant before it can name one (a queue claim that takes the next job of any tenant, a sweep of expired jobs, the owner of a row found by its ID) is the one repository method that names no tenant. It returns the tenant with every row, is reached only from system callers (never an action or a page), and every read or write that follows names the tenant it returned (NX-AUTH-06). A category A write fenced by a token the claim handed out (attempt number, lease) counts as following the claim. The integration test proves the follow-up methods change nothing when given another tenant's id."
   - id: NX-CACHE-01
     group: cache
     table: cache
@@ -160,7 +168,7 @@ rules:
     mechanism: agent
     checklist: true
     doc: docs/nextjs/architecture.md#database
-    rule: "Not a valid reason for database code: \"easier in SQL\", \"the platform makes it convenient\", \"to avoid N+1\" (use a join or CTE), \"to enforce permissions\"."
+    rule: "Not a valid reason for database code: \"easier in SQL\", \"the platform makes it convenient\", \"to avoid N+1\" (use a join or CTE; a recursive one is a raw statement in its repository, NX-DRZ-08), \"to enforce permissions\"."
   - id: NX-DB-05
     group: database
     table: database
@@ -264,7 +272,7 @@ rules:
     mechanism: ast-grep
     tool: "nx-drz-08-no-raw-sql-in-repository"
     doc: docs/nextjs/bindings/drizzle.md#rules
-    rule: "A repository runs no raw SQL except to call a category A/B function; the call is wrapped by exactly one method and its result parsed with a contract schema."
+    rule: "A repository runs a raw statement (`execute(sql`…`)`) only to call a category A/B function, to call a category C helper when a command needs its answer before it writes (`select public.is_iana_timezone($1)`), or for a query the query builder cannot express, such as a recursive CTE (`with recursive`). Each statement is wrapped by exactly one repository method and its result parsed with a contract schema; functions are called schema-qualified. A `sql` fragment passed to the builder (`.set({ archivedAt: sql`now()` })`) is not a raw statement."
   - id: NX-ERR-01
     group: errors
     table: errors
@@ -288,7 +296,7 @@ rules:
     mechanism: ast-grep
     tool: "nx-err-03-standard-errors-from-core"
     doc: docs/nextjs/architecture.md#errors
-    rule: "`SignedOut`, `Forbidden`, `NotFound`, `Conflict`, `Unexpected` come from `@conventions/nextjs/core`, never redefined per module."
+    rule: "`ValidationFailed`, `SignedOut`, `Forbidden`, `NotFound`, `Conflict` (a constraint refused the write), `RevisionConflict` (an edit started from a revision that is no longer current) and `Unexpected` come from `@conventions/nextjs/core`, never redefined per module."
   - id: NX-ERR-04
     group: errors
     table: errors
@@ -450,7 +458,7 @@ rules:
     tool: "nx-err-03-standard-errors-from-core"
     reportedAs: NX-ERR-03
     doc: docs/nextjs/naming.md#application-layer-application
-    rule: "`NotFound`, `Forbidden`, `SignedOut`, `Conflict`, `Unexpected` come from `@conventions/nextjs/core`; the domain does not know about requesters or lookups."
+    rule: "`NotFound`, `Forbidden`, `SignedOut`, `Conflict`, `RevisionConflict`, `Unexpected` come from `@conventions/nextjs/core`; the domain does not know about requesters or lookups."
   - id: NX-NAME-34
     group: naming
     table: naming-application
@@ -738,7 +746,7 @@ rules:
     mechanism: check
     tool: "rich-shape"
     doc: docs/nextjs/architecture.md#when-to-go-rich-vs-anemic
-    rule: "Anemic module shape: `contracts.ts` + `queries.ts` + `actions.ts` + `index.ts` + `server.ts` + `infra/<noun>.repository.ts`. No `domain/`, no `application/`, no `commands.ts` until promotion."
+    rule: "Anemic module shape: `contracts.ts` + `queries.ts` + `actions.ts` + `index.ts` + `server.ts` + `infra/<noun>.repository.ts`, no `domain/` and no `application/` until promotion. It may have a `commands.ts` for writes other modules' use cases call (NX-XMOD-01), each one repository call. A module whose `domain/` other modules judge with, and which has no `actions.ts` or `commands.ts`, is a read-only domain module and needs no `application/`."
   - id: NX-RICH-02
     group: rich
     table: rich
@@ -858,7 +866,7 @@ rules:
     mechanism: check
     tool: "inventory"
     doc: docs/nextjs/bindings/supabase.md#rules
-    rule: "Queue claims (`claim_*`, `finalize_*`) are category A; `SECURITY DEFINER` helpers used by policies or `CHECK` constraints (`is_iana_timezone`) are category C; read-model functions for the Data API are category B. All have inventory rows."
+    rule: "Queue claims (`claim_*`, `finalize_*`) are category A; `SECURITY DEFINER` helpers used by policies or `CHECK` constraints (`is_iana_timezone`) are category C, called from app code only through one repository method when a command needs the answer before it writes (NX-DRZ-08); read-model functions for the Data API are category B. All have inventory rows."
   - id: NX-SB-06
     group: supabase
     table: supabase
@@ -907,7 +915,7 @@ rules:
     mechanism: ast-grep
     tool: "nx-test-03-integration-tests-skip-loudly"
     doc: docs/nextjs/testing.md#
-    rule: "Integration tests run in the normal test command and use `describeIntegration()` from `@conventions/nextjs/testing`, which skips with a message when no local database stack is running. They never silently pass."
+    rule: "Integration tests run in the normal test command and use `describeIntegration()` from `@conventions/nextjs/testing`, which skips with a message when no local database stack is running. They never silently pass. A project that finds its stack its own way passes that check: `describeIntegration(name, fn, { when: localStack })`."
   - id: NX-TEST-04
     group: testing
     table: testing
@@ -962,7 +970,7 @@ rules:
     mechanism: eslint
     tool: "nx-ts/consistent-type-assertions"
     doc: docs/nextjs/architecture.md#type-safety-chain
-    rule: "No `as` cast across a layer boundary. If the types don't line up, add a mapper in `infra/` or fix the schema. `as` is allowed only in `*.mapper.ts`, `lib/db/`, brand constructors (`domain/*-id.ts`) and `as const`."
+    rule: "No `as` cast across a layer boundary. If the types don't line up, add a mapper in `infra/` or fix the schema. `as` is allowed only in `*.mapper.ts`, `lib/db/`, brand constructors (`domain/*-id.ts`) and `as const`. The mapper exemption is for shapes the types cannot express (a brand, a library's loose types), not for narrowing a value the code could check; a constrained `text` column is parsed (NX-ZOD-06)."
   - id: NX-TYPE-03
     group: types
     table: types
@@ -1035,3 +1043,11 @@ rules:
     tool: "nx-zod-05-env-outside-env-readers"
     doc: docs/nextjs/bindings/zod.md#
     rule: "`lib/env.ts` uses `@t3-oss/env-nextjs` or plain `z.object(...).parse(process.env)`; either way it is the only reader of `process.env` besides `lib/db/client.ts`. Tooling outside the app (`*.config.*`, `scripts/`) reads its own."
+  - id: NX-ZOD-06
+    group: zod
+    table: zod
+    severity: guidance
+    mechanism: agent
+    checklist: true
+    doc: docs/nextjs/bindings/zod.md#
+    rule: "A `text` column a check constraint holds to a set of values (status, kind, currency) is narrowed in `infra/` by parsing with the domain's `as const` list through `z.enum(LIST)`, never by a cast, not even in a `*.mapper.ts`. A row that breaks its constraint then fails loudly instead of a wrong value travelling on (NX-TYPE-02)."

@@ -10,6 +10,16 @@ snapshots:
       style: secondary
       start: 12
       end: 20
+  "export type RevisionConflict = { readonly _tag: 'RevisionConflict' };":
+    labels:
+    - source: "type RevisionConflict = { readonly _tag: 'RevisionConflict' };"
+      style: primary
+      start: 7
+      end: 69
+    - source: RevisionConflict
+      style: secondary
+      start: 12
+      end: 28
   "interface Forbidden { _tag: 'Forbidden' }":
     labels:
     - source: "interface Forbidden { _tag: 'Forbidden' }"

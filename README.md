@@ -25,24 +25,26 @@ tool, not a promise; the catalogue build fails when a rule claims one it cannot 
 
 | Mechanism | What it is | Rules (nextjs) |
 | --- | --- | --- |
-| `eslint` | boundaries (layers, module entry points, vendor packages per layer), typescript-eslint, three custom rules | 27 |
-| `ast-grep` | syntax rules in YAML with their own test cases: suffixes, `server-only`, no `throw` in pure layers, … | 26 |
+| `eslint` | boundaries (layers, module entry points, vendor packages per layer), typescript-eslint, three custom rules | 23 |
+| `ast-grep` | syntax rules in YAML with their own test cases: suffixes, `server-only`, no `throw` in pure layers, … | 30 |
 | `ls-lint` | file and folder names, module-root layout | 4 |
 | `tsc` | shapes the core types refuse: `TenantId`, `defineUseCase`, `systemRequester` | 5 |
 | `check` | `conventions check`: modules complete, tests next to use cases and repositories, header version, deviations, database inventory | 13 |
 | `ci` | a job in the project's workflow: schema drift, pgTAP | 3 |
-| `agent` | judgement: the conventions skill and the reviewer, with a generated checklist | 52 |
+| `agent` | judgement: the conventions skill and the reviewer, with a generated checklist | 54 |
 
 `conventions lint` runs ESLint, ast-grep and ls-lint in one pass and prints every finding with
-its rule id. `conventions explain NX-…` prints the rule. The violations fixture proves every
+its rule id; findings of the project's other ESLint plugins (framework presets) come out as
+`ESLINT`, so it is the one lint command a project needs, Deviations rows included. `conventions explain NX-…` prints the rule. The violations fixture proves every
 lint-enforced rule fires, and the reference module proves the rules are satisfiable.
 
 ## Use in a project
 
 ```sh
-# from the release tarballs (install both in one command, the profile depends on the cli)
-V=0.2.2; R=https://github.com/laserjm/conventions/releases/download/v$V
-npm i -D -E $R/conventions-nextjs-$V.tgz $R/conventions-cli-$V.tgz
+# from the release tarballs; app code imports the profile's runtime core, so it is a dependency
+V=0.2.3; R=https://github.com/laserjm/conventions/releases/download/v$V
+npm i -E $R/conventions-nextjs-$V.tgz
+npm i -D -E $R/conventions-cli-$V.tgz
 npx conventions init --profile nextjs             # ARCHITECTURE.md, eslint.config.mjs, CI, CLAUDE.md, AGENTS.md
 npx conventions lint && npx conventions check
 ```
@@ -51,7 +53,7 @@ npx conventions lint && npx conventions check
 project configures the conventions:
 
 ```yaml
-conventions: 0.2.2
+conventions: 0.2.3
 profile: nextjs
 bindings: [drizzle, supabase, zod, next-safe-action]
 app-root: .                      # or src

@@ -23,7 +23,7 @@ rules:
     tool: inventory
   - id: NX-SB-05
     severity: error
-    rule: Queue claims (`claim_*`, `finalize_*`) are category A; `SECURITY DEFINER` helpers used by policies or `CHECK` constraints (`is_iana_timezone`) are category C; read-model functions for the Data API are category B. All have inventory rows.
+    rule: Queue claims (`claim_*`, `finalize_*`) are category A; `SECURITY DEFINER` helpers used by policies or `CHECK` constraints (`is_iana_timezone`) are category C, called from app code only through one repository method when a command needs the answer before it writes (NX-DRZ-08); read-model functions for the Data API are category B. All have inventory rows.
     mechanism: check
     tool: inventory
   - id: NX-SB-06

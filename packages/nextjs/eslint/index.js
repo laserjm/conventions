@@ -4,7 +4,7 @@ import { createConfig as build, RULE_GROUPS, LEGACY_EXEMPT } from './config.js';
 export { rules, RULE_GROUPS, LEGACY_EXEMPT };
 
 const plugin = {
-  meta: { name: '@conventions/nextjs', version: '0.2.2' },
+  meta: { name: '@conventions/nextjs', version: '0.2.3' },
   rules,
   configs: {},
 };

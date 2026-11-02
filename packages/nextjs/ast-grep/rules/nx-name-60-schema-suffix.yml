@@ -2,6 +2,7 @@ id: nx-name-60-schema-suffix
 language: typescript
 severity: error
 message: "NX-NAME-60: '$NAME' is a contract schema; name it camelCase + 'Schema' (NX-ZOD-02)."
+note: "Only a value that is itself a schema is reported: a chain rooted at `z` (`z.object(…)`, `z.string().min(1)`) or derived from another schema (`baseSchema.extend(…)`). A shape spread into schemas, a record of schemas or an action built with an inline schema is not a schema."
 rule:
   kind: variable_declarator
   all:
@@ -13,9 +14,8 @@ rule:
             - kind: program
             - { kind: export_statement, inside: { kind: program } }
     - has:
-        stopBy: end
-        kind: member_expression
-        has: { field: object, pattern: z }
+        field: value
+        regex: '^(z\s*\.|[A-Za-z_$][\w$]*Schema\s*\.\s*(extend|pick|omit|partial|required|merge|and|or|array|nullable|nullish|optional|refine|superRefine|transform|pipe|brand|default|catch)\b)'
     - not:
         has:
           field: value

@@ -1,5 +1,54 @@
 # Changelog
 
+## 0.2.3 — rule text and tooling from the screenerhub2 rollout
+
+Errors and database
+
+- `RevisionConflict` and `revisionConflict()` in `@conventions/nextjs/core`, next to `Conflict`:
+  an edit started from a revision that is no longer current. NX-ERR-03 and NX-NAME-33 name it,
+  and the lint rule reports a module that redefines it (#6).
+- NX-DRZ-08 rewritten (#9, #12, #17). A repository's raw statement (`execute(sql`…`)`) may call a
+  category A/B function, call a category C helper a command needs before it writes, or run a query
+  the builder can't express, such as `with recursive`; each in one method, its result parsed.
+  NX-DB-04's "use a join or CTE" and NX-SB-05 point to it. Category C's wrapper is "none, or one
+  repository method when a command asks it ahead of a write". The lint rule reports only raw
+  statements: a `sql` fragment handed to the builder, a schema-qualified function call and
+  `with recursive` are not reported. The drizzle binding shows the three cases.
+- NX-AUTH-08 (guidance): a system read that has to find its tenant (a queue claim, a sweep, the
+  owner of a row found by ID) is the one method that names no tenant. It returns the tenant with
+  every row, only system callers reach it, and what follows names that tenant. A category A
+  write fenced by the claim's token counts as following it (#13).
+- NX-ZOD-06 (guidance): a constrained `text` column is narrowed by parsing with `z.enum(LIST)`,
+  never by a cast. NX-TYPE-02's mapper exemption is for shapes the types can't express (#3).
+
+Rules that misfired
+
+- NX-NAME-60 reports only a value that is a schema: a chain rooted at `z`, or derived from
+  another schema (`baseSchema.extend(…)`). A shape spread into schemas, a record of schemas or an
+  action built with an inline schema is no longer reported (#21).
+- NX-RICH-01: a module whose `domain/` other modules judge with, and which has no
+  `actions.ts` or `commands.ts`, needs no `application/`. An anemic module may have a
+  `commands.ts` for writes other modules' use cases call, each one repository call. The check
+  reports only `domain/` with writes and no `application/` (#22).
+
+Tooling
+
+- `describeIntegration(name, fn, { when })` takes the project's own stack check, for a project
+  that picks a worktree's stack or sets its address and keys (NX-TEST-03, #20).
+- `conventions lint` keeps the findings of the project's other ESLint plugins (framework presets,
+  react-hooks) as `ESLINT <rule>: …`. It is now the one lint command a project needs: Deviations
+  rows and legacy exemptions apply, and nothing `eslint .` reports is lost (#23).
+- The release's `@conventions/nextjs` tarball depends on the CLI tarball of the same release, so
+  it installs by itself (#19).
+
+Upgrading from 0.2.2: install both 0.2.3 tarballs, `npx conventions sync`. Then:
+- delete the module copies of `RevisionConflict` and import it from `@conventions/nextjs/core`;
+- point `npm run lint` at `conventions lint` alone, and drop the ESLint override blocks that
+  repeated Deviations rows or legacy exemptions for `eslint .`;
+- a project with its own stack check can move its integration tests to
+  `describeIntegration(name, fn, { when: localStack })`;
+- remove Deviations rows for NX-NAME-60 and NX-RICH-01 that the rules no longer report.
+
 ## 0.2.2 — what the screenerhub2 rollout needs
 
 - Install: the `drizzle-orm` peer range is `>=0.40.0 || >=1.0.0-rc.0`, so the profile installs

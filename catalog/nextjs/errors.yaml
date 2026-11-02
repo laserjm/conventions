@@ -13,7 +13,7 @@ rules:
     tool: nextjs/tag-matches-type-name
   - id: NX-ERR-03
     severity: error
-    rule: "`SignedOut`, `Forbidden`, `NotFound`, `Conflict`, `Unexpected` come from `@conventions/nextjs/core`, never redefined per module."
+    rule: "`ValidationFailed`, `SignedOut`, `Forbidden`, `NotFound`, `Conflict` (a constraint refused the write), `RevisionConflict` (an edit started from a revision that is no longer current) and `Unexpected` come from `@conventions/nextjs/core`, never redefined per module."
     mechanism: ast-grep
     tool: nx-err-03-standard-errors-from-core
   - id: NX-ERR-04

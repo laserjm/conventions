@@ -16,7 +16,7 @@ rules:
     tool: defineUseCase
   - id: NX-NAME-33
     severity: error
-    rule: "`NotFound`, `Forbidden`, `SignedOut`, `Conflict`, `Unexpected` come from `@conventions/nextjs/core`; the domain does not know about requesters or lookups."
+    rule: "`NotFound`, `Forbidden`, `SignedOut`, `Conflict`, `RevisionConflict`, `Unexpected` come from `@conventions/nextjs/core`; the domain does not know about requesters or lookups."
     mechanism: ast-grep
     tool: nx-err-03-standard-errors-from-core
     reportedAs: NX-ERR-03

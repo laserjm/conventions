@@ -35,3 +35,8 @@ rules:
     rule: Components never decide permissions; they receive booleans like `can.editOrder` computed server-side in `queries.ts`.
     mechanism: ast-grep
     tool: nx-auth-07-roles-in-components
+  - id: NX-AUTH-08
+    severity: guidance
+    rule: "A system read that has to find its tenant before it can name one (a queue claim that takes the next job of any tenant, a sweep of expired jobs, the owner of a row found by its ID) is the one repository method that names no tenant. It returns the tenant with every row, is reached only from system callers (never an action or a page), and every read or write that follows names the tenant it returned (NX-AUTH-06). A category A write fenced by a token the claim handed out (attempt number, lease) counts as following the claim. The integration test proves the follow-up methods change nothing when given another tenant's id."
+    mechanism: agent
+    checklist: true

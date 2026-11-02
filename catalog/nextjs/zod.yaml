@@ -27,3 +27,8 @@ rules:
     rule: "`lib/env.ts` uses `@t3-oss/env-nextjs` or plain `z.object(...).parse(process.env)`; either way it is the only reader of `process.env` besides `lib/db/client.ts`. Tooling outside the app (`*.config.*`, `scripts/`) reads its own."
     mechanism: ast-grep
     tool: nx-zod-05-env-outside-env-readers
+  - id: NX-ZOD-06
+    severity: guidance
+    rule: "A `text` column a check constraint holds to a set of values (status, kind, currency) is narrowed in `infra/` by parsing with the domain's `as const` list through `z.enum(LIST)`, never by a cast, not even in a `*.mapper.ts`. A row that breaks its constraint then fails loudly instead of a wrong value travelling on (NX-TYPE-02)."
+    mechanism: agent
+    checklist: true

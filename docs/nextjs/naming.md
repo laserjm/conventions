@@ -96,7 +96,7 @@ document.
 | NX-NAME-30 | guidance | Command verbs: `create`, `update`, `delete`, `cancel`, `approve`, `submit`, `assign`, `archive`, or the business verb (`shipOrder`). | agent |
 | NX-NAME-31 | guidance | Query verbs: `get` (one, errors when missing), `find` (one, may be null), `list`, `search`, `count`, `exists`. Repositories use the same vocabulary plus `save` (insert or update); no `create`/`update` split. | agent |
 | NX-NAME-32 | error | Dependencies are one object typed `<UseCase>Deps`, never positional (`defineUseCase` admits no other shape). | tsc:defineUseCase |
-| NX-NAME-33 | error | `NotFound`, `Forbidden`, `SignedOut`, `Conflict`, `Unexpected` come from `@conventions/nextjs/core`; the domain does not know about requesters or lookups. | ast-grep:nx-err-03-standard-errors-from-core |
+| NX-NAME-33 | error | `NotFound`, `Forbidden`, `SignedOut`, `Conflict`, `RevisionConflict`, `Unexpected` come from `@conventions/nextjs/core`; the domain does not know about requesters or lookups. | ast-grep:nx-err-03-standard-errors-from-core |
 | NX-NAME-34 | error | Tenant-owned repository methods take the tenant id first, typed `TenantId`: `findById(tenantId, id)`. Shared-data methods take no tenant id. | tsc:TenantId |
 <!-- /rules -->
 

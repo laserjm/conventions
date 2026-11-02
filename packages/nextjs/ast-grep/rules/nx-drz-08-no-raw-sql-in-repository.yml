@@ -1,7 +1,17 @@
 id: nx-drz-08-no-raw-sql-in-repository
 language: typescript
 severity: warning
-message: "NX-DRZ-08: a repository runs no raw SQL except to call a category A/B function, wrapped by exactly one method and parsed with a contract schema."
+message: "NX-DRZ-08: a raw statement in a repository calls a schema-qualified category A/B function (or a category C helper a command asks before it writes), or is a query the builder can't express such as `with recursive`; one method per statement, its result parsed with a contract schema."
+note: "A `sql` fragment passed to the query builder (`.set({ at: sql`now()` })`) is not a raw statement and is not reported."
 files: ["**/modules/*/infra/*.repository.ts"]
 rule:
-  pattern: sql`$$$QUERY`
+  any:
+    - pattern: $DB.$EXEC(sql`$$$Q`)
+    - pattern: $DB.$EXEC(sql.raw($$$Q))
+  not:
+    has:
+      stopBy: end
+      kind: template_string
+      regex: '(?i)with\s+recursive|\b[a-z_][a-z0-9_]*\.[a-z_][a-z0-9_]*\s*\('
+constraints:
+  EXEC: { regex: '^(execute|run|all|get|values)$' }

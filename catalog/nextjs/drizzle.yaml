@@ -39,6 +39,6 @@ rules:
     mechanism: agent
   - id: NX-DRZ-08
     severity: warn
-    rule: A repository runs no raw SQL except to call a category A/B function; the call is wrapped by exactly one method and its result parsed with a contract schema.
+    rule: "A repository runs a raw statement (`execute(sql`…`)`) only to call a category A/B function, to call a category C helper when a command needs its answer before it writes (`select public.is_iana_timezone($1)`), or for a query the query builder cannot express, such as a recursive CTE (`with recursive`). Each statement is wrapped by exactly one repository method and its result parsed with a contract schema; functions are called schema-qualified. A `sql` fragment passed to the builder (`.set({ archivedAt: sql`now()` })`) is not a raw statement."
     mechanism: ast-grep
     tool: nx-drz-08-no-raw-sql-in-repository
