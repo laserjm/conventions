@@ -3,7 +3,7 @@ group: rich
 rules:
   - id: NX-RICH-01
     severity: error
-    rule: "Anemic module shape: `contracts.ts` + `queries.ts` + `actions.ts` + `index.ts` + `server.ts` + `infra/<noun>.repository.ts`. No `domain/`, no `application/`, no `commands.ts` until promotion."
+    rule: "Anemic module shape: `contracts.ts` + `queries.ts` + `actions.ts` + `index.ts` + `server.ts` + `infra/<noun>.repository.ts`, no `domain/` and no `application/` until promotion. It may have a `commands.ts` for writes other modules' use cases call (NX-XMOD-01), each one repository call. A module whose `domain/` other modules judge with, and which has no `actions.ts` or `commands.ts`, is a read-only domain module and needs no `application/`."
     mechanism: check
     tool: rich-shape
   - id: NX-RICH-02

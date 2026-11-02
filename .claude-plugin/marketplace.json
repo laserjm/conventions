@@ -8,7 +8,7 @@
       "name": "conventions",
       "source": ".",
       "description": "Architecture conventions (profile nextjs): skills and hooks that use the installed catalogue and the conventions CLI.",
-      "version": "0.2.2"
+      "version": "0.2.3"
     }
   ]
 }

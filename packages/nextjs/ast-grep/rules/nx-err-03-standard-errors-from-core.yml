@@ -8,4 +8,4 @@ rule:
     - kind: interface_declaration
   has: { field: name, pattern: $NAME }
 constraints:
-  NAME: { regex: '^(ValidationFailed|SignedOut|Forbidden|NotFound|Conflict|Unexpected)$' }
+  NAME: { regex: '^(ValidationFailed|SignedOut|Forbidden|NotFound|Conflict|RevisionConflict|Unexpected)$' }

@@ -1,8 +1,20 @@
 id: nx-drz-08-no-raw-sql-in-repository
 snapshots:
+  await tx.execute(sql.raw('delete from orders'));:
+    labels:
+    - source: tx.execute(sql.raw('delete from orders'))
+      style: primary
+      start: 6
+      end: 47
   const rows = await db().execute(sql`select * from orders`);:
     labels:
-    - source: sql`select * from orders`
+    - source: db().execute(sql`select * from orders`)
       style: primary
-      start: 32
-      end: 57
+      start: 19
+      end: 58
+  "const rows = await tx.execute(sql`select count(*) from orders where tenant_id = ${tenantId}`);":
+    labels:
+    - source: tx.execute(sql`select count(*) from orders where tenant_id = ${tenantId}`)
+      style: primary
+      start: 19
+      end: 93

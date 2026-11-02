@@ -16,9 +16,10 @@ export async function modules(project) {
     }
     if (adopted(project, 'NX-RICH-01')) {
       const has = async (p) => (await files(project.appRoot, [`${dir}/${p}`])).length > 0;
-      const domain = await has('domain/**'), application = await has('application/**'), commands = await has('commands.ts');
-      if (domain && !application) out.push(finding(project, 'NX-RICH-01', `module '${name}' has domain/ but no application/: a rich module has use cases that call its domain`, { file: dir, check: 'rich-shape' }));
-      if (commands && !application) out.push(finding(project, 'NX-RICH-01', `module '${name}' has commands.ts but no application/: commands wire use cases`, { file: dir, check: 'rich-shape' }));
+      const domain = await has('domain/**'), application = await has('application/**');
+      // a domain other modules judge with, and no writes of its own, needs no use case; an anemic module's commands.ts may wrap repository calls
+      const writes = (await has('actions.ts')) || (await has('commands.ts'));
+      if (domain && !application && writes) out.push(finding(project, 'NX-RICH-01', `module '${name}' has domain/ and writes (actions.ts or commands.ts) but no application/: a rich module writes through use cases that call its domain`, { file: dir, check: 'rich-shape' }));
     }
   }
   return out;

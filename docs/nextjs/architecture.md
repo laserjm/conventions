@@ -166,6 +166,11 @@ Authentication (who is this?) happens once, in the action client's middleware an
 top of `queries.ts`, producing a `Requester` (`{ userId, tenantId, roles }`). Authorization
 (may they do this?) is a business decision and lives in the use case.
 
+System work has no session: it names the tenant it works for (NX-AUTH-06). A worker that
+serves every tenant learns whose job it holds from the claim itself, so the claim, and a
+read like it, is the one method that names no tenant, and returns the tenant it found
+(NX-AUTH-08).
+
 <!-- rules: auth -->
 | ID | Sev | Rule | Enforcement |
 | --- | --- | --- | --- |
@@ -176,6 +181,7 @@ top of `queries.ts`, producing a `Requester` (`{ userId, tenantId, roles }`). Au
 | NX-AUTH-05 | error | Shared data (registries, templates, lookups) is read without a requester; its repository methods take no tenant id. Tenant-owned methods take a `TenantId` first, so the port makes the distinction visible and the compiler refuses a plain string. | tsc:TenantId |
 | NX-AUTH-06 | error | System callers (scheduled runs, workers, delivery jobs) use the same repositories as users and name their tenant explicitly through `systemRequester(tenantId, name)`. There is no bypass path. | tsc:systemRequester |
 | NX-AUTH-07 | warn | Components never decide permissions; they receive booleans like `can.editOrder` computed server-side in `queries.ts`. | ast-grep:nx-auth-07-roles-in-components |
+| NX-AUTH-08 | guidance | A system read that has to find its tenant before it can name one (a queue claim that takes the next job of any tenant, a sweep of expired jobs, the owner of a row found by its ID) is the one repository method that names no tenant. It returns the tenant with every row, is reached only from system callers (never an action or a page), and every read or write that follows names the tenant it returned (NX-AUTH-06). A category A write fenced by a token the claim handed out (attempt number, lease) counts as following the claim. The integration test proves the follow-up methods change nothing when given another tenant's id. | agent |
 <!-- /rules -->
 
 ## Type safety chain
@@ -196,7 +202,7 @@ Every shape has exactly one source of truth; everything else is inferred.
 | ID | Sev | Rule | Enforcement |
 | --- | --- | --- | --- |
 | NX-TYPE-01 | guidance | One source of truth per shape (table above). If you write the same type twice by hand, one of them is already wrong. | agent |
-| NX-TYPE-02 | error | No `as` cast across a layer boundary. If the types don't line up, add a mapper in `infra/` or fix the schema. `as` is allowed only in `*.mapper.ts`, `lib/db/`, brand constructors (`domain/*-id.ts`) and `as const`. | eslint:nx-ts/consistent-type-assertions |
+| NX-TYPE-02 | error | No `as` cast across a layer boundary. If the types don't line up, add a mapper in `infra/` or fix the schema. `as` is allowed only in `*.mapper.ts`, `lib/db/`, brand constructors (`domain/*-id.ts`) and `as const`. The mapper exemption is for shapes the types cannot express (a brand, a library's loose types), not for narrowing a value the code could check; a constrained `text` column is parsed (NX-ZOD-06). | eslint:nx-ts/consistent-type-assertions |
 | NX-TYPE-03 | guidance | Validate at the edge once: action input, webhook payload, env, external API responses, database function results. Inside the module, trust the types. | agent |
 | NX-TYPE-04 | guidance | Forms use the same contract schema as the action. Client and server disagree on nothing. | agent |
 | NX-TYPE-05 | guidance | Ids and money are branded primitives (`type OrderId = string & { __brand: 'OrderId' }`). | agent |
@@ -216,6 +222,7 @@ domain errors on top. Every error is a tagged object; the discriminant is `_tag`
 | `Forbidden` | identity may not do this | use case / requester check | `serverError` | `forbidden()` |
 | `NotFound` | aggregate missing | use case / query | `serverError` | `notFound()` → 404 |
 | `Conflict` | constraint refused the write | repository (NX-DB-05) | `serverError` carrying `_tag` | inline |
+| `RevisionConflict` | the edit started from a revision that is no longer current | use case comparing the expected revision | `serverError` carrying `_tag` | reload, keep the input |
 | domain error | invariant blocked the action | `domain/` via `Result` | `serverError` carrying `_tag` | inline |
 | `Unexpected` | something threw | anything | generic `serverError` with trace id | `error.tsx` → 500 |
 
@@ -224,7 +231,7 @@ domain errors on top. Every error is a tagged object; the discriminant is `_tag`
 | --- | --- | --- | --- |
 | NX-ERR-01 | error | Use cases return `Result`, never throw: `defineUseCase` types the return as `Promise<Result<Output, Error>>`. A use case stops on an impossible state with `bug(message)` from `@conventions/nextjs/core`, which the action client reports as `Unexpected`; it never adds a tag no caller can handle. Actions translate `Result` into the action client's result shape. | tsc:defineUseCase |
 | NX-ERR-02 | error | Errors are tagged unions; `_tag` equals the TypeScript type name. The action switches exhaustively. | eslint:nextjs/tag-matches-type-name |
-| NX-ERR-03 | error | `SignedOut`, `Forbidden`, `NotFound`, `Conflict`, `Unexpected` come from `@conventions/nextjs/core`, never redefined per module. | ast-grep:nx-err-03-standard-errors-from-core |
+| NX-ERR-03 | error | `ValidationFailed`, `SignedOut`, `Forbidden`, `NotFound`, `Conflict` (a constraint refused the write), `RevisionConflict` (an edit started from a revision that is no longer current) and `Unexpected` come from `@conventions/nextjs/core`, never redefined per module. | ast-grep:nx-err-03-standard-errors-from-core |
 | NX-ERR-04 | warn | The raw `_tag` never appears in the UI; the client maps tags to copy with an exhaustive map. | ast-grep:nx-err-04-tag-in-jsx |
 <!-- /rules -->
 
@@ -261,7 +268,7 @@ database inventory (`docs/architecture/db-inventory.md`, written by `conventions
 | --- | --- | --- |
 | A — atomic claim/lock | several statements must be one transaction and app round-trips would break the latency budget or create a race (inventory reservation, counters, queue claim) | one repository method, result validated with a contract schema |
 | B — read model | a view or function serves a read that would otherwise need many queries | one repository method, result validated |
-| C — constraint/policy helper | a pure function used by a `CHECK` constraint or row policy | none; no business decision inside |
+| C — constraint/policy helper | a pure function used by a `CHECK` constraint or row policy | none, or one repository method when a command asks it ahead of a write (NX-DRZ-08); no business decision inside |
 | D — platform lifecycle hook | the platform forces a hook (user provisioning on sign-up) | inventory row with justification |
 | E — pipeline | data pipelines outside the app's modules | inventory row; not callable from modules |
 | X — legacy, to be ported | brownfield only: the function still holds business rules and its callers are legacy code (NX-LAYER-10, NX-MIG-01) | none yet; its row names the step that ports it, and it leaves with its last legacy caller |
@@ -272,7 +279,7 @@ database inventory (`docs/architecture/db-inventory.md`, written by `conventions
 | NX-DB-01 | error | One schema source of truth, declared in `ARCHITECTURE.md`: **code-first** (ORM definitions generate migrations) or **migrations-first** (migrations are hand-written, ORM definitions are generated by introspection). Generated files are never edited; CI fails on drift. | ci:schema-drift |
 | NX-DB-02 | error | A database function or trigger is allowed only in categories A–E, or X (legacy, to be ported) while its callers are legacy code (NX-LAYER-10, NX-MIG-01), and has an inventory row: name, category, caller, wrapping repository method, test. An X row names the step that ports it; an A or B row leaves its wrapper empty while its caller is legacy. A migration that adds one adds the row. | check:inventory |
 | NX-DB-03 | guidance | No business rule inside database code: no pricing, no status decisions, no notifications. Category A/B code takes already-validated input and performs the write or read. | agent |
-| NX-DB-04 | guidance | Not a valid reason for database code: "easier in SQL", "the platform makes it convenient", "to avoid N+1" (use a join or CTE), "to enforce permissions". | agent |
+| NX-DB-04 | guidance | Not a valid reason for database code: "easier in SQL", "the platform makes it convenient", "to avoid N+1" (use a join or CTE; a recursive one is a raw statement in its repository, NX-DRZ-08), "to enforce permissions". | agent |
 | NX-DB-05 | guidance | A constraint the database refuses becomes a tagged error in the repository (`Conflict` or a domain error), translated with `lib/db/errors.ts`. Nothing above `infra/` sees a driver error. | agent |
 | NX-DB-06 | error | Transactions: `lib/db/client.ts` builds `withTransaction` with `createTransactionRunner` from `@conventions/nextjs/drizzle`; only `infra/` calls it. A use case that needs several writes in one transaction receives a `UnitOfWork` port that the module's `infra/` implements; it runs `fn` with `{ rollbackOnErr: true }`, so an `err` the use case returns after writing leaves nothing behind. | ast-grep:nx-db-06-transactions-only-in-infra |
 | NX-DB-07 | guidance | Every repository statement runs inside a transaction with a statement timeout. Interactive and system callers have different budgets; the numbers live in the binding. | agent |
@@ -295,7 +302,7 @@ A module gets a `domain/` layer only when it has invariants. Otherwise it is a C
 <!-- rules: rich -->
 | ID | Sev | Rule | Enforcement |
 | --- | --- | --- | --- |
-| NX-RICH-01 | error | Anemic module shape: `contracts.ts` + `queries.ts` + `actions.ts` + `index.ts` + `server.ts` + `infra/<noun>.repository.ts`. No `domain/`, no `application/`, no `commands.ts` until promotion. | check:rich-shape |
+| NX-RICH-01 | error | Anemic module shape: `contracts.ts` + `queries.ts` + `actions.ts` + `index.ts` + `server.ts` + `infra/<noun>.repository.ts`, no `domain/` and no `application/` until promotion. It may have a `commands.ts` for writes other modules' use cases call (NX-XMOD-01), each one repository call. A module whose `domain/` other modules judge with, and which has no `actions.ts` or `commands.ts`, is a read-only domain module and needs no `application/`. | check:rich-shape |
 | NX-RICH-02 | guidance | Promotion: the moment an action contains an `if` about business state, or a second action needs the same calculation, extract a use case and a `domain/` file. | agent |
 | NX-RICH-03 | error | "Rich" means plain types and pure functions, not classes: `applyPayment(order, payment): Result<Order, OrderError>`. | ast-grep:nx-rich-03-no-domain-classes |
 | NX-RICH-04 | guidance | Reads go `queries.ts → repository`. A read use case exists only when the read carries authorization or derivation logic (`can.*` flags). | agent |
@@ -342,6 +349,7 @@ for you. Copy into a PR template.
 
 <!-- checklist -->
 - [ ] NX-AUTH-02 Authorization decisions live in the use case, which receives `requester` in `Deps` and returns `err({ _tag
+- [ ] NX-AUTH-08 A system read that has to find its tenant before it can name one (a queue claim that takes the next job of any tenant, a sweep of expired jobs, the owner of a row found by its ID) is the one repository method that names no tenant
 - [ ] NX-CACHE-03 One `all` tag per aggregate for lists, one `one(id)` tag for detail views
 - [ ] NX-XMOD-01 Two mechanisms
 - [ ] NX-XMOD-02 Events are collected by the use case through an `EventCollector` port and dispatched after commit via `lib/events.ts` by whoever ran the use case
@@ -373,4 +381,5 @@ for you. Copy into a PR template.
 - [ ] NX-TYPE-04 Forms use the same contract schema as the action
 - [ ] NX-ZOD-03 Branded ids
 - [ ] NX-ZOD-04 Forms use the action's input schema through `@hookform/resolvers/zod` (NX-TYPE-04)
+- [ ] NX-ZOD-06 A `text` column a check constraint holds to a set of values (status, kind, currency) is narrowed in `infra/` by parsing with the domain's `as const` list through `z.enum(LIST)`, never by a cast, not even in a `*.mapper.ts`
 <!-- /checklist -->

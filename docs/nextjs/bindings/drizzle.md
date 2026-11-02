@@ -24,8 +24,44 @@ rules; it never relaxes a core rule.
 | NX-DRZ-05 | guidance | `createTransactionRunner` sets `statement_timeout` per caller class: interactive callers 8 s, system callers 5 min (defaults; the project may pass its own and records it in `ARCHITECTURE.md`). A nested `withTransaction` joins the outer transaction and its timeout; `statementTimeout` overrides the budget for tests and maintenance only. | agent |
 | NX-DRZ-06 | error | The `UnitOfWork` port is implemented in `infra/unit-of-work.ts` by delegating to `withTransaction` from `lib/db/client.ts` with `{ rollbackOnErr: true }`: its `run` takes a `fn` that returns a `Result` and rolls back on `err`. Use cases never see the Drizzle transaction object. | ast-grep:nx-db-06-transactions-only-in-infra |
 | NX-DRZ-07 | guidance | Read models (category B) that are views are declared with `pgView` so they are typed. | agent |
-| NX-DRZ-08 | warn | A repository runs no raw SQL except to call a category A/B function; the call is wrapped by exactly one method and its result parsed with a contract schema. | ast-grep:nx-drz-08-no-raw-sql-in-repository |
+| NX-DRZ-08 | warn | A repository runs a raw statement (`execute(sql`…`)`) only to call a category A/B function, to call a category C helper when a command needs its answer before it writes (`select public.is_iana_timezone($1)`), or for a query the query builder cannot express, such as a recursive CTE (`with recursive`). Each statement is wrapped by exactly one repository method and its result parsed with a contract schema; functions are called schema-qualified. A `sql` fragment passed to the builder (`.set({ archivedAt: sql`now()` })`) is not a raw statement. | ast-grep:nx-drz-08-no-raw-sql-in-repository |
 <!-- /rules -->
+
+## Raw statements (NX-DRZ-08)
+
+The query builder covers almost every read and write. A raw statement, `tx.execute(sql`…`)`, is
+allowed in a repository for three cases only, each in its own method with its result parsed:
+
+```ts
+// category A/B: the inventory row names this method as the function's wrapper
+async claim(lease: string) {
+  const { rows } = await tx.execute(sql`select * from public.claim_job(${lease}::interval)`);
+  return claimedJobSchema.array().parse(rows);
+},
+
+// category C, asked before the command's first write (the constraint would refuse too late)
+async isKnownZone(zone: string) {
+  const { rows } = await tx.execute(sql`select public.is_iana_timezone(${zone}) as known`);
+  return z.object({ known: z.boolean() }).parse(rows[0]).known;
+},
+
+// a query the builder cannot express: a recursive CTE instead of one query per level (NX-DB-04)
+async supersededChain(observationId: string) {
+  const { rows } = await tx.execute(sql`
+    with recursive chain as (
+      select id, supersedes_id from metric_observations where id = ${observationId}
+      union all
+      select o.id, o.supersedes_id from metric_observations o join chain c on o.id = c.supersedes_id
+    )
+    select id from chain`);
+  return z.object({ id: z.uuid() }).array().parse(rows).map((r) => r.id);
+},
+```
+
+Call functions schema-qualified (`public.claim_job`): the lint rule reads a qualified call or
+`with recursive` as one of the allowed cases and warns on any other raw statement. A `sql`
+fragment handed to the builder, such as `.set({ archivedAt: sql`now()` })`, is not a raw
+statement.
 
 ## Shipped
 

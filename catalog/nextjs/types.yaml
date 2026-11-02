@@ -8,7 +8,7 @@ rules:
     checklist: true
   - id: NX-TYPE-02
     severity: error
-    rule: No `as` cast across a layer boundary. If the types don't line up, add a mapper in `infra/` or fix the schema. `as` is allowed only in `*.mapper.ts`, `lib/db/`, brand constructors (`domain/*-id.ts`) and `as const`.
+    rule: No `as` cast across a layer boundary. If the types don't line up, add a mapper in `infra/` or fix the schema. `as` is allowed only in `*.mapper.ts`, `lib/db/`, brand constructors (`domain/*-id.ts`) and `as const`. The mapper exemption is for shapes the types cannot express (a brand, a library's loose types), not for narrowing a value the code could check; a constrained `text` column is parsed (NX-ZOD-06).
     mechanism: eslint
     tool: "nx-ts/consistent-type-assertions"
   - id: NX-TYPE-03

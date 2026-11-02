@@ -1,6 +1,9 @@
 // One run of every linter the profile uses, output unified: { id, severity, file, line, message, tool }.
 // Legacy folders (ARCHITECTURE.md `legacy:`) get the layer rules only (NX-LAYER-10): findings of the
-// exempt rulesets are dropped there. Rulesets not adopted are dropped everywhere.
+// exempt rulesets are dropped there. Rulesets not adopted are dropped everywhere. Findings of the
+// project's other ESLint plugins (framework presets, react-hooks) are kept as id `ESLINT`, so this
+// is the one lint command a project runs: Deviations rows and legacy exemptions apply here, and
+// nothing ESLint reports is lost (#23).
 import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { readFileSync } from 'node:fs';
@@ -37,9 +40,9 @@ async function runEslint(project, targets) {
     for (const m of r.messages) {
       if (!m.ruleId && /Unused eslint-disable directive/.test(m.message)) continue;
       const id = ID.exec(m.message)?.[1] ?? ESLINT_IDS[m.ruleId] ?? (m.fatal ? 'PARSE' : 'ESLINT');
-      // findings of other plugins (framework presets) belong to `eslint .`, not to the conventions; a missing rule definition is a config problem and stays
-      if (id === 'ESLINT' && !/Definition for rule/.test(m.message)) continue;
-      out.push({ id, severity: m.severity === 2 ? 'error' : 'warn', file: path.relative(project.appRoot, r.filePath), line: m.line, message: m.message, tool: m.ruleId ?? 'eslint' });
+      // another plugin's finding names its rule, since it carries no convention id
+      const message = id === 'ESLINT' && m.ruleId ? `${m.ruleId}: ${m.message}` : m.message;
+      out.push({ id, severity: m.severity === 2 ? 'error' : 'warn', file: path.relative(project.appRoot, r.filePath), line: m.line, message, tool: m.ruleId ?? 'eslint' });
     }
   }
   return out;

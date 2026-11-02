@@ -18,7 +18,7 @@ rules:
     checklist: true
   - id: NX-DB-04
     severity: guidance
-    rule: 'Not a valid reason for database code: "easier in SQL", "the platform makes it convenient", "to avoid N+1" (use a join or CTE), "to enforce permissions".'
+    rule: 'Not a valid reason for database code: "easier in SQL", "the platform makes it convenient", "to avoid N+1" (use a join or CTE; a recursive one is a raw statement in its repository, NX-DRZ-08), "to enforce permissions".'
     mechanism: agent
     checklist: true
   - id: NX-DB-05
