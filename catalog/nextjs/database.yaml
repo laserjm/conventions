@@ -8,7 +8,7 @@ rules:
     tool: schema-drift
   - id: NX-DB-02
     severity: error
-    rule: "A database function or trigger is allowed only in categories A–E and has an inventory row: name, category, caller, wrapping repository method, test. A migration that adds one adds the row."
+    rule: "A database function or trigger is allowed only in categories A–E, or X (legacy, to be ported) while its callers are legacy code (NX-LAYER-10, NX-MIG-01), and has an inventory row: name, category, caller, wrapping repository method, test. An X row names the step that ports it; an A or B row leaves its wrapper empty while its caller is legacy. A migration that adds one adds the row."
     mechanism: check
     tool: inventory
   - id: NX-DB-03
@@ -28,7 +28,7 @@ rules:
     checklist: true
   - id: NX-DB-06
     severity: error
-    rule: "Transactions: `lib/db/client.ts` builds `withTransaction` with `createTransactionRunner` from `@conventions/nextjs/drizzle`; only `infra/` calls it. A use case that needs several writes in one transaction receives a `UnitOfWork` port that the module's `infra/` implements."
+    rule: "Transactions: `lib/db/client.ts` builds `withTransaction` with `createTransactionRunner` from `@conventions/nextjs/drizzle`; only `infra/` calls it. A use case that needs several writes in one transaction receives a `UnitOfWork` port that the module's `infra/` implements; it runs `fn` with `{ rollbackOnErr: true }`, so an `err` the use case returns after writing leaves nothing behind."
     mechanism: ast-grep
     tool: nx-db-06-transactions-only-in-infra
   - id: NX-DB-07

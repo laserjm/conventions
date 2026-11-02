@@ -1,5 +1,38 @@
 # Changelog
 
+## 0.2.2 — what the screenerhub2 rollout needs
+
+- Install: the `drizzle-orm` peer range is `>=0.40.0 || >=1.0.0-rc.0`, so the profile installs
+  next to `1.0.0-rc.5` without `--legacy-peer-deps`; the package builds and tests against rc.5
+  (#15).
+- Runtime: `@conventions/nextjs/core` and `/drizzle` load under plain Node ESM (the build
+  emitted extensionless imports, which only bundlers and tsx resolved).
+- `withTransaction(caller, fn, { rollbackOnErr: true })`: `fn` returns a `Result`; an `err`
+  rolls the transaction back and is returned unchanged, so a use case that refuses after it
+  wrote keeps nothing. Joined to an outer transaction, it hands the `err` to the outer unit of
+  work. The reference `UnitOfWork` port and `infra/unit-of-work.ts` use it (NX-DB-06,
+  NX-DRZ-06, #8).
+- `withTransaction(caller, fn, { join: 'required' })` joins the caller's transaction and stops
+  with a bug when none is open: for a lock or write that only means something inside another
+  module's unit of work (NX-XMOD-01, #5).
+- `bug(message): never` and `Bug` in `@conventions/nextjs/core`: the sanctioned way for
+  `domain/` and `application/` to stop on an impossible state. NX-LAYER-08 and NX-ERR-01 say a
+  refusal returns `err(...)` and a bug calls `bug(...)`; the lint message says so too (#2).
+- NX-DB-02 adds category X, legacy to be ported, allowed while its callers are legacy code;
+  an A or B row may leave its wrapper empty while its caller is legacy. The architecture doc's
+  category table and the inventory template describe it (#14).
+- `conventions check`'s inventory check is rewritten (#16). It replays the migrations (quoted
+  and schema-qualified names, `create constraint trigger`, comma-separated drops, renames of
+  functions, triggers and tables; a trigger goes with its table and its function), reads every
+  table with a `Category` column and a section that names one category for a list of names,
+  ignores Dropped sections, and reports a row without a valid category. Policies are no
+  longer inventoried: NX-DB-02 covers functions and triggers. On screenerhub2 the check goes
+  from 79 findings, 78 of them false, to none.
+
+Upgrading from 0.2.1: `npm i -D -E @conventions/nextjs@0.2.2 @conventions/cli@0.2.2`,
+`npx conventions sync`. A project that rolled back refusals with its own signal in
+`infra/unit-of-work.ts` can pass `{ rollbackOnErr: true }` instead.
+
 ## 0.2.1 — fixes from the first 0.2.0 dry run (screenerhub2)
 
 - ast-grep rules match declarations by node kind: a use case, action, component or type with a

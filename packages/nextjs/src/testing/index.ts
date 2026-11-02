@@ -1,4 +1,4 @@
-export { localStack } from './local-stack';
-export { describeIntegration } from './describe-integration';
-export type { TenantIsolationCase } from './tenant-isolation';
-export { assertTenantIsolation } from './tenant-isolation';
+export { localStack } from './local-stack.js';
+export { describeIntegration } from './describe-integration.js';
+export type { TenantIsolationCase } from './tenant-isolation.js';
+export { assertTenantIsolation } from './tenant-isolation.js';

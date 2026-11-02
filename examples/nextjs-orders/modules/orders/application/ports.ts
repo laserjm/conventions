@@ -1,5 +1,5 @@
 // Ports carry the business name (NX-NAME-30/31/34). Tenant-owned methods take the TenantId first.
-import type { TenantId } from '@conventions/nextjs/core';
+import type { Result, TenantId } from '@conventions/nextjs/core';
 import type { Order } from '../domain/order';
 import type { OrderEvent } from '../domain/events';
 import type { OrderId } from '../domain/order-id';
@@ -13,4 +13,5 @@ export type Clock = { now(): Date };
 
 export type EventCollector = { collect(event: OrderEvent): void };
 
-export type UnitOfWork = { run<T>(fn: () => Promise<T>): Promise<T> };
+/** Runs `fn` in one transaction: commits on `ok`, rolls back on `err` (NX-DB-06). */
+export type UnitOfWork = { run<R extends Result<unknown, unknown>>(fn: () => Promise<R>): Promise<R> };

@@ -1,7 +1,7 @@
 id: nx-layer-08-no-throw-in-pure-layers
 language: typescript
 severity: error
-message: "NX-LAYER-08: return err(...) — throwing is reserved for bugs and never crosses a layer."
+message: "NX-LAYER-08: a refusal returns err(...); an impossible state calls bug(...) from '@conventions/nextjs/core'. No throw in domain/ or application/."
 files: ["**/modules/*/domain/**/*.ts", "**/modules/*/application/**/*.ts"]
 ignores: ["**/*.test.ts", "**/__fakes__/**"]
 rule:
