@@ -3,7 +3,7 @@ group: cross-module
 rules:
   - id: NX-XMOD-01
     severity: guidance
-    rule: "Two mechanisms: a **direct call** through the other module's `index.ts`/`server.ts` when A needs B's answer now; a **domain event** when A only needs to inform B. Start with direct calls; introduce events at the second subscriber or when the call would cross a transaction boundary."
+    rule: "Two mechanisms: a **direct call** through the other module's `index.ts`/`server.ts` when A needs B's answer now; a **domain event** when A only needs to inform B. Start with direct calls; introduce events at the second subscriber or when the call would cross a transaction boundary. A command that only means something inside the caller's transaction (a lock taken on the caller's behalf, a write that commits or rolls back with it) runs `withTransaction` with `{ join: 'required' }`."
     mechanism: agent
     checklist: true
   - id: NX-XMOD-02

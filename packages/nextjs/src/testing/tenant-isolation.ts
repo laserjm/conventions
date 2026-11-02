@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import type { TenantId } from '../core/requester';
+import type { TenantId } from '../core/requester.js';
 
 type TenantRepository<Row, Id> = {
   findById(tenantId: TenantId, id: Id): Promise<Row | null>;

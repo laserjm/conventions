@@ -1,4 +1,4 @@
-import type { Result } from './result';
+import type { Result } from './result.js';
 
 /** `(input, deps) => Promise<Result>` — the only shape a use case has (NX-LAYER-07, NX-ERR-01, NX-NAME-32). */
 export type UseCase<Input, Output, Error, Deps extends object> = (input: Input, deps: Deps) => Promise<Result<Output, Error>>;

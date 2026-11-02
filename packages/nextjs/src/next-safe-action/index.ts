@@ -1,7 +1,7 @@
 // NX-NSA-01, NX-NSA-03 — the two action clients every project uses, created once in lib/safe-action.ts.
 import { createSafeActionClient, returnServerError } from 'next-safe-action';
 import { randomUUID } from 'node:crypto';
-import { signedOut, type Requester, type SignedOut, type Unexpected } from '../core/index';
+import { signedOut, type Requester, type SignedOut, type Unexpected } from '../core/index.js';
 
 export type ActionClientsOptions = {
   /** Reads the session once per request (NX-AUTH-01); null for a visitor. */

@@ -1,5 +1,6 @@
 id: nx-layer-08-no-throw-in-pure-layers
 valid:
   - "export function f() { return err({ _tag: 'OrderAlreadyPaid' }); }"
+  - "export function f(t: Template | null) { if (!t) bug('a duplicate names no template'); return ok(t); }"
 invalid:
   - "export function f() { throw new Error('nope'); }"

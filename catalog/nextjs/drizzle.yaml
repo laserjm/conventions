@@ -29,7 +29,7 @@ rules:
     checklist: true
   - id: NX-DRZ-06
     severity: error
-    rule: The `UnitOfWork` port is implemented in `infra/unit-of-work.ts` by delegating to `withTransaction` from `lib/db/client.ts`. Use cases never see the Drizzle transaction object.
+    rule: "The `UnitOfWork` port is implemented in `infra/unit-of-work.ts` by delegating to `withTransaction` from `lib/db/client.ts` with `{ rollbackOnErr: true }`: its `run` takes a `fn` that returns a `Result` and rolls back on `err`. Use cases never see the Drizzle transaction object."
     mechanism: ast-grep
     tool: nx-db-06-transactions-only-in-infra
     reportedAs: NX-DB-06

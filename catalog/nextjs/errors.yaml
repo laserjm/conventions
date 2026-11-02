@@ -3,7 +3,7 @@ group: errors
 rules:
   - id: NX-ERR-01
     severity: error
-    rule: "Use cases return `Result`, never throw: `defineUseCase` types the return as `Promise<Result<Output, Error>>`. Actions translate `Result` into the action client's result shape."
+    rule: "Use cases return `Result`, never throw: `defineUseCase` types the return as `Promise<Result<Output, Error>>`. A use case stops on an impossible state with `bug(message)` from `@conventions/nextjs/core`, which the action client reports as `Unexpected`; it never adds a tag no caller can handle. Actions translate `Result` into the action client's result shape."
     mechanism: tsc
     tool: defineUseCase
   - id: NX-ERR-02

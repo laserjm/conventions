@@ -1,4 +1,4 @@
-import type { Brand } from './brand';
+import type { Brand } from './brand.js';
 
 /**
  * The tenant a row belongs to. Branded so a repository method on tenant-owned data cannot be

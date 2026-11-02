@@ -41,7 +41,7 @@ rules:
     tool: nx-layer-07-use-define-use-case
   - id: NX-LAYER-08
     severity: error
-    rule: Errors cross layer boundaries as values (`Result`), never as thrown exceptions. `throw` is reserved for bugs and does not appear in `domain/` or `application/`.
+    rule: "Errors cross layer boundaries as values (`Result`), never as thrown exceptions. A refusal returns `err(...)`; an impossible state (a bug) calls `bug(message)` from `@conventions/nextjs/core`. `throw` does not appear in `domain/` or `application/`."
     mechanism: ast-grep
     tool: nx-layer-08-no-throw-in-pure-layers
   - id: NX-LAYER-09

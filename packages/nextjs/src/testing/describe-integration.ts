@@ -1,5 +1,5 @@
 import { describe } from 'vitest';
-import { localStack } from './local-stack';
+import { localStack } from './local-stack.js';
 
 /**
  * `describe` for tests that need the real database. Skips with a visible reason when no local

@@ -1,6 +1,6 @@
 # Generated from catalog/nextjs/*.yaml by scripts/build-catalog.mjs — do not edit by hand.
 profile: nextjs
-version: 0.2.1
+version: 0.2.2
 rulesets: [auth, cache, cross-module, database, drizzle, errors, layers, migration, naming, next-safe-action, rich, structure, supabase, testing, types, zod]
 rules:
   - id: NX-AUTH-01
@@ -112,7 +112,7 @@ rules:
     mechanism: agent
     checklist: true
     doc: docs/nextjs/architecture.md#cross-module-communication
-    rule: "Two mechanisms: a **direct call** through the other module's `index.ts`/`server.ts` when A needs B's answer now; a **domain event** when A only needs to inform B. Start with direct calls; introduce events at the second subscriber or when the call would cross a transaction boundary."
+    rule: "Two mechanisms: a **direct call** through the other module's `index.ts`/`server.ts` when A needs B's answer now; a **domain event** when A only needs to inform B. Start with direct calls; introduce events at the second subscriber or when the call would cross a transaction boundary. A command that only means something inside the caller's transaction (a lock taken on the caller's behalf, a write that commits or rolls back with it) runs `withTransaction` with `{ join: 'required' }`."
   - id: NX-XMOD-02
     group: cross-module
     table: cross-module
@@ -144,7 +144,7 @@ rules:
     mechanism: check
     tool: "inventory"
     doc: docs/nextjs/architecture.md#database
-    rule: "A database function or trigger is allowed only in categories A–E and has an inventory row: name, category, caller, wrapping repository method, test. A migration that adds one adds the row."
+    rule: "A database function or trigger is allowed only in categories A–E, or X (legacy, to be ported) while its callers are legacy code (NX-LAYER-10, NX-MIG-01), and has an inventory row: name, category, caller, wrapping repository method, test. An X row names the step that ports it; an A or B row leaves its wrapper empty while its caller is legacy. A migration that adds one adds the row."
   - id: NX-DB-03
     group: database
     table: database
@@ -176,7 +176,7 @@ rules:
     mechanism: ast-grep
     tool: "nx-db-06-transactions-only-in-infra"
     doc: docs/nextjs/architecture.md#database
-    rule: "Transactions: `lib/db/client.ts` builds `withTransaction` with `createTransactionRunner` from `@conventions/nextjs/drizzle`; only `infra/` calls it. A use case that needs several writes in one transaction receives a `UnitOfWork` port that the module's `infra/` implements."
+    rule: "Transactions: `lib/db/client.ts` builds `withTransaction` with `createTransactionRunner` from `@conventions/nextjs/drizzle`; only `infra/` calls it. A use case that needs several writes in one transaction receives a `UnitOfWork` port that the module's `infra/` implements; it runs `fn` with `{ rollbackOnErr: true }`, so an `err` the use case returns after writing leaves nothing behind."
   - id: NX-DB-07
     group: database
     table: database
@@ -249,7 +249,7 @@ rules:
     tool: "nx-db-06-transactions-only-in-infra"
     reportedAs: NX-DB-06
     doc: docs/nextjs/bindings/drizzle.md#rules
-    rule: "The `UnitOfWork` port is implemented in `infra/unit-of-work.ts` by delegating to `withTransaction` from `lib/db/client.ts`. Use cases never see the Drizzle transaction object."
+    rule: "The `UnitOfWork` port is implemented in `infra/unit-of-work.ts` by delegating to `withTransaction` from `lib/db/client.ts` with `{ rollbackOnErr: true }`: its `run` takes a `fn` that returns a `Result` and rolls back on `err`. Use cases never see the Drizzle transaction object."
   - id: NX-DRZ-07
     group: drizzle
     table: drizzle
@@ -272,7 +272,7 @@ rules:
     mechanism: tsc
     tool: "defineUseCase"
     doc: docs/nextjs/architecture.md#errors
-    rule: "Use cases return `Result`, never throw: `defineUseCase` types the return as `Promise<Result<Output, Error>>`. Actions translate `Result` into the action client's result shape."
+    rule: "Use cases return `Result`, never throw: `defineUseCase` types the return as `Promise<Result<Output, Error>>`. A use case stops on an impossible state with `bug(message)` from `@conventions/nextjs/core`, which the action client reports as `Unexpected`; it never adds a tag no caller can handle. Actions translate `Result` into the action client's result shape."
   - id: NX-ERR-02
     group: errors
     table: errors
@@ -363,7 +363,7 @@ rules:
     mechanism: ast-grep
     tool: "nx-layer-08-no-throw-in-pure-layers"
     doc: docs/nextjs/architecture.md#layer-rules
-    rule: "Errors cross layer boundaries as values (`Result`), never as thrown exceptions. `throw` is reserved for bugs and does not appear in `domain/` or `application/`."
+    rule: "Errors cross layer boundaries as values (`Result`), never as thrown exceptions. A refusal returns `err(...)`; an impossible state (a bug) calls `bug(message)` from `@conventions/nextjs/core`. `throw` does not appear in `domain/` or `application/`."
   - id: NX-LAYER-09
     group: layers
     table: layers
