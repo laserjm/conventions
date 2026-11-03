@@ -161,6 +161,14 @@ argument, the way another module's rule does: `commands.ts` imports it from that
 `index.ts` and hands it to the use case, which passes it on. An infra adapter may import
 another module's `index.ts` itself. Neither imports `components/`.
 
+The rule applies on both sides. A sentence another module's stored or sent text builds on is
+that module's `domain/` too: it reaches the caller through `index.ts` either way, but it must not
+sit in `components/`, where a change made for the UI would silently reword stored data and email.
+
+Where the UI shows a `domain/` sentence that takes another module's wording, the binding
+(`summaryOf(content) => digestSummary(content, changeSentences(content.changes))`) lives in
+`components/`: `index.ts` may not import another module, and `domain/` may not either.
+
 <!-- rules: layers -->
 | ID | Sev | Rule | Enforcement |
 | --- | --- | --- | --- |
@@ -175,7 +183,7 @@ another module's `index.ts` itself. Neither imports `components/`.
 | NX-LAYER-09 | error | If two modules import each other, merge them or extract a third. | eslint:import-x/no-cycle |
 | NX-LAYER-10 | error | Code that predates the modules is declared as the `legacy` element in the ESLint config. Legacy code keeps the imports it has but reaches a module only through `index.ts`/`server.ts`. No new feature lands in legacy; a folder leaves the list when its module is done. Legacy globs are anchored at the app root, so `components/**` is never a module's `components/`. Lint applies only the layer rules to legacy code; naming, cast and env rules start when the folder leaves the list. Tooling outside the app (`scripts/`, `*.config.*`) may import legacy code and module APIs. | eslint:boundaries/element-types |
 | NX-LAYER-11 | error | `commands.ts` is optional: it appears with the module's first write use case, so anemic modules have none. It wires each use case to its repositories, unit of work, policy and clock and exports it under the use case's name, taking the `Requester` the caller signed in as its first argument: `payOrder(requester, input)`. It holds no business rule, reads no session and revalidates nothing. Once it exists, `actions.ts` calls it and imports no value from its own `application/` or `infra/`; `server.ts` re-exports it for workers, other modules and tests. | eslint:nextjs/actions-use-commands |
-| NX-LAYER-12 | guidance | Wording lives with its audience. Text a use case stores, or that the UI and a sent message both show, is `domain/`: a pure function over the module's own shapes, with another module's wording passed in as arguments that `commands.ts` wires from its `index.ts`. Rendering for an external channel (an email's text and HTML, a push payload) is an `infra/` adapter the use case reaches through a port. `components/` is the ui layer: only text the UI alone shows lives there, and `domain/`, `application/`, `infra/` and `commands.ts` never import it. | agent |
+| NX-LAYER-12 | guidance | Wording lives with its audience. Text a use case stores, or that the UI and a sent message both show, is `domain/`: a pure function over the module's own shapes, with another module's wording passed in as arguments that `commands.ts` wires from its `index.ts`; that wording, in turn, lives in its own module's `domain/`. Rendering for an external channel (an email's text and HTML, a push payload) is an `infra/` adapter the use case reaches through a port. `components/` is the ui layer: only text the UI alone shows lives there, and `domain/`, `application/`, `infra/` and `commands.ts` never import it. | agent |
 <!-- /rules -->
 
 ## Authorization & data ownership

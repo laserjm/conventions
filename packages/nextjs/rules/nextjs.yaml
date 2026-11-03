@@ -408,7 +408,7 @@ rules:
     mechanism: agent
     checklist: true
     doc: docs/nextjs/architecture.md#layer-rules
-    rule: "Wording lives with its audience. Text a use case stores, or that the UI and a sent message both show, is `domain/`: a pure function over the module's own shapes, with another module's wording passed in as arguments that `commands.ts` wires from its `index.ts`. Rendering for an external channel (an email's text and HTML, a push payload) is an `infra/` adapter the use case reaches through a port. `components/` is the ui layer: only text the UI alone shows lives there, and `domain/`, `application/`, `infra/` and `commands.ts` never import it."
+    rule: "Wording lives with its audience. Text a use case stores, or that the UI and a sent message both show, is `domain/`: a pure function over the module's own shapes, with another module's wording passed in as arguments that `commands.ts` wires from its `index.ts`; that wording, in turn, lives in its own module's `domain/`. Rendering for an external channel (an email's text and HTML, a push payload) is an `infra/` adapter the use case reaches through a port. `components/` is the ui layer: only text the UI alone shows lives there, and `domain/`, `application/`, `infra/` and `commands.ts` never import it."
   - id: NX-MIG-01
     group: migration
     table: migration
