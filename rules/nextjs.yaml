@@ -401,6 +401,14 @@ rules:
     tool: "nextjs/actions-use-commands"
     doc: docs/nextjs/architecture.md#layer-rules
     rule: "`commands.ts` is optional: it appears with the module's first write use case, so anemic modules have none. It wires each use case to its repositories, unit of work, policy and clock and exports it under the use case's name, taking the `Requester` the caller signed in as its first argument: `payOrder(requester, input)`. It holds no business rule, reads no session and revalidates nothing. Once it exists, `actions.ts` calls it and imports no value from its own `application/` or `infra/`; `server.ts` re-exports it for workers, other modules and tests."
+  - id: NX-LAYER-12
+    group: layers
+    table: layers
+    severity: guidance
+    mechanism: agent
+    checklist: true
+    doc: docs/nextjs/architecture.md#layer-rules
+    rule: "Wording lives with its audience. Text a use case stores, or that the UI and a sent message both show, is `domain/`: a pure function over the module's own shapes, with another module's wording passed in as arguments that `commands.ts` wires from its `index.ts`. Rendering for an external channel (an email's text and HTML, a push payload) is an `infra/` adapter the use case reaches through a port. `components/` is the ui layer: only text the UI alone shows lives there, and `domain/`, `application/`, `infra/` and `commands.ts` never import it."
   - id: NX-MIG-01
     group: migration
     table: migration

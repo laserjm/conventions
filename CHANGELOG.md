@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased
+
+Rules
+
+- NX-LAYER-12 (guidance, new): wording lives with its audience. Text a use case stores, or
+  that the UI and a sent message both show, is `domain/`, with another module's wording passed
+  in as arguments; rendering for an external channel (an email's text and HTML) is an `infra/`
+  adapter behind a port; `components/` holds only text the UI alone shows. Decided in #26 (D4)
+  after laserjm/screenerhub2 had to wire a digest's stored subject and its email from
+  `components/`. Allowing `commands.ts` to import its own `components/` was considered and
+  rejected: `components/` is the ui layer.
+
+Docs
+
+- The layer table says `components/` may import its own `domain/`, not only its types, as the
+  ESLint config has always allowed; a new section, "Wording a use case stores or sends", shows
+  where each kind of text lives.
+
 ## 0.3.0 — not every app has tenants: `isolation:`
 
 Breaking. The ownership rules assumed a tenant. A project now says who owns a row in one new,
