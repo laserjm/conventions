@@ -31,7 +31,7 @@ tool, not a promise; the catalogue build fails when a rule claims one it cannot 
 | `tsc` | shapes the core types refuse: `TenantId`/`OwnerId`, `defineUseCase`, `systemRequester` | 4 |
 | `check` | `conventions check`: modules complete, tests next to use cases and repositories, owner ids typed and isolation tested, header version, deviations, database inventory | 14 |
 | `ci` | a job in the project's workflow: schema drift, pgTAP | 3 |
-| `agent` | judgement: the conventions skill and the reviewer, with a generated checklist | 54 |
+| `agent` | judgement: the conventions skill and the reviewer, with a generated checklist | 55 |
 
 `conventions lint` runs ESLint, ast-grep and ls-lint in one pass and prints every finding with
 its rule id; findings of the project's other ESLint plugins (framework presets) come out as

@@ -126,12 +126,12 @@ other only through `index.ts` and `server.ts`.
 
 | Layer | Contains | May import | Never contains |
 | --- | --- | --- | --- |
-| `domain/` | types, branded value objects, invariant functions, tagged errors, events | own `domain/`, `@conventions/nextjs/core` | I/O, Next, React, the ORM, contract-schema runtime calls |
+| `domain/` | types, branded value objects, invariant functions, tagged errors, events, wording a use case stores or the UI and a sent message share (NX-LAYER-12) | own `domain/`, `@conventions/nextjs/core` | I/O, Next, React, the ORM, contract-schema runtime calls |
 | `application/` (optional) | use cases, `ports.ts` interfaces | `domain/`, `contracts.ts` (types), other modules' `index.ts` (types only, e.g. the event a handler receives), `@conventions/nextjs/core` | the ORM client, `fetch`, `cookies()`, `revalidate*` |
-| `infra/` | repository implementations, external adapters, mappers | `application/ports`, `domain/`, `contracts.ts`, `lib/db`, `lib/*`, other modules' `index.ts` (to map to and from their public types) | business rules, validation of user input |
+| `infra/` | repository implementations, external adapters (rendering for an external channel included, NX-LAYER-12), mappers | `application/ports`, `domain/`, `contracts.ts`, `lib/db`, `lib/*`, other modules' `index.ts` (to map to and from their public types) | business rules, validation of user input |
 | `contracts.ts` | the module's input/output schemas and DTOs | own `domain/`, `lib/*` except `lib/db`, other modules' `index.ts` (to reuse the owner's schema or type, NX-TYPE-01) | logic beyond schema composition |
 | `actions.ts`, `queries.ts` | server actions, cached queries | `commands.ts`, `application/`, `infra/` (when no use case), `contracts.ts`, `domain/` types, `lib/*` except `lib/db`, other modules' `index.ts`/`server.ts` | business rules beyond calling a use case or a repository |
-| `components/` | feature components | own `components/`, `actions.ts`, `contracts.ts`, `domain/` types, `lib/*` except `lib/db`, `components/ui`, other modules' `index.ts` | `infra/`, `queries.ts`, `commands.ts`, use cases: components run in the browser |
+| `components/` | feature components, and wording only the UI shows | own `components/`, `actions.ts`, `contracts.ts`, `domain/`, `lib/*` except `lib/db`, `components/ui`, other modules' `index.ts` | `infra/`, `queries.ts`, `commands.ts`, use cases: components run in the browser |
 | `commands.ts` (optional) | write use cases wired to their dependencies; server-only | own `application/`, `infra/`, `contracts.ts`, `domain/`, `lib/*` except `lib/db`, other modules' `index.ts`/`server.ts` | business rules, session reads, revalidation, the action client |
 | `index.ts` | browser-safe public API | own `domain/`, `application/` (types only), `contracts.ts`, `components/`, `actions.ts` | anything from `infra/`, `queries.ts` or `commands.ts` |
 | `server.ts` | server-only public API | own `queries.ts`, `commands.ts`, `actions.ts`, plus everything `index.ts` may | `infra/` |
@@ -143,6 +143,31 @@ but they are the **ui layer** in the clean-architecture sense: together with `pa
 play the role of the *controller* — they translate HTTP/React into use-case calls and back.
 A file or folder in a module that is not one of the names above is reported (NX-STR-02): a
 module has no `helpers.ts`, `utils/` or `hooks/`; hooks live in `components/`.
+
+### Wording a use case stores or sends
+
+`components/` is the ui layer, so wording that leaves the UI lives elsewhere (NX-LAYER-12).
+Ask who reads the text, and when it is fixed:
+
+| The text | Example | Lives in | Reached by |
+| --- | --- | --- | --- |
+| stored by a use case, frozen with the row | a digest's subject, a notification's title | `domain/`, a pure function over the module's own shapes | the use case; `commands.ts` passes in any other module's wording it builds on |
+| shown by the UI and by a sent message alike | the summary sentence a digest page and its email both show | `domain/` | `components/` (own `domain/`), `infra/` (own `domain/`) |
+| rendered for an external channel | an email's text and HTML, a push payload | `infra/`, an adapter beside the channel's client | a port the use case calls, wired in `commands.ts` |
+| shown only by the UI | a button label, an empty state | `components/` | the ui layer only |
+
+`domain/` imports nothing outside its module, so another module's wording reaches it as an
+argument, the way another module's rule does: `commands.ts` imports it from that module's
+`index.ts` and hands it to the use case, which passes it on. An infra adapter may import
+another module's `index.ts` itself. Neither imports `components/`.
+
+The rule applies on both sides. A sentence another module's stored or sent text builds on is
+that module's `domain/` too: it reaches the caller through `index.ts` either way, but it must not
+sit in `components/`, where a change made for the UI would silently reword stored data and email.
+
+Where the UI shows a `domain/` sentence that takes another module's wording, the binding
+(`summaryOf(content) => digestSummary(content, changeSentences(content.changes))`) lives in
+`components/`: `index.ts` may not import another module, and `domain/` may not either.
 
 <!-- rules: layers -->
 | ID | Sev | Rule | Enforcement |
@@ -158,6 +183,7 @@ module has no `helpers.ts`, `utils/` or `hooks/`; hooks live in `components/`.
 | NX-LAYER-09 | error | If two modules import each other, merge them or extract a third. | eslint:import-x/no-cycle |
 | NX-LAYER-10 | error | Code that predates the modules is declared as the `legacy` element in the ESLint config. Legacy code keeps the imports it has but reaches a module only through `index.ts`/`server.ts`. No new feature lands in legacy; a folder leaves the list when its module is done. Legacy globs are anchored at the app root, so `components/**` is never a module's `components/`. Lint applies only the layer rules to legacy code; naming, cast and env rules start when the folder leaves the list. Tooling outside the app (`scripts/`, `*.config.*`) may import legacy code and module APIs. | eslint:boundaries/element-types |
 | NX-LAYER-11 | error | `commands.ts` is optional: it appears with the module's first write use case, so anemic modules have none. It wires each use case to its repositories, unit of work, policy and clock and exports it under the use case's name, taking the `Requester` the caller signed in as its first argument: `payOrder(requester, input)`. It holds no business rule, reads no session and revalidates nothing. Once it exists, `actions.ts` calls it and imports no value from its own `application/` or `infra/`; `server.ts` re-exports it for workers, other modules and tests. | eslint:nextjs/actions-use-commands |
+| NX-LAYER-12 | guidance | Wording lives with its audience. Text a use case stores, or that the UI and a sent message both show, is `domain/`: a pure function over the module's own shapes, with another module's wording passed in as arguments that `commands.ts` wires from its `index.ts`; that wording, in turn, lives in its own module's `domain/`. Rendering for an external channel (an email's text and HTML, a push payload) is an `infra/` adapter the use case reaches through a port. `components/` is the ui layer: only text the UI alone shows lives there, and `domain/`, `application/`, `infra/` and `commands.ts` never import it. | agent |
 <!-- /rules -->
 
 ## Authorization & data ownership
@@ -373,6 +399,7 @@ for you. Copy into a PR template.
 - [ ] NX-DB-08 On tables that hold business data the only triggers are `updated_at` and audit
 - [ ] NX-DRZ-04 **Code-first** projects
 - [ ] NX-DRZ-05 `createTransactionRunner` sets `statement_timeout` per caller class
+- [ ] NX-LAYER-12 Wording lives with its audience
 - [ ] NX-MIG-01 No new database code may be added during the transition unless it passes NX-DB-02/03, even in untouched modules
 - [ ] NX-MIG-02 No new code imports a legacy helper that a module already replaced
 - [ ] NX-NAME-23 Events are past tense; commands are never defined in `domain/`
