@@ -1,6 +1,6 @@
 {
   "name": "@conventions/nextjs",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "The nextjs conventions profile: ESLint flat config, ast-grep rules, ls-lint config, the rule catalogue and the runtime core (Result, errors, use cases, transactions, action clients, test helpers).",
   "type": "module",
   "exports": {

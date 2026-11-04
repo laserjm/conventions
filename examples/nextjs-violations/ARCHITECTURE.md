@@ -1,7 +1,7 @@
 # Architecture (violations fixture)
 
 ```yaml
-conventions: 0.3.0
+conventions: 0.3.1
 profile: nextjs
 bindings: [drizzle, supabase, zod, next-safe-action]
 app-root: .
