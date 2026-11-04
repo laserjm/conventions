@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.1 — wording lives with its audience
 
 Rules
 

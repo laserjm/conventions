@@ -42,7 +42,7 @@ lint-enforced rule fires, and the reference module proves the rules are satisfia
 
 ```sh
 # from the release tarballs; app code imports the profile's runtime core, so it is a dependency
-V=0.3.0; R=https://github.com/laserjm/conventions/releases/download/v$V
+V=0.3.1; R=https://github.com/laserjm/conventions/releases/download/v$V
 npm i -E $R/conventions-nextjs-$V.tgz
 npm i -D -E $R/conventions-cli-$V.tgz
 npx conventions init --profile nextjs --isolation owner   # ARCHITECTURE.md, eslint.config.mjs, CI, CLAUDE.md, AGENTS.md
@@ -53,7 +53,7 @@ npx conventions lint && npx conventions check
 project configures the conventions:
 
 ```yaml
-conventions: 0.3.0
+conventions: 0.3.1
 profile: nextjs
 bindings: [drizzle, supabase, zod, next-safe-action]
 app-root: .                      # or src
