@@ -37,9 +37,9 @@ rule applies here.
    together; every message starts with an `NX-` id. The plugin's hook runs it after every
    write. Fix by reading the rule, never by disabling it: a disabled rule without a Deviations
    row fails `conventions check` (NX-MIG-04).
-2. **Before you finish**: `npx conventions check` (modules complete, tests next to use cases
-   and repositories, owner ids typed and the isolation helper used, header version, deviations, database
-   inventory) and `npx tsc --noEmit`. The hook runs the checks on stop.
+2. **Before you finish**: `npx conventions check` (modules complete, tests for use cases
+   and repositories next to them or in the module's `commands.integration.test.ts`, owner ids
+   typed and the isolation helper used, header version, deviations, database inventory) and `npx tsc --noEmit`. The hook runs the checks on stop.
 3. **Apply the guidance rules yourself.** `conventions explain` shows `enforced by: agent` for
    them; the checklist at the end of `architecture.md` lists the ones that matter most:
    - NX-AUTH-02: authorization is decided in the use case, never in a component.

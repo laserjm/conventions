@@ -38,6 +38,7 @@
     "unitTestSuffix": ".test.ts",
     "repositories": "infra/*.repository.ts",
     "integrationTestSuffix": ".integration.test.ts",
+    "commandTest": "commands.integration.test.ts",
     "bannedNames": [
       "api",
       "utils",

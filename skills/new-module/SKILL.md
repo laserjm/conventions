@@ -48,6 +48,10 @@ Rich (state transitions, calculations, two use cases on one entity): everything 
   `throw new ConstraintViolation(violatedConstraint(error), '<nouns>')`.
 - `infra/<noun>.repository.integration.test.ts`: `describeIntegration('<noun>Repository', () => { assertIsolation({ ownerA, ownerB, arrange, read, change }); })`
   for owned data (`isolation: tenant` or `owner`).
+- Or, for thin write use cases, one `commands.integration.test.ts` next to `commands.ts` in place of
+  both tests: it calls each use case's command by name with requesters it builds, against the
+  real database, and calls `assertIsolation()` through commands and queries for owned data.
+  A repository only `queries.ts` reaches keeps its own integration test (`docs/nextjs/testing.md`, "Command tests").
 - `infra/<noun>.mapper.ts`: `type <Noun>Row = InferSelectModel<typeof <nouns>>`, `toDomain`, `toRow`.
 - `commands.ts`: `export async function <verbNoun>(requester: Requester, input: <VerbNoun>Input)` wiring
   the use case to the repository, unit of work, clock and event collector; catches

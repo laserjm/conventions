@@ -13,7 +13,7 @@ rules:
     checklist: true
   - id: NX-AUTH-03
     severity: error
-    rule: "Isolation between owners is enforced in the repository: every method on owned data takes the owner's id as its first argument (`tenantId` under `isolation: tenant`, `ownerId` under `isolation: owner`) and names it in the query. The repository's integration test calls `assertIsolation()` from `@conventions/nextjs/testing`, proving another owner's rows can be neither read nor changed."
+    rule: "Isolation between owners is enforced in the repository: every method on owned data takes the owner's id as its first argument (`tenantId` under `isolation: tenant`, `ownerId` under `isolation: owner`) and names it in the query. The repository's integration test calls `assertIsolation()` from `@conventions/nextjs/testing`, proving another owner's rows can be neither read nor changed. When the module's command test covers the repository (NX-TEST-02), the command test calls it, with `arrange`, `read` and `change` going through commands and queries for two owners."
     mechanism: check
     tool: isolation-test
     isolation: [tenant, owner]

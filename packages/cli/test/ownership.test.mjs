@@ -57,6 +57,30 @@ describe('ownership under isolation: owner', () => {
   });
 });
 
+describe('ownership with a command test', () => {
+  const tree = {
+    'threads/application/ports.ts': 'findById(ownerId: OwnerId, id: ThreadId): Promise<Thread | null>;\n',
+    'threads/infra/thread.repository.ts': 'export const threadRepository = { async findById(ownerId: OwnerId, id: ThreadId) { return null; } };\n',
+    'threads/infra/message.repository.ts': 'export const messageRepository = { async list(ownerId: OwnerId) { return []; } };\n',
+    'threads/commands.ts': "import { threadRepository } from './infra/thread.repository';\n",
+    'threads/queries.ts': "import { messageRepository } from './infra/message.repository';\n",
+    'threads/commands.integration.test.ts': 'describeIntegration("threads commands", () => { startThread(alice, {}); });\n',
+  };
+  it('reports an owned repository it covers when it does not call assertIsolation()', async () => {
+    const found = await ownership(project('owner', tree));
+    assert.deepEqual(ids(found), ['NX-AUTH-03 modules/threads/commands.integration.test.ts']);
+    assert.match(found[0].message, /must call assertIsolation\(\).*covers thread\.repository\.ts.*own thread\.repository\.integration\.test\.ts/);
+  });
+  it('is satisfied when it calls assertIsolation(); a repository only queries.ts reaches is left to NX-TEST-02', async () => {
+    const t = { ...tree, 'threads/commands.integration.test.ts': 'describeIntegration("threads commands", () => { assertIsolation({ ownerA, ownerB, arrange, read, change }); });\n' };
+    assert.deepEqual(ids(await ownership(project('owner', t))), []);
+  });
+  it('checks the repository\'s own test when it has one', async () => {
+    const t = { ...tree, 'threads/infra/thread.repository.integration.test.ts': 'describeIntegration("threadRepository", () => {});\n' };
+    assert.deepEqual(ids(await ownership(project('owner', t))), ['NX-AUTH-03 modules/threads/infra/thread.repository.integration.test.ts']);
+  });
+});
+
 describe('ownership under isolation: tenant', () => {
   it('reports tenantId typed string and a repository that takes a TenantId without the helper', async () => {
     const tree = {

@@ -45,3 +45,28 @@ export async function globFrom(dir, pattern) {
   const list = await glob([rest], { cwd: base, onlyFiles: true, ignore: ['**/node_modules/**'] });
   return list.sort().map((f) => path.join(base, f));
 }
+
+/** A use case's export name: the camelCase of its kebab-case file name (NX-NAME-03). */
+export const exportName = (file) => path.basename(file, '.ts').replace(/-([a-z0-9])/g, (_, c) => c.toUpperCase());
+
+/**
+ * The module's command test (`module.commandTest`, next to `commands.ts`), or null when the
+ * profile names none or the module has none. `text` is its source; `repositories` holds the
+ * repository files (`<dir>/infra/<x>.repository.ts`) `commands.ts` imports, which it covers.
+ */
+export async function commandTest(project, dir) {
+  const m = project.manifest.module;
+  if (!m.commandTest) return null;
+  const file = `${dir}/${m.commandTest}`;
+  if (!(await files(project.appRoot, [file])).length) return null;
+  const commands = `${dir}/${m.commandTest.replace(m.integrationTestSuffix, '.ts')}`;
+  const repositories = new Set();
+  if ((await files(project.appRoot, [commands])).length) {
+    const spec = /(?:from|import)\s*\(?\s*['"]([^'"]+)['"]/g;
+    for (const [, s] of read(project.appRoot, commands).matchAll(spec)) {
+      const hit = /(?:^|\/)infra\/([a-z0-9-]+)\.repository(?:\.[mc]?[jt]s)?$/.exec(s);
+      if (hit) repositories.add(`${dir}/infra/${hit[1]}.repository.ts`);
+    }
+  }
+  return { file, text: read(project.appRoot, file), repositories };
+}

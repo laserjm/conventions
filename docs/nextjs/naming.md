@@ -185,6 +185,7 @@ Component role vocabulary (second word): `List`, `Table`, `Card`, `Row`, `Form`,
 | --- | --- | --- |
 | Unit test | next to the file, `<name>.test.ts` | `describe('<function>')`, `it('<behaviour>')` |
 | Integration test (real DB) | `<name>.integration.test.ts` | same |
+| Command test (real DB) | `modules/<m>/commands.integration.test.ts`, next to `commands.ts` | `describe('<module> commands')` |
 | Browser test | `tests/browser/<flow>.spec.ts` | `test('<user goal>')` |
 | Fake port | `application/__fakes__/<noun>.repository.fake.ts` | `InMemory<Noun>Repository` |
 | Factory | `tests/factories/<noun>.ts` | `a<Noun>(overrides)` |
