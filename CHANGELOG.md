@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.2 — command tests: a thin use case is tested through its command
 
 Rules
 

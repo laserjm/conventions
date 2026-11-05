@@ -1,6 +1,6 @@
 # Generated from catalog/nextjs/*.yaml by scripts/build-catalog.mjs — do not edit by hand.
 profile: nextjs
-version: 0.3.1
+version: 0.3.2
 rulesets: [auth, cache, cross-module, database, drizzle, errors, layers, migration, naming, next-safe-action, rich, structure, supabase, testing, types, zod]
 rules:
   - id: NX-AUTH-01

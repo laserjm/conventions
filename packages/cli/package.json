@@ -1,6 +1,6 @@
 {
   "name": "@conventions/cli",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "`conventions`: check a project against its conventions profile, lint with every tool at once, explain a rule, init and sync a project. Profile-agnostic; the profile package (e.g. @conventions/nextjs) describes the project shape.",
   "type": "module",
   "bin": {
