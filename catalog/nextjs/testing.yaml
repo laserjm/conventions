@@ -3,12 +3,12 @@ group: testing
 rules:
   - id: NX-TEST-01
     severity: error
-    rule: Every use case has a unit test next to it, run with in-memory fakes for its ports. No database, no Next.
+    rule: "Every use case has a unit test next to it, run with in-memory fakes for its ports. No database, no Next. A thin use case may instead be covered by the module's command test, `commands.integration.test.ts` next to `commands.ts`, which calls it by its export name (`startThread`) against a real database with requesters it builds itself. Use cases with rules worth example tables (NX-TEST-06) keep their unit test."
     mechanism: check
     tool: use-case-test
   - id: NX-TEST-02
     severity: error
-    rule: "Every repository has an integration test (`*.integration.test.ts`) against a real database. For owned data (`isolation: tenant` or `owner`) it proves another owner's rows can be neither read nor changed (NX-AUTH-03)."
+    rule: "Every repository has an integration test (`*.integration.test.ts`) against a real database: its own, or the module's command test when `commands.ts` imports it. A repository only `queries.ts` reaches has its own. For owned data (`isolation: tenant` or `owner`) the test proves another owner's rows can be neither read nor changed (NX-AUTH-03)."
     mechanism: check
     tool: repository-test
   - id: NX-TEST-03

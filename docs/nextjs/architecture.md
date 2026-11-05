@@ -87,6 +87,7 @@ modules/
     actions.ts                  # server actions ("use server")   ─┐
     queries.ts                  # cached, server-only reads        ├ ui layer
     commands.ts                 # wired write use cases, server-only (optional, NX-LAYER-11)
+    commands.integration.test.ts  # command test (optional): covers thin use cases and their repositories
     components/                 # feature UI                       ─┘
     contracts.ts                # contract schemas + DTO types
     index.ts                    # public API, safe in the browser
@@ -215,7 +216,7 @@ that names no owner, and returns the owner it found (NX-AUTH-08).
 | --- | --- | --- | --- |
 | NX-AUTH-01 | error | `Requester` is produced in `lib/safe-action.ts` (actions) and in `queries.ts` (reads). Nothing else reads the session: `commands.ts` receives the requester from its caller. | ast-grep:nx-auth-01-session-read-outside-edge |
 | NX-AUTH-02 | guidance | Authorization decisions live in the use case, which receives `requester` in `Deps` and returns `err({ _tag: 'Forbidden' })`. An action that skips the application layer checks `requester` itself; that is the only business `if` allowed in an action. | agent |
-| NX-AUTH-03 | error | Isolation between owners is enforced in the repository: every method on owned data takes the owner's id as its first argument (`tenantId` under `isolation: tenant`, `ownerId` under `isolation: owner`) and names it in the query. The repository's integration test calls `assertIsolation()` from `@conventions/nextjs/testing`, proving another owner's rows can be neither read nor changed. | check:isolation-test (isolation: tenant, owner) |
+| NX-AUTH-03 | error | Isolation between owners is enforced in the repository: every method on owned data takes the owner's id as its first argument (`tenantId` under `isolation: tenant`, `ownerId` under `isolation: owner`) and names it in the query. The repository's integration test calls `assertIsolation()` from `@conventions/nextjs/testing`, proving another owner's rows can be neither read nor changed. When the module's command test covers the repository (NX-TEST-02), the command test calls it, with `arrange`, `read` and `change` going through commands and queries for two owners. | check:isolation-test (isolation: tenant, owner) |
 | NX-AUTH-04 | guidance | Database row policies, where the platform offers them, are a second net for isolation between owners. A permission rule is never written there. | agent (isolation: tenant, owner) |
 | NX-AUTH-05 | error | Shared data (registries, templates, lookups) is read without a requester; its repository methods take no owner id. Methods on owned data take the owner's id first, typed with its brand (`TenantId` under `isolation: tenant`, `OwnerId` under `isolation: owner`), never `string`: the port makes the distinction visible and the compiler refuses a plain string. | check:owner-id-type (isolation: tenant, owner) |
 | NX-AUTH-06 | error | System callers (scheduled runs, workers, delivery jobs) use the same repositories as users and identify as `systemRequester(name)`. Under `isolation: tenant` or `owner` they name the owner they work for: `systemRequester(name, { tenantId })` or `systemRequester(name, { ownerId })`. There is no bypass path. | tsc:systemRequester |

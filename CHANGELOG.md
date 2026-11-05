@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.3.2 — command tests: a thin use case is tested through its command
+
+Rules
+
+- NX-TEST-01, NX-TEST-02, NX-AUTH-03: a module may have one command test,
+  `commands.integration.test.ts` next to `commands.ts`. It calls the module's commands (and its
+  queries where it reads back) against the real database inside `describeIntegration()`, with
+  requesters it builds itself, and stands in for the unit test of every use case it names by its
+  export name (`start-thread.ts` → `startThread`) and for the integration test of every repository
+  `commands.ts` imports. A repository only `queries.ts` reaches keeps its own test; for an owned
+  repository the command test calls `assertIsolation()` through commands and queries for two
+  owners. Unit tests with fakes stay the default for use cases with rules worth example tables
+  (NX-TEST-06). Decided in #29 after laserjm/workspace-prototype's thin `createProject` and
+  `startThread` needed a fake-backed unit test and a repository test each. Action-level tests
+  were considered and rejected: they need `headers()` and session mocking.
+
+Tooling
+
+- `conventions check` (`use-case-test`, `repository-test`, `isolation-test`) accepts the command
+  test, and its messages name both ways to satisfy each rule.
+- `profile.json`: `module.commandTest` names the command test (`commands.integration.test.ts`).
+
+Docs
+
+- `testing.md` has a section "Command tests" with an example; the module tree in
+  `architecture.md`, the test table in `naming.md` and both skills mention the file.
+
 ## 0.3.1 — wording lives with its audience
 
 Rules

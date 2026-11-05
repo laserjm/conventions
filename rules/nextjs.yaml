@@ -1,6 +1,6 @@
 # Generated from catalog/nextjs/*.yaml by scripts/build-catalog.mjs — do not edit by hand.
 profile: nextjs
-version: 0.3.1
+version: 0.3.2
 rulesets: [auth, cache, cross-module, database, drizzle, errors, layers, migration, naming, next-safe-action, rich, structure, supabase, testing, types, zod]
 rules:
   - id: NX-AUTH-01
@@ -27,7 +27,7 @@ rules:
     tool: "isolation-test"
     isolation: [tenant, owner]
     doc: docs/nextjs/architecture.md#authorization-data-ownership
-    rule: "Isolation between owners is enforced in the repository: every method on owned data takes the owner's id as its first argument (`tenantId` under `isolation: tenant`, `ownerId` under `isolation: owner`) and names it in the query. The repository's integration test calls `assertIsolation()` from `@conventions/nextjs/testing`, proving another owner's rows can be neither read nor changed."
+    rule: "Isolation between owners is enforced in the repository: every method on owned data takes the owner's id as its first argument (`tenantId` under `isolation: tenant`, `ownerId` under `isolation: owner`) and names it in the query. The repository's integration test calls `assertIsolation()` from `@conventions/nextjs/testing`, proving another owner's rows can be neither read nor changed. When the module's command test covers the repository (NX-TEST-02), the command test calls it, with `arrange`, `read` and `change` going through commands and queries for two owners."
   - id: NX-AUTH-04
     group: auth
     table: auth
@@ -913,7 +913,7 @@ rules:
     mechanism: check
     tool: "use-case-test"
     doc: docs/nextjs/testing.md#
-    rule: "Every use case has a unit test next to it, run with in-memory fakes for its ports. No database, no Next."
+    rule: "Every use case has a unit test next to it, run with in-memory fakes for its ports. No database, no Next. A thin use case may instead be covered by the module's command test, `commands.integration.test.ts` next to `commands.ts`, which calls it by its export name (`startThread`) against a real database with requesters it builds itself. Use cases with rules worth example tables (NX-TEST-06) keep their unit test."
   - id: NX-TEST-02
     group: testing
     table: testing
@@ -921,7 +921,7 @@ rules:
     mechanism: check
     tool: "repository-test"
     doc: docs/nextjs/testing.md#
-    rule: "Every repository has an integration test (`*.integration.test.ts`) against a real database. For owned data (`isolation: tenant` or `owner`) it proves another owner's rows can be neither read nor changed (NX-AUTH-03)."
+    rule: "Every repository has an integration test (`*.integration.test.ts`) against a real database: its own, or the module's command test when `commands.ts` imports it. A repository only `queries.ts` reaches has its own. For owned data (`isolation: tenant` or `owner`) the test proves another owner's rows can be neither read nor changed (NX-AUTH-03)."
   - id: NX-TEST-03
     group: testing
     table: testing
