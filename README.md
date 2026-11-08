@@ -5,7 +5,7 @@ A project copies the document, copies the ESLint config that enforces its import
 points its agent instructions at it. Nothing is installed.
 
 ```
-docs/nextjs/CONVENTIONS.md      the conventions: layout, six rules, the two states of a route,
+docs/nextjs/CONVENTIONS.md      the conventions: layout, eleven rules, the two states of a route,
                                 promotion triggers, errors, testing, naming
 templates/eslint.config.mjs     the import graph and the server-only / 'use server' checks the
                                 document only points at; flat config on top of eslint-config-next

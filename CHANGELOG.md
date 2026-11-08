@@ -22,51 +22,57 @@ self-contained and promotes it to a module on explicit triggers. It was written 
 
 Each bullet names the 0.3.x rules it retires and the sentence that replaces them.
 
-- **A branded owner id that only `lib/auth` can mint.** Retires NX-AUTH-03 (`assertIsolation`),
-  NX-AUTH-05, NX-NAME-34, NX-TYPE-05, NX-ZOD-03 and the `TenantId`/`OwnerId` brands. Replaced by:
-  "Lint already restricts who imports `lib/auth` as a value, and a brand would force every test to
-  mint one." Isolation is Rule 2 (every read and write scoped by the caller) plus Testing §5, the
-  "someone else's id" case every use case gets.
-- **A "who may import what" table in the document.** Retires the layer table and NX-LAYER-01,
-  -02, -03, -04, -05, -09, -10, NX-STR-03, -05, -06, NX-CACHE-01, -04, NX-ZOD-01, NX-NSA-05,
-  NX-SB-08, NX-DRZ-01 as prose. Replaced by: "It drifted; `eslint.config.mjs` is the table." Rule 5
-  states the direction in one sentence; the template enforces it.
-- **`index.ts` (and `server.ts`) as a public API before a module exists.** Retires NX-STR-07,
-  NX-NAME-12 and the browser-safe/server-only split of NX-LAYER-05. Replaced by: "A self-contained
-  route has none." A module has one server-only `index.ts`; UI imports its types with
-  `import type`.
-- **Full module layering from day one.** Retires `domain/`, `application/`, `infra/` (NX-STR-02),
-  NX-LAYER-06, -07, -08, -11, -12, NX-RICH-01 to -04, `Result` and tagged errors (NX-ERR-01 to
-  -04), the layer naming tables (NX-NAME-20 to -24, -30 to -34, -40 to -43, -60 to -62) and
-  fake-backed use-case tests (NX-TEST-01, -06). Replaced by: "Correct, and too heavy for a route
-  that owns one table." Routes start in `_lib/`, promote on one hard or two soft triggers, and a
-  module is six flat files. Domain errors are thrown classes that adapters map.
+- **A branded `AuthCtx` type only `lib/auth` can mint.** Retires NX-AUTH-05, NX-NAME-34 and the
+  `TenantId`/`OwnerId` brands. Replaced by: "Lint already restricts who imports `lib/auth` as a
+  value, and a brand would force every test to mint one." Isolation is Rule 2 (every read and write
+  scoped by the caller) plus Testing §5, the "someone else's id" case every use case gets; that
+  test also retires `assertIsolation` (NX-AUTH-03).
+- **A "who may import what" table in the document.** Retires the layer table and NX-LAYER-01 to
+  -05, -10, NX-STR-03, -05, -06, NX-CACHE-01, -04, NX-ZOD-01, NX-NSA-05, NX-SB-08, NX-DRZ-01 as
+  prose. Replaced by: "It drifted; `eslint.config.mjs` is the table." Rules 3, 5 and 6 state the
+  direction and the three doors into a module; the template enforces them.
+- **`index.ts` as a public API before a module exists.** Retires NX-STR-07 and NX-NAME-12.
+  Replaced by: "A self-contained route has none."
+- **Full module layering from day one.** Retires `domain/`, `application/`, `infra/` and ports
+  (NX-STR-02), NX-LAYER-06, -07, -11, -12, NX-RICH-01 to -04, the layer naming tables (NX-NAME-20,
+  -21, -23, -24, -30, -32, -40 to -43, -60, -61) and fake-backed use-case tests (NX-TEST-01,
+  -06). Replaced by: "Correct and too heavy for a route that owns one table. Flat files, promoted
+  on trigger." Pure rules get `domain.ts` and `policy.ts` when one is needed twice or deserves a
+  unit test.
+- **`Result` types and tagged error unions.** Retires NX-ERR-01 to -04, NX-LAYER-08, NX-NAME-22,
+  -33, -62 and NX-NSA-03, -04. Replaced by: "Thrown classes mapped in the adapter are the
+  TypeScript default and cost no runtime package. The price is exhaustiveness: a forgotten
+  `instanceof` is a 500, not a compile error." The Errors table maps each case to what the query,
+  command, action and route handler do.
+- **A separate browser-safe `index.ts` and server-only `server.ts`.** Retires the split of
+  NX-LAYER-05. Replaced by: "One server-only `index.ts` plus a browser-safe `contracts.ts` gives
+  the same guarantee with one file fewer." Forms still validate with the action's schema
+  (NX-TYPE-04, NX-ZOD-04) through `contracts.ts`.
+- **Cache tags, cross-module events, branded ids.** Retires NX-CACHE-02, -03, -05, -06,
+  NX-XMOD-01, -02, NX-TYPE-05, NX-ZOD-03. Replaced by: "Not until `cacheComponents` is on, a second
+  subscriber exists, or a swapped-argument bug slips past Testing §5."
 
-### Gone with the catalogue
+### Carried over in a lighter form
 
-| 0.3.x ruleset | Where it went |
-| --- | --- |
-| auth (NX-AUTH-01, -02, -07) | Rules 1, 2 and 6. NX-AUTH-04, -06, -08 (row policies, system callers, queue claims) are dropped; see "Not yet covered". |
-| cache (NX-CACHE-01 to -06) | Deferred until `cacheComponents` is on; actions call `revalidatePath()`. |
-| cross-module (NX-XMOD-01 to -03) | Hard trigger 3. Direct calls; no events until a second subscriber exists. |
-| database, drizzle, supabase (NX-DB, NX-DRZ, NX-SB) | Dropped with the bindings. Principle 1, "business logic lives in TypeScript", stays in the Why section. |
-| migration (NX-MIG-01 to -04), legacy | Dropped. The self-contained default is the strangler path; a deviation is an ADR. |
-| naming (general, folders, ui, tests) | The Naming section: two tables and a role vocabulary. |
-| testing (NX-TEST-02, -03, -05, -07, -08) | Testing §1 to §6: real Postgres, own users per test, factories, E2E for business-critical flows. The setup refuses to start outside a `_test` database instead of skipping. |
-| types (NX-TYPE-01 to -06) | Principle 2. NX-TYPE-02 (no `as` across boundaries) and NX-TYPE-06 (env read once) are not yet in the document. |
-| next-safe-action (NX-NSA-01 to -05) | Plain server actions, `useActionState`, `{ error }`. |
-| rule ids, severities, mechanisms, checklist | Each rule carries _Lint_, _Review_ or _Test_. |
+| 0.3.x                                                                                                 | 0.4.0                                                                                                                                                                      |
+| ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| NX-AUTH-01, -02, -07 (who resolves the user, where authorization lives, no permissions in components) | Rules 1, 2 and 7; `policy.ts` on hard trigger 4                                                                                                                            |
+| NX-AUTH-06, NX-LAYER-11 (system callers, commands take the requester first)                           | Rule 6, second door: `scripts/`, `app/api/system/` and other modules import `queries.ts` / `commands.ts` and pass the requester they act for                               |
+| NX-TYPE-02 (no `as` across a boundary)                                                                | Rule 8                                                                                                                                                                     |
+| NX-ZOD-05, NX-TYPE-06 (env read once)                                                                 | Rule 9                                                                                                                                                                     |
+| NX-DB-01 to -04, -08, NX-DRZ-04 (schema source, no logic in the database)                             | Rule 10, one sentence                                                                                                                                                      |
+| NX-MIG-04 (deviations are written down)                                                               | Rule 11: an `eslint-disable` links an ADR                                                                                                                                  |
+| NX-DB-05 (a refused constraint becomes a named error)                                                 | Errors table: the command throws `Conflict`, the action returns `{ error }`, the route handler `409`                                                                       |
+| NX-LAYER-09 (no cycles between modules)                                                               | Rule 5, by review                                                                                                                                                          |
+| NX-NAME-01, -02, -10, -50, -52, -53                                                                   | The Naming section. NX-NAME-31 is reversed: queries are `get<Noun>` and return `null`; there is no `find`                                                                  |
+| NX-TEST-02, -03, -05, -07, -08                                                                        | Testing §1 to §6: real Postgres, own users per test, factories, E2E for business-critical flows. The setup refuses to start outside a `_test` database instead of skipping |
+| NX-STR-04 (route-local UI first)                                                                      | The tree: `_components/` per route, `components/` shared                                                                                                                   |
+| Rule ids, severities, mechanisms, the generated checklist                                             | Each rule carries _Lint_, _Review_ or _Test_                                                                                                                               |
 
-### Not yet covered
-
-Gaps the comparison against 0.3.x found, left for 0.4.x so this release stays a copy of the
-document in use: an entry point for callers that bring their own requester (other modules, cron,
-webhooks; NX-AUTH-06, NX-LAYER-11 covered it); a browser-safe `contracts.ts` so forms reuse the
-action's schema (NX-TYPE-04); a `domain.ts` for pure business rules beyond `policy.ts`
-(NX-RICH-02); a `Conflict` error for refused constraints (NX-DB-05); no `as` outside mappers
-(NX-TYPE-02); `lib/env.ts` as the only reader of `process.env` (NX-ZOD-05); code-first schema with
-generated migrations (NX-DB-01, NX-DRZ-04); business nouns for module names (NX-NAME-10); no
-cycles between modules (NX-LAYER-09).
+Dropped without replacement, each traced by the 0.3.x changelog to one project: NX-AUTH-04, -08
+(row policies, queue claims), NX-LAYER-12 (wording), NX-DB-06, -07, -09, NX-DRZ-02, -03, -05 to
+-08, every NX-SB rule, NX-XMOD-03, NX-MIG-01 to -03, NX-NAME-04 to -08, -11, -70 to -72,
+NX-NSA-01, -02, NX-TEST-04, NX-TYPE-01, -03, NX-ZOD-02, -06.
 
 ### Tooling
 
@@ -74,7 +80,6 @@ cycles between modules (NX-LAYER-09).
 - `ci.yml` is deleted: every step built or tested what this release removes.
 - `release.yml` checks that the tag matches `package.json` and has a changelog entry, then creates
   the GitHub release. No tarballs.
-
 
 ## 0.3.2 — command tests: a thin use case is tested through its command
 
@@ -126,11 +131,11 @@ Docs
 Breaking. The ownership rules assumed a tenant. A project now says who owns a row in one new,
 required header key, and the rules, types, checks and helper follow it:
 
-| `isolation:` | A row belongs to | `Requester` | Owned repository methods take first |
-| --- | --- | --- | --- |
-| `tenant` | a workspace or organisation | `TenantRequester` (`tenantId`) | `tenantId: TenantId` |
-| `owner` | the signed-in user; no shared workspaces | `OwnerRequester` (`ownerId`) | `ownerId: OwnerId` |
-| `none` | nobody: shared data only | `Requester` | — |
+| `isolation:` | A row belongs to                         | `Requester`                    | Owned repository methods take first |
+| ------------ | ---------------------------------------- | ------------------------------ | ----------------------------------- |
+| `tenant`     | a workspace or organisation              | `TenantRequester` (`tenantId`) | `tenantId: TenantId`                |
+| `owner`      | the signed-in user; no shared workspaces | `OwnerRequester` (`ownerId`)   | `ownerId: OwnerId`                  |
+| `none`       | nobody: shared data only                 | `Requester`                    | —                                   |
 
 Core and testing
 
@@ -171,6 +176,7 @@ Tooling
 - The reference module's billing repository has a real `invoices` table and an isolation test.
 
 Upgrading from 0.2.3: install both 0.3.0 tarballs, `npx conventions sync`. Then:
+
 - add `isolation: tenant | owner | none` to the ARCHITECTURE.md header;
 - type `lib/auth/requester.ts` as `TenantRequester` or `OwnerRequester` (`ownerId: OwnerId(claims.sub)`
   for `owner`), and rename `requester.tenantId` to `requester.ownerId` under `owner`;
@@ -222,6 +228,7 @@ Tooling
   it installs by itself (#19).
 
 Upgrading from 0.2.2: install both 0.2.3 tarballs, `npx conventions sync`. Then:
+
 - delete the module copies of `RevisionConflict` and import it from `@conventions/nextjs/core`;
 - point `npm run lint` at `conventions lint` alone, and drop the ESLint override blocks that
   repeated Deviations rows or legacy exemptions for `eslint .`;
@@ -279,7 +286,6 @@ Upgrading from 0.2.1: `npm i -D -E @conventions/nextjs@0.2.2 @conventions/cli@0.
 - NX-NAME-61 is checked in `contracts.ts` only.
 - `conventions lint` ignores hidden folders (`.next`) in ls-lint output.
 - Release workflow: pushing `v<version>` packs both packages and attaches the tarballs.
-
 
 ## 0.2.0 — rebuild: every rule names its tool
 
