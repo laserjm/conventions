@@ -1,7 +1,0 @@
-id: nx-name-20-no-domain-suffixes
-valid:
-  - "export type Order = { id: string };"
-invalid:
-  - "export type OrderModel = { id: string };"
-  - "export interface OrderEntity { id: string }"
-  - "export type OrderModel<T> = { id: T };"

@@ -1,9 +1,0 @@
-id: nx-name-52-no-component-suffixes
-valid:
-  - "export function OrderCard() { return <div />; }"
-  - "export function OrderCard(props: OrderCardProps): JSX.Element { return <div />; }"
-invalid:
-  - "export function OrderCardComponent() { return <div />; }"
-  - "export const OrderListContainer = () => <div />;"
-  - "export function OrderCardView(props: Props): JSX.Element { return <div />; }"
-  - "export default function OrderWidget() { return <div />; }"

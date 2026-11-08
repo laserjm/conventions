@@ -1,8 +1,0 @@
-id: nx-test-03-integration-tests-skip-loudly
-snapshots:
-  "import { describe } from 'vitest'; describe('orderRepository', () => {});":
-    labels:
-    - source: import { describe } from 'vitest'; describe('orderRepository', () => {});
-      style: primary
-      start: 0
-      end: 73

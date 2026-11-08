@@ -1,22 +1,7 @@
 {
   "name": "conventions",
   "private": true,
-  "version": "0.3.2",
-  "description": "Architecture conventions as docs, lint rules and skills — per stack profile",
-  "scripts": {
-    "build": "pnpm --filter @conventions/nextjs build",
-    "catalog": "node scripts/build-catalog.mjs",
-    "test": "pnpm build && node scripts/build-catalog.mjs && pnpm -r test",
-    "test:reference": "pnpm --filter @conventions/example-nextjs-orders test",
-    "test:fixtures": "pnpm --filter @conventions/example-nextjs-violations test"
-  },
-  "packageManager": "pnpm@10.28.0",
-  "engines": {
-    "node": ">=20"
-  },
-  "devDependencies": {
-    "ajv": "^8.20.0",
-    "tinyglobby": "^0.2.17",
-    "yaml": "^2.9.1"
-  }
+  "version": "0.4.1",
+  "description": "Architecture conventions for Next.js apps: one document, an ESLint config template and an ADR template",
+  "packageManager": "pnpm@10.28.0"
 }

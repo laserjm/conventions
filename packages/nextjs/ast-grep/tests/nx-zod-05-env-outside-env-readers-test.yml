@@ -1,7 +1,0 @@
-id: nx-zod-05-env-outside-env-readers
-valid:
-  - "import { env } from '@/lib/env'; export const url = env.DATABASE_URL;"
-invalid:
-  - "export const url = process.env.DATABASE_URL;"
-  - "export const all = process.env;"
-  - "const { env } = process; export const u = env.X;"

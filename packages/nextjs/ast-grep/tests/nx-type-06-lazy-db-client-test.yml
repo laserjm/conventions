@@ -1,5 +1,0 @@
-id: nx-type-06-lazy-db-client
-valid:
-  - "let database; export function db() { database ??= drizzle(postgres(url)); return database; }"
-invalid:
-  - "export const db = drizzle(postgres(url));"

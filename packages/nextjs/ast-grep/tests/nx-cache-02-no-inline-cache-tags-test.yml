@@ -1,7 +1,0 @@
-id: nx-cache-02-no-inline-cache-tags
-valid:
-  - "revalidateTag(ORDER_TAGS.all); revalidateTag(ORDER_TAGS.one(id)); cacheTag(ORDER_TAGS.all);"
-invalid:
-  - "revalidateTag('orders');"
-  - "cacheTag(`order:${id}`);"
-  - "cache.revalidateTag('orders');"

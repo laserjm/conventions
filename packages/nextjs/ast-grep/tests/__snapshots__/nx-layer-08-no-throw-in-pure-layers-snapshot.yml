@@ -1,8 +1,0 @@
-id: nx-layer-08-no-throw-in-pure-layers
-snapshots:
-  "export function f() { throw new Error('nope'); }":
-    labels:
-    - source: throw new Error('nope');
-      style: primary
-      start: 22
-      end: 46

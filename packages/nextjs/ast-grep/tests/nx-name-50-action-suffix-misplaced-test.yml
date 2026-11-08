@@ -1,8 +1,0 @@
-id: nx-name-50-action-suffix-misplaced
-valid:
-  - "export { payOrderAction } from './actions';"
-  - "export const payOrder = 1;"
-invalid:
-  - "export const payOrderAction = 1;"
-  - "function doAction() {}"
-  - "export async function payOrderAction(input: Input): Promise<void> {}"

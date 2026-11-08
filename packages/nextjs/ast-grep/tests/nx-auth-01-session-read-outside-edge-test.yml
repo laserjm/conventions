@@ -1,5 +1,0 @@
-id: nx-auth-01-session-read-outside-edge
-valid:
-  - "import { conflict } from '@conventions/nextjs/core';"
-invalid:
-  - "import { getRequester } from '@/lib/auth/requester';"

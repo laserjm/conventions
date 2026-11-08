@@ -1,8 +1,0 @@
-id: nx-rich-03-no-domain-classes
-snapshots:
-  "export class Order { pay() {} }":
-    labels:
-    - source: class Order { pay() {} }
-      style: primary
-      start: 7
-      end: 31

@@ -1,7 +1,0 @@
-id: nx-drz-02-no-hand-written-row-types
-valid:
-  - "export type OrderRow = InferSelectModel<typeof orders>;"
-  - "export type OrderRow = typeof orders.$inferSelect;"
-invalid:
-  - "export type OrderRow = { id: string; tenantId: string };"
-  - "type OrderRow = { readonly id: string };"

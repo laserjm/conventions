@@ -1,7 +1,0 @@
-id: nx-rich-03-no-domain-classes
-language: typescript
-severity: error
-message: "NX-RICH-03: rich means plain types and pure functions, not classes: applyPayment(order, payment): Result<Order, OrderError>."
-files: ["**/modules/*/domain/**/*.ts"]
-rule:
-  kind: class_declaration
