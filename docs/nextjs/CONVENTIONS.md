@@ -1,8 +1,7 @@
 # Conventions
 
 How a Next.js app on Drizzle, Postgres and zod is organized, and when a route grows into a
-module. Rules that lint enforces are only pointed at here; the project's `eslint.config.mjs`
-(template: `templates/eslint.config.mjs`) is the source of truth for the import graph.
+module. Rules that lint enforces are only pointed at here; the project's `eslint.config.mjs` is the source of truth for the import graph.
 
 ## Why
 
@@ -250,8 +249,8 @@ builds them. UI imports DTO types, never a row type.
 
 ## Sources of truth
 
-- `eslint.config.mjs` (template: `templates/eslint.config.mjs`): the import graph, `server-only`,
+- `eslint.config.mjs`: the import graph, `server-only`,
   `'use server'`, casts, `process.env`.
-- `docs/adr/` (template: `templates/adr-0000-template.md`): every decision that interprets or
+- `docs/adr/`: every decision that interprets or
   deviates from a rule, with the options considered and how to reverse it.
 - `test/global-setup.ts`, `test/factories.ts`: test database and fixtures.
