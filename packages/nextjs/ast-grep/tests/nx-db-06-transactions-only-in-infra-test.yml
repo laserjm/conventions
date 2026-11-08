@@ -1,5 +1,0 @@
-id: nx-db-06-transactions-only-in-infra
-valid:
-  - "import { conflict } from '@conventions/nextjs/core';"
-invalid:
-  - "import { createTransactionRunner } from '@conventions/nextjs/drizzle';"

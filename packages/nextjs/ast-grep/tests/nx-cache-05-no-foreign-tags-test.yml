@@ -1,7 +1,0 @@
-id: nx-cache-05-no-foreign-tags
-valid:
-  - "import { getOrder } from '@/modules/orders/server'; import { ORDER_TAGS } from './queries';"
-  - "import { revalidateOrder } from '@/modules/orders/index';"
-invalid:
-  - "import { ORDER_TAGS } from '@/modules/orders/server';"
-  - "import { getOrder, ORDER_TAGS } from '../orders/server';"

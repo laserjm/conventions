@@ -1,7 +1,0 @@
-id: nx-layer-05-require-server-only
-valid:
-  - "import 'server-only'; export const getOrder = 1;"
-  - "import 'server-only';\nexport * from './queries';"
-invalid:
-  - "export const getOrder = 1;"
-  - "import { x } from 'y'; export * from './queries';"

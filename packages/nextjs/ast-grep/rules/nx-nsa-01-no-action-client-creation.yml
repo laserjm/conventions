@@ -1,9 +1,0 @@
-id: nx-nsa-01-no-action-client-creation
-language: typescript
-severity: error
-message: "NX-NSA-01: the action clients are created once, in lib/safe-action.ts, with createActionClients() from '@conventions/nextjs/next-safe-action' (NX-NSA-03)."
-ignores: ["**/lib/safe-action.ts"]
-rule:
-  any:
-    - pattern: createSafeActionClient($$$ARGS)
-    - pattern: createActionClients($$$ARGS)

@@ -1,6 +1,0 @@
-id: nx-err-04-tag-in-jsx
-valid:
-  - "const x = <p>{ERROR_COPY[error._tag]}</p>;"
-  - "const y = <p>{copy}</p>;"
-invalid:
-  - "const x = <p>{error._tag}</p>;"

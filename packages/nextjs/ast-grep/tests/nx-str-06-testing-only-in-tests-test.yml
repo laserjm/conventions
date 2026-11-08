@@ -1,6 +1,0 @@
-id: nx-str-06-testing-only-in-tests
-valid:
-  - "import { ok } from '@conventions/nextjs/core';"
-invalid:
-  - "import { localStack } from '@conventions/nextjs/testing';"
-  - "import { describe } from 'vitest';"

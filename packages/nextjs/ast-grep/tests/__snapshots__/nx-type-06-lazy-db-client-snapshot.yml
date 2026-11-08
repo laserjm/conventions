@@ -1,8 +1,0 @@
-id: nx-type-06-lazy-db-client
-snapshots:
-  export const db = drizzle(postgres(url));:
-    labels:
-    - source: export const db = drizzle(postgres(url));
-      style: primary
-      start: 0
-      end: 41

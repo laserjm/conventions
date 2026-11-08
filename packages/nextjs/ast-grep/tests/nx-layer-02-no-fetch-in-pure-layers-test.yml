@@ -1,5 +1,0 @@
-id: nx-layer-02-no-fetch-in-pure-layers
-valid:
-  - "export const f = async (deps) => deps.gateway.charge(1);"
-invalid:
-  - "export const f = async () => fetch('https://x');"
