@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased — 0.4.1 draft: close the lint holes 0.4.0 left
+## 0.4.1 — close the lint holes 0.4.0 left
 
 - `contracts.ts` imports only zod and types (lint). 0.4.0 exempted it from `server-only` without
   restricting what it imports, so a stray `@/lib/db` import would have reached the browser bundle.

@@ -1,7 +1,7 @@
 {
   "name": "conventions",
   "private": true,
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Architecture conventions for Next.js apps: one document, an ESLint config template and an ADR template",
   "packageManager": "pnpm@10.28.0"
 }
