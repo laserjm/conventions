@@ -10,6 +10,14 @@
   and throws `Conflict`.
 - `templates/adr-0001-example-where-the-current-user-is-resolved.md`: the ADR the template's
   headings came from, as a filled-in example.
+- Rule 12 (lint): a module imports from `lib/` only the db, and types. External services are
+  clients in `lib/<service>.ts` that the adapter builds from `env` and passes in; `index.ts` may
+  import `lib/auth` and nothing else from `lib/`.
+- Route handlers answer `{ error }` JSON on every status. The Errors table said `404`, `403` and
+  `500` without a body, and `notFound()` renders the HTML page. The body type lives once in
+  `lib/http.ts`, never per module.
+- User-facing text a module must emit itself (an error chunk after a stream started) is handed in
+  by the adapter as a function: `lib/` clients classify errors, adapters word them.
 
 ## 0.4.0 — one document
 
