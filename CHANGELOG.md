@@ -14,10 +14,9 @@
   clients in `lib/<service>.ts` that the adapter builds from `env` and passes in; `index.ts` may
   import `lib/auth` and nothing else from `lib/`.
 - Route handlers answer `{ error }` JSON on every status. The Errors table said `404`, `403` and
-  `500` without a body, and `notFound()` renders the HTML page. The body type lives once in
-  `lib/http.ts`, never per module.
+  `500` without a body, and `notFound()` renders the HTML page.
 - User-facing text a module must emit itself (an error chunk after a stream started) is handed in
-  by the adapter as a function: `lib/` clients classify errors, adapters word them.
+  by the adapter as a function. A module never holds copy.
 - Rule 9 loses its exemption for `lib/db/client.ts`: the db client reads its connection string
   from `env` like everything else.
 
