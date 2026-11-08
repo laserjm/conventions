@@ -262,10 +262,10 @@ const eslintConfig = defineConfig([
     },
   },
 
-  // Rule 9: lib/env.ts (and the db client) are the only readers of process.env.
+  // Rule 9: lib/env.ts is the only reader of process.env.
   {
     files: ["app/**", "modules/**", "lib/**", "components/**", "hooks/**"],
-    ignores: ["lib/env.ts", "lib/db/client.ts"],
+    ignores: ["lib/env.ts"],
     rules: {
       "no-restricted-properties": [
         "error",

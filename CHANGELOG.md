@@ -18,6 +18,8 @@
   `lib/http.ts`, never per module.
 - User-facing text a module must emit itself (an error chunk after a stream started) is handed in
   by the adapter as a function: `lib/` clients classify errors, adapters word them.
+- Rule 9 loses its exemption for `lib/db/client.ts`: the db client reads its connection string
+  from `env` like everything else.
 
 ## 0.4.0 — one document
 
