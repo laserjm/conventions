@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased — 0.4.1 draft: close the lint holes 0.4.0 left
+
+- `contracts.ts` imports only zod and types (lint). 0.4.0 exempted it from `server-only` without
+  restricting what it imports, so a stray `@/lib/db` import would have reached the browser bundle.
+- `scripts/` gets the same import block as `app/api/system/` (lint): a script passes the requester
+  it acts for and never imports a module's `index.ts`, `repo.ts` or `mappers.ts`.
+- `lib/db/errors.ts` is the one place that knows the driver's error codes; a command catches there
+  and throws `Conflict`.
+- `templates/adr-0001-example-where-the-current-user-is-resolved.md`: the ADR the template's
+  headings came from, as a filled-in example.
+
 ## 0.4.0 — one document
 
 Breaking. The 0.3.x rule catalogue (133 rules in 16 rulesets) is replaced by one Markdown

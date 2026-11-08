@@ -136,6 +136,13 @@ const eslintConfig = defineConfig([
       ],
     },
   },
+  // Scripts (seed, maintenance) are system callers too (Rule 6, second door).
+  {
+    files: ["scripts/**"],
+    rules: {
+      "no-restricted-imports": ["error", { patterns: [noSessionBoundModule] }],
+    },
+  },
   // Route handlers are adapters: no db, no route `_lib`/`actions.ts`/`_components`, modules via index.ts.
   {
     files: ["app/api/**"],
@@ -286,6 +293,37 @@ const eslintConfig = defineConfig([
               allowTypeImports: true,
               message:
                 "Only a module's index.ts binds the user (withUser). Take `requester` and use `import type`.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // Rule 6, third door: contracts.ts reaches the browser, so it imports only zod and types.
+  // This block replaces the auth-type block above for contracts.ts (flat config does not merge
+  // options); `@/*` covers `@/lib/auth` as well.
+  {
+    files: ["modules/*/contracts.ts"],
+    rules: {
+      "@typescript-eslint/no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: [
+                "@/*",
+                "./*",
+                "../*",
+                "server-only",
+                "next",
+                "next/*",
+                "drizzle-orm",
+                "drizzle-orm/*",
+              ],
+              allowTypeImports: true,
+              message:
+                "contracts.ts is browser-safe: import only zod and types.",
             },
           ],
         },

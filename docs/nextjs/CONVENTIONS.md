@@ -42,7 +42,7 @@ components/               # shared UI; components/ui/* is shadcn, untouched
 lib/
 ├─ auth.ts                # getUser / requireUser (cache()), withUser
 ├─ env.ts                 # validated env; the only reader of process.env (with lib/db/client.ts)
-└─ db/                    # client, schema (code-first), generated migrations
+└─ db/                    # client, schema (code-first), generated migrations; errors.ts names the driver codes
 scripts/                  # seed and maintenance: system callers (optional)
 ```
 
@@ -71,6 +71,8 @@ db itself; a bare `actions.ts` next to `page.tsx` means a module does.
      which would bind the session; never `repo.ts` or `mappers.ts`.
    - UI, client components included, imports `contracts.ts` for input schemas and DTO types, so a
      form validates with the same schema the action parses.
+     `contracts.ts` itself imports nothing but zod and types, so it can't drag the server into the
+     bundle.
 
    _Lint._
 
@@ -127,6 +129,9 @@ the UI sees an error class.
 - One answer for missing, foreign and malformed ids, so ownership isn't leaked. Until `policy.ts`
   exists, "not owned" is "not found" by design; `Forbidden` arrives with hard trigger 4.
 - `{ error }` holds copy the user can read (`useActionState`), never a class name or a tag.
+- The driver's error codes are recognized in one place, `lib/db/errors.ts` (`23505` unique,
+  `23503` foreign key). A command catches there and throws `Conflict`; nothing else reads a driver
+  error.
 - Error classes live in `modules/<x>/errors.ts`. A self-contained route has no adapter layer to
   map them, so it calls `notFound()` or returns `{ error }` directly; wanting named errors there is
   soft trigger 8.
@@ -254,3 +259,4 @@ builds them. UI imports DTO types, never a row type.
 - `docs/adr/`: every decision that interprets or
   deviates from a rule, with the options considered and how to reverse it.
 - `test/global-setup.ts`, `test/factories.ts`: test database and fixtures.
+- `lib/db/errors.ts`: the one place that knows the driver's error codes.

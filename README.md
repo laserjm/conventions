@@ -10,6 +10,7 @@ docs/nextjs/CONVENTIONS.md      the conventions: layout, eleven rules, the two s
 templates/eslint.config.mjs     the import graph and the server-only / 'use server' checks the
                                 document only points at; flat config on top of eslint-config-next
 templates/adr-0000-template.md  one record per decision that changes or interprets a rule
+templates/adr-0001-example-*.md a filled-in example: where the current user is resolved
 CHANGELOG.md                    what changed per version, and why
 ```
 
