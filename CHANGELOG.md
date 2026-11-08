@@ -1,5 +1,81 @@
 # Changelog
 
+## 0.4.0 — one document
+
+Breaking. The 0.3.x rule catalogue (133 rules in 16 rulesets) is replaced by one Markdown
+document, `docs/nextjs/CONVENTIONS.md`, with an ESLint config template and an ADR template beside
+it. The runtime package `@conventions/nextjs` (`Result`, the standard errors, `defineUseCase`,
+`defineRepository`, `Requester`, `TenantId`/`OwnerId`, `systemRequester`, the transaction runner,
+the action clients, `describeIntegration`, `assertIsolation`), the CLI `@conventions/cli`
+(`lint`, `check`, `explain`, `init`, `sync`), the ast-grep and ls-lint rules, the bindings
+(drizzle, supabase, zod, next-safe-action), the reference and violation examples, and the Claude
+Code plugin with its skills and hooks are gone. **There is no upgrade path for code that imports
+`@conventions/nextjs/core`, `/drizzle`, `/next-safe-action` or `/testing`.** A 0.3.x project keeps
+its pinned tarballs or inlines the helpers it uses; the 0.3.2 release assets stay available.
+
+The reason: a 0.3.x rollout in a real app showed the layering, the runtime types and the tooling
+cost more than they returned for routes that own one table. The new document starts every route
+self-contained and promotes it to a module on explicit triggers. It was written and used in the
+`dogfood-challenge` app first; this release copies it here, generalized.
+
+### Removed, following the document's "Deliberately dropped" section
+
+Each bullet names the 0.3.x rules it retires and the sentence that replaces them.
+
+- **A branded owner id that only `lib/auth` can mint.** Retires NX-AUTH-03 (`assertIsolation`),
+  NX-AUTH-05, NX-NAME-34, NX-TYPE-05, NX-ZOD-03 and the `TenantId`/`OwnerId` brands. Replaced by:
+  "Lint already restricts who imports `lib/auth` as a value, and a brand would force every test to
+  mint one." Isolation is Rule 2 (every read and write scoped by the caller) plus Testing §5, the
+  "someone else's id" case every use case gets.
+- **A "who may import what" table in the document.** Retires the layer table and NX-LAYER-01,
+  -02, -03, -04, -05, -09, -10, NX-STR-03, -05, -06, NX-CACHE-01, -04, NX-ZOD-01, NX-NSA-05,
+  NX-SB-08, NX-DRZ-01 as prose. Replaced by: "It drifted; `eslint.config.mjs` is the table." Rule 5
+  states the direction in one sentence; the template enforces it.
+- **`index.ts` (and `server.ts`) as a public API before a module exists.** Retires NX-STR-07,
+  NX-NAME-12 and the browser-safe/server-only split of NX-LAYER-05. Replaced by: "A self-contained
+  route has none." A module has one server-only `index.ts`; UI imports its types with
+  `import type`.
+- **Full module layering from day one.** Retires `domain/`, `application/`, `infra/` (NX-STR-02),
+  NX-LAYER-06, -07, -08, -11, -12, NX-RICH-01 to -04, `Result` and tagged errors (NX-ERR-01 to
+  -04), the layer naming tables (NX-NAME-20 to -24, -30 to -34, -40 to -43, -60 to -62) and
+  fake-backed use-case tests (NX-TEST-01, -06). Replaced by: "Correct, and too heavy for a route
+  that owns one table." Routes start in `_lib/`, promote on one hard or two soft triggers, and a
+  module is six flat files. Domain errors are thrown classes that adapters map.
+
+### Gone with the catalogue
+
+| 0.3.x ruleset | Where it went |
+| --- | --- |
+| auth (NX-AUTH-01, -02, -07) | Rules 1, 2 and 6. NX-AUTH-04, -06, -08 (row policies, system callers, queue claims) are dropped; see "Not yet covered". |
+| cache (NX-CACHE-01 to -06) | Deferred until `cacheComponents` is on; actions call `revalidatePath()`. |
+| cross-module (NX-XMOD-01 to -03) | Hard trigger 3. Direct calls; no events until a second subscriber exists. |
+| database, drizzle, supabase (NX-DB, NX-DRZ, NX-SB) | Dropped with the bindings. Principle 1, "business logic lives in TypeScript", stays in the Why section. |
+| migration (NX-MIG-01 to -04), legacy | Dropped. The self-contained default is the strangler path; a deviation is an ADR. |
+| naming (general, folders, ui, tests) | The Naming section: two tables and a role vocabulary. |
+| testing (NX-TEST-02, -03, -05, -07, -08) | Testing §1 to §6: real Postgres, own users per test, factories, E2E for business-critical flows. The setup refuses to start outside a `_test` database instead of skipping. |
+| types (NX-TYPE-01 to -06) | Principle 2. NX-TYPE-02 (no `as` across boundaries) and NX-TYPE-06 (env read once) are not yet in the document. |
+| next-safe-action (NX-NSA-01 to -05) | Plain server actions, `useActionState`, `{ error }`. |
+| rule ids, severities, mechanisms, checklist | Each rule carries _Lint_, _Review_ or _Test_. |
+
+### Not yet covered
+
+Gaps the comparison against 0.3.x found, left for 0.4.x so this release stays a copy of the
+document in use: an entry point for callers that bring their own requester (other modules, cron,
+webhooks; NX-AUTH-06, NX-LAYER-11 covered it); a browser-safe `contracts.ts` so forms reuse the
+action's schema (NX-TYPE-04); a `domain.ts` for pure business rules beyond `policy.ts`
+(NX-RICH-02); a `Conflict` error for refused constraints (NX-DB-05); no `as` outside mappers
+(NX-TYPE-02); `lib/env.ts` as the only reader of `process.env` (NX-ZOD-05); code-first schema with
+generated migrations (NX-DB-01, NX-DRZ-04); business nouns for module names (NX-NAME-10); no
+cycles between modules (NX-LAYER-09).
+
+### Tooling
+
+- `package.json` has no scripts and no dependencies; `pnpm-workspace.yaml` lists no packages.
+- `ci.yml` is deleted: every step built or tested what this release removes.
+- `release.yml` checks that the tag matches `package.json` and has a changelog entry, then creates
+  the GitHub release. No tarballs.
+
+
 ## 0.3.2 — command tests: a thin use case is tested through its command
 
 Rules
