@@ -1,18 +1,23 @@
 # Changelog
 
-## 0.6.0 — the copy is changed at home, top down
+## 0.6.0 — the copy is changed at home; agents challenge, the human decides
 
 Reverses where the document is changed: no longer "in this file" of the project, but only in the
 home repository (`laserjm/conventions`), released there and rolled out to the projects. A project
-on 0.5.0 has nothing to change in its code; an agent that used to edit the copy now reports.
+on 0.5.0 has nothing to change in its code; an agent that used to edit the copy now challenges
+the rule through the human in the loop.
 
 - "Changing this document" opens with where the file is changed: in the home repository, top
   down. The project never edits its copy and doesn't open issues or pull requests against the
-  home repository.
-- A problem with a floor rule, an unproven part that doesn't fit, and a default that keeps
-  collecting ADRs are findings, reported where the work is reported. The owner decides whether
-  the home repository changes.
-- "How to read this" (the floor row), "Unproven" and Rule 11 say "reported" instead of "changed
+  home repository; the human in the loop decides whether it changes.
+- Challenge a rule when a floor rule or an unproven part doesn't fit, when a better way conflicts
+  with a default, when a default keeps collecting ADRs, and when an improvement would help every
+  project (a rule that would have prevented the bug just fixed, a tighter default, a check lint or
+  a test could take over), even if the task is done without it.
+- New "How to challenge": a `Conventions challenge` section per rule where the work is reported,
+  naming the rule id, what happened (commit, issue or ADR), the proposed change and its
+  enforcement class.
+- "How to read this" (the floor row), "Unproven" and Rule 11 say "challenged" instead of "changed
   in this file".
 - `templates/adr-0000-template.md`: Consequences names the rule an ADR departs from or
   interprets, instead of a rule it rewords.
