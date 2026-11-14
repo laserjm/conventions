@@ -30,23 +30,45 @@ What the document doesn't name is **open territory**, decided by its priorities.
 
 ## Adopt it in a project
 
-1. Register the project in the table in [AGENTS.md](AGENTS.md).
-2. Copy `docs/nextjs/CONVENTIONS.md` and `docs/nextjs/NAMING.md` to the project root. Keep their
-   first line (`<!-- conventions 0.6.0 -->`): it tells the next rollout where to start.
-3. Copy `templates/eslint.config.mjs` to the project root as `eslint.config.mjs`. It expects
+The conventions apply to one Next.js app and live at its **app root**, the folder that holds the
+app's `package.json`. In a single-app repository that is the repository root; in a monorepo it is
+`apps/<app>/`. Every app that adopts them carries its own copy:
+
+```
+<app root>/
+├─ AGENTS.md            points at docs/CONVENTIONS.md
+├─ CLAUDE.md            @AGENTS.md
+├─ eslint.config.mjs    from templates/eslint.config.mjs
+└─ docs/
+   ├─ CONVENTIONS.md    from docs/nextjs/
+   ├─ NAMING.md         from docs/nextjs/
+   └─ adr/              the app's decisions
+```
+
+1. Register the app in the table in [AGENTS.md](AGENTS.md), one row per app.
+2. Copy `docs/nextjs/CONVENTIONS.md` and `docs/nextjs/NAMING.md` to `docs/` at the app root. Keep
+   their first line (`<!-- conventions 0.6.0 -->`): it tells the next rollout where to start.
+3. Copy `templates/eslint.config.mjs` to the app root as `eslint.config.mjs`. It expects
    `eslint-config-next`, the `@/` path alias, and the folders the document names (`app/`,
    `modules/`, `lib/`, `components/`, `hooks/`, `scripts/`). Adjust the globs if yours differ.
-4. Add to the project's `AGENTS.md`:
+4. Add to the app's `AGENTS.md`, and give the app a `CLAUDE.md` that contains only `@AGENTS.md`:
 
    ```markdown
    # Conventions
 
-   Use `CONVENTIONS.md`
+   Use `docs/CONVENTIONS.md`
    ```
 
+   Point at `CONVENTIONS.md` only. It sends the reader to `NAMING.md` when a file or an export is
+   created or renamed, so most tasks don't load the naming tables.
 5. Before a decision departs from a default, copy `templates/adr-0000-template.md` to
    `docs/adr/NNNN-<slug>.md` and fill it in. The document's last section says what else the
    project owns: the test setup that refuses to run outside a `_test` database, and the factories.
+
+In a monorepo, the repository root's `AGENTS.md` is a map: it lists the apps under `apps/`, says
+which of them follow the conventions, and tells the reader to read an app's `AGENTS.md` before
+working in it. It doesn't point at the conventions itself. A second Next.js app gets its own copy,
+ADRs and version; one shared copy is not worth it until two apps exist.
 
 ## Change the conventions
 

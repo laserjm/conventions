@@ -20,6 +20,10 @@ The sections bind differently. Only the floor can be violated.
 Rule, trigger and Testing § numbers are ids, not an order: the lint config, the ADRs and the
 changelog cite them, so they keep their number wherever the rule sits.
 
+Paths (`app/`, `lib/`, `eslint.config.mjs`, `docs/adr/`) are relative to the app root, the
+folder that holds the Next.js app's `package.json`: the repository root in a single-app
+repository, `apps/<app>/` in a monorepo. This file and NAMING.md sit in `docs/` there.
+
 **Unproven.** Some parts are carried over from earlier projects, and no app has exercised them
 yet: `app/api/system/`, one module calling another (Rule 6, hard trigger 3, the shared
 transaction), `scripts/` calling a use case instead of writing rows, `policy.ts` and the

@@ -24,14 +24,18 @@ downstream of this one.
    template, is a minor bump; wording that changes no behavior is a patch. Before 1.0 a minor
    bump may remove or reverse a rule, and the changelog says so in its first line.
 5. **A release is rolled out to every registered repository** that implements the changed part,
-   one pull request per repository, opened from a session in this repository. When it is merged,
-   update the repository's version in the table below.
-6. **A repository is registered here before it adopts the conventions**, and removed from the
-   table when it stops using them.
+   one pull request per repository, opened from a session in this repository. A rollout also
+   brings the app to the layout in the README: the documents in `docs/` at the app root, the
+   app's `AGENTS.md` pointing at `docs/CONVENTIONS.md` only, a `CLAUDE.md` with `@AGENTS.md`, and
+   in a monorepo a root `AGENTS.md` that maps the apps. When it is merged, update the version in
+   the table below.
+6. **An app is registered here before it adopts the conventions**, one row per app, and removed
+   from the table when it stops using them. A monorepo with two adopting apps has two rows.
 
 ## Registered repositories
 
-Local links assume the downstream repositories are cloned next to this one.
+Local links assume the downstream repositories are cloned next to this one. *Where* is the app
+root: the repository root for a single-app repository, `apps/<app>/` in a monorepo.
 
 | Repository | Local | Implements | Version | Where |
 | --- | --- | --- | --- | --- |

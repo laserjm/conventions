@@ -4,8 +4,9 @@
 
 Reverses where the document is changed: no longer "in this file" of the project, but only in the
 home repository (`laserjm/conventions`), released there and rolled out to the projects. A project
-on 0.5.0 has nothing to change in its code; an agent that used to edit the copy now challenges
-the rule through the human in the loop.
+on 0.5.0 has nothing to change in its code; it moves the two documents to `docs/` at the app
+root (see Layout). An agent that used to edit the copy now challenges the rule through the human
+in the loop.
 
 - "Changing this document" opens with where the file is changed: in the home repository, top
   down. The project never edits its copy and doesn't open issues or pull requests against the
@@ -21,6 +22,19 @@ the rule through the human in the loop.
   in this file".
 - `templates/adr-0000-template.md`: Consequences names the rule an ADR departs from or
   interprets, instead of a rule it rewords.
+
+### Layout
+
+- The documents move from the project root to `docs/` at the app root, next to `docs/adr/`. The
+  app's `AGENTS.md` says "Use `docs/CONVENTIONS.md`" and points at nothing else; NAMING.md is
+  read when the document sends the reader there.
+- "How to read this": paths are relative to the app root, the repository root in a single-app
+  repository and `apps/<app>/` in a monorepo.
+- README: in a monorepo every adopting app carries its own copy, ADRs and version; the root
+  `AGENTS.md` maps the apps and doesn't point at the conventions. The registry has one row per
+  app.
+- To upgrade from 0.5.0: `git mv CONVENTIONS.md NAMING.md docs/` and update the line in
+  `AGENTS.md`. The links between the two files are relative and keep working.
 
 ## 0.5.0 — what the dogfood app settled
 
