@@ -84,6 +84,13 @@ const noComponentsInLib = {
   message:
     "`_lib` and `actions.ts` never import `_components`. Types the UI needs come from the query or module that returns them.",
 }
+// Rule 1: a script has no session, so it never resolves the current user.
+const noSessionInScripts = {
+  group: ["@/lib/auth", "**/lib/auth"],
+  allowTypeImports: true,
+  message:
+    "A script has no session: name the requester it acts for and call `@/modules/<x>/queries` or `/commands` (Rule 1, Rule 6).",
+}
 const noRouteLibInApi = {
   group: [
     "**/_lib",
@@ -102,8 +109,9 @@ const eslintConfig = defineConfig([
   ...nextTs,
   globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts"]),
 
-  // Rule 2: only `_lib/*`, `lib/` and `modules/` may import the db.
-  // `_lib` may import the db, but modules only through their index.ts.
+  // Rule 3: only `_lib/*`, `lib/` and `modules/` may import the db; outside the app, test/ and
+  // scripts/ do too (they are not matched below). `_lib` may import the db, but modules only
+  // through their index.ts.
   {
     files: ["app/**/_lib/**"],
     rules: {
@@ -136,11 +144,16 @@ const eslintConfig = defineConfig([
       ],
     },
   },
-  // Scripts (seed, maintenance) are system callers too (Rule 6, second door).
+  // Scripts (seed, maintenance) are system callers (Rule 6, second door). `pnpm seed` runs them
+  // with the `react-server` condition (Rule 4), so they use lib/env and lib/db/client like the
+  // app, but never lib/auth: there is no session.
   {
     files: ["scripts/**"],
     rules: {
-      "no-restricted-imports": ["error", { patterns: [noSessionBoundModule] }],
+      "@typescript-eslint/no-restricted-imports": [
+        "error",
+        { patterns: [noSessionBoundModule, noSessionInScripts] },
+      ],
     },
   },
   // Route handlers are adapters: no db, no route `_lib`/`actions.ts`/`_components`, modules via index.ts.
@@ -166,8 +179,9 @@ const eslintConfig = defineConfig([
     },
   },
 
-  // Rule 3: server-only on every file that touches db or auth.
-  // schema.ts is exempt: drizzle-kit and seed.ts load it outside Next, where `server-only` throws.
+  // Rule 4: server-only on every file that touches db or auth. Scripts too: their runner sets
+  // the `react-server` condition, so running one without it fails loudly.
+  // schema.ts is exempt: drizzle-kit loads it without that condition. Tests are exempt.
   {
     files: [
       "app/**/_lib/**",
@@ -177,6 +191,7 @@ const eslintConfig = defineConfig([
       "lib/auth.ts",
       "lib/auth/**",
       "modules/**",
+      "scripts/**",
     ],
     ignores: [
       "lib/db/migrations/**",
@@ -188,7 +203,7 @@ const eslintConfig = defineConfig([
     rules: { "local/require-server-only": "error" },
   },
 
-  // Rule 3, actions: `'use server'` first, then `import 'server-only'` (checked above).
+  // Rule 4, actions: `'use server'` first, then `import 'server-only'` (checked above).
   // Matches both `_lib/actions.ts` (before promotion) and the route-level adapter (after).
   {
     files: ["app/**/actions.ts"],
@@ -196,7 +211,7 @@ const eslintConfig = defineConfig([
     rules: { "local/require-use-server": "error" },
   },
 
-  // Rule 4: lib/ never imports app/ (or modules/).
+  // Rule 5: lib/ never imports app/ (or modules/).
   {
     files: ["lib/**"],
     rules: {
@@ -218,7 +233,8 @@ const eslintConfig = defineConfig([
     },
   },
 
-  // Promoted modules: no Next, and app/ only through index.ts.
+  // Rule 5 and Rule 6: promoted modules import no Next and no app/, and reach other modules
+  // only through queries/commands/errors.
   {
     files: ["modules/**"],
     rules: {
@@ -262,9 +278,19 @@ const eslintConfig = defineConfig([
     },
   },
 
-  // Rule 9: lib/env.ts is the only reader of process.env.
+  // Rule 9: lib/env.ts is the only reader of process.env. The tool configs at the root
+  // (drizzle.config.ts, vitest.config.ts) are not matched: their tools load them without the
+  // `react-server` condition, so they can't import lib/env.
   {
-    files: ["app/**", "modules/**", "lib/**", "components/**", "hooks/**"],
+    files: [
+      "app/**",
+      "modules/**",
+      "lib/**",
+      "components/**",
+      "hooks/**",
+      "scripts/**",
+      "test/**",
+    ],
     ignores: ["lib/env.ts"],
     rules: {
       "no-restricted-properties": [

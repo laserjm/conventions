@@ -1,5 +1,82 @@
 # Changelog
 
+## 0.5.0 — what the dogfood app settled
+
+Removes one promotion trigger and moves Naming into its own file. Ported from
+`dogfood-challenge`, where the document is developed against a real app. A project on 0.4.1 has
+nothing to change in its code; the 200-line file trigger no longer counts.
+
+### How the document binds
+
+- New section "How to read this". The floor (Rules 1, 2, 7, 10, 11 and Testing §5) holds in every
+  diff, and no ADR lifts it. Everything under "Defaults" (layout, the import graph in Rules 3–6,
+  8, 9 and 12, the two states, errors, promotion, testing, naming) is departed from with an ADR
+  first (Rule 11). "Deliberately dropped" names what reopens each item; "Open territory" is free.
+- Rule numbers are ids, not an order: the rules are grouped by section and keep their numbers,
+  because the lint config, ADRs and this log cite them.
+- Why gains three habits: structure is earned, one place per fact, tools hold what tools can check.
+- New sections: "Examples" (a self-contained read and the same read after promotion), "Open
+  territory" (going further in a default's own direction needs no ADR; structure ahead of its
+  trigger is not an improvement), "Changing this document".
+- A list of unproven parts, which no app has exercised yet: `app/api/system/`, one module calling
+  another, `scripts/` calling a use case, `policy.ts` and `Forbidden`, `lib/db/errors.ts`,
+  `domain.ts`, UI tests. A misfit there is a finding about the rule, not a deviation.
+
+### Rules
+
+- Rule 1: a system adapter has no session and names the requester it acts for.
+- Rule 2: every read and write is scoped by what the requester may access; ownership until
+  `policy.ts` exists. A missing, a foreign and a malformed id get one answer. A self-contained
+  route has no test for it, and that gap closes on promotion.
+- Rules 3, 4, 9: `scripts/` runs like the app. `pnpm seed` sets the `react-server` condition, so a
+  script starts with `import 'server-only'` and uses `lib/env` and `lib/db/client`; never
+  `lib/auth`, because there is no session (lint). `vitest.config.ts` aliases `server-only` to its
+  empty file. Only the root tool configs read `process.env` directly; `scripts/` and `test/` are
+  now matched by Rule 9 (lint).
+- Rule 6: `index.ts` re-exports the module's error classes, so an adapter maps
+  `chats.ChatNotFound`.
+- Rule 7: a permission is decided once, on the server, where a test can reach it.
+- Rule 10: no triggers at all; `updated_at` is `$onUpdate` in the schema. A generated migration is
+  never edited; a backfill, or SQL the schema can't express, is its own custom migration
+  (`drizzle-kit generate --custom`).
+- `templates/eslint.config.mjs`: the rule numbers in its comments match the document again, and
+  the `scripts/` block uses `@typescript-eslint/no-restricted-imports`, so `allowTypeImports`
+  takes effect.
+
+### Errors and promotion
+
+- A refused write throws the fact that blocked it (`TitleTaken`), not `Conflict`, so the adapter
+  can choose the copy.
+- Hard trigger 3: the owning module opens the transaction; a command another module calls takes it
+  as its last parameter and defaults to the db client.
+- Soft trigger 5 is one function passing about 40 lines. The 200-line file limit is gone and
+  listed under "Deliberately dropped".
+- Soft triggers 6 and 8 name what a reviewer can see ("a business rule shares a function with the
+  framework", "a caller has to tell failures apart") instead of what someone wants.
+- Layout: a module starts as `index.ts`, `contracts.ts`, `queries.ts`, `commands.ts`; `repo.ts`,
+  `mappers.ts` and `errors.ts` appear on need.
+
+### Naming
+
+- The tables and the role list move to `docs/nextjs/NAMING.md`; the document keeps a short
+  section that points there.
+- Components sit by who renders them: the nearest `_components/` while one route group does, flat
+  in `components/` once two do. `components/<module>/` is listed under "Deliberately dropped": it
+  read as the module's UI layer and had no clear trigger.
+
+### Not taken from the 0.5.0 draft
+
+The draft of 2026-11-09 was never released. These parts of it were tried in the dogfood app and
+reversed there:
+
+- Defaults replaceable without an ADR, and adding "above the floor". A note in a project's copy
+  can't be found later; an ADR can. Going further in a default's own direction stays free (Open
+  territory).
+- A section "Outside Next" with scripts building their own db client. The `react-server` condition
+  lets scripts use the app's env and client, which keeps "one place per fact".
+- `scripts/` losing its door into a module. It stays a system caller; that door is unproven.
+- `lib/pure/`. The one helper it was for was deleted; a shared helper waits for a second module.
+
 ## 0.4.1 — close the lint holes 0.4.0 left
 
 - `contracts.ts` imports only zod and types (lint). 0.4.0 exempted it from `server-only` without
