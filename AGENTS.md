@@ -41,5 +41,6 @@ root: the repository root for a single-app repository, `apps/<app>/` in a monore
 | --- | --- | --- | --- | --- |
 | [laserjm/dogfood-challenge](https://github.com/laserjm/dogfood-challenge) | [`../dogfood-challenge`](../dogfood-challenge) | Complete: both documents, ESLint config, ADRs | 0.5.0 | repository root |
 | [laserjm/screenerhub3](https://github.com/laserjm/screenerhub3) | [`../screenerhub3/apps/web`](../screenerhub3/apps/web) | Complete: `CONVENTIONS.md`, ESLint config, ADRs | 0.4.1 | `apps/web/` |
+| [laserjm/workspace-prototype](https://github.com/laserjm/workspace-prototype) | [`../workspace-prototype`](../workspace-prototype) | Adopting 0.6.0 on branch `conventions/0.6.0` | – | repository root |
 
 A repository below the current version (see `package.json`) is due a rollout.
