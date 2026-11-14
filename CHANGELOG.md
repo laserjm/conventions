@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.6.0 — the copy is changed at home, top down
+
+Reverses where the document is changed: no longer "in this file" of the project, but only in the
+home repository (`laserjm/conventions`), released there and rolled out to the projects. A project
+on 0.5.0 has nothing to change in its code; an agent that used to edit the copy now reports.
+
+- "Changing this document" opens with where the file is changed: in the home repository, top
+  down. The project never edits its copy and doesn't open issues or pull requests against the
+  home repository.
+- A problem with a floor rule, an unproven part that doesn't fit, and a default that keeps
+  collecting ADRs are findings, reported where the work is reported. The owner decides whether
+  the home repository changes.
+- "How to read this" (the floor row), "Unproven" and Rule 11 say "reported" instead of "changed
+  in this file".
+- `templates/adr-0000-template.md`: Consequences names the rule an ADR departs from or
+  interprets, instead of a rule it rewords.
+
 ## 0.5.0 — what the dogfood app settled
 
 Removes one promotion trigger and moves Naming into its own file. Ported from

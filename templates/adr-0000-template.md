@@ -44,7 +44,7 @@ it, and what the decider would have preferred if that principle didn't apply.>
 ## Consequences
 
 - <Which files change.>
-- <Which rule in CONVENTIONS.md is reworded, and how.>
+- <Which rule in CONVENTIONS.md this departs from or interprets, and how.>
 - <Which lint rule or test enforces it now.>
 
 ## Reversing this decision

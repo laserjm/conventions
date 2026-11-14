@@ -32,7 +32,7 @@ What the document doesn't name is **open territory**, decided by its priorities.
 
 1. Register the project in the table in [AGENTS.md](AGENTS.md).
 2. Copy `docs/nextjs/CONVENTIONS.md` and `docs/nextjs/NAMING.md` to the project root. Keep their
-   first line (`<!-- conventions 0.5.0 -->`): it tells the next rollout where to start.
+   first line (`<!-- conventions 0.6.0 -->`): it tells the next rollout where to start.
 3. Copy `templates/eslint.config.mjs` to the project root as `eslint.config.mjs`. It expects
    `eslint-config-next`, the `@/` path alias, and the folders the document names (`app/`,
    `modules/`, `lib/`, `components/`, `hooks/`, `scripts/`). Adjust the globs if yours differ.

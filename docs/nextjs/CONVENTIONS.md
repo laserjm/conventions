@@ -1,4 +1,4 @@
-<!-- conventions 0.5.0 -->
+<!-- conventions 0.6.0 -->
 
 # Conventions
 
@@ -12,7 +12,7 @@ The sections bind differently. Only the floor can be violated.
 | Section              | What it is                                             | Departing from it                                           |
 | -------------------- | ------------------------------------------------------ | ----------------------------------------------------------- |
 | Why                  | The priorities every rule comes from                   | Decides whatever the rules don't cover                      |
-| The floor            | What holds in every diff                               | Never. A wrong floor rule is changed in this file           |
+| The floor            | What holds in every diff                               | Never. A wrong floor rule is reported, not edited here      |
 | Defaults             | How things are done unless there is a reason not to    | A decision, not a violation, once an ADR records it         |
 | Deliberately dropped | Trade-offs already settled, each with what reopens it  | Reopen when the named condition is met                      |
 | Open territory       | Everything this document doesn't name                  | Free; decide by Why                                         |
@@ -25,7 +25,7 @@ yet: `app/api/system/`, one module calling another (Rule 6, hard trigger 3, the 
 transaction), `scripts/` calling a use case instead of writing rows, `policy.ts` and the
 `Forbidden` row, `lib/db/errors.ts` and the `<Fact>` errors it feeds, `domain.ts`, and UI tests.
 If one of them doesn't fit the first project that needs it, that is a finding about the rule, not
-a deviation: change it in this file.
+a deviation: report it (Changing this document).
 
 ## Why
 
@@ -73,8 +73,8 @@ the rules that guard who may see and change what, and that mostly only a reviewe
   the schema can't express, is its own custom migration (`drizzle-kit generate --custom`). This is
   the first principle in Why. _Review._
 - **Rule 11. A deviation is written down before it happens.** An `eslint-disable` carries a
-  comment that links an ADR. A rule nobody can follow is changed in this file, not disabled in
-  source. _Review._
+  comment that links an ADR. A rule nobody can follow is reported (Changing this document), not
+  disabled in source. _Review._
 
 ## Defaults
 
@@ -367,16 +367,22 @@ later") is not an improvement here; see Promotion and Deliberately dropped.
 
 ## Changing this document
 
+This file is a copy. It is changed only in the home repository of the conventions,
+`laserjm/conventions`, released there and rolled out to every project that uses it. Changes go
+top down: the project never edits this file, and doesn't open issues or pull requests against the
+home repository either.
+
 - **A better way that fits the defaults:** do it.
 - **A better way that conflicts with a default:** follow the default and name the idea where the
   work is reported. If the task can't be done well without departing, write the ADR first
   (Rule 11), then depart.
-- **A problem with a floor rule:** stop and raise it. The floor changes in this file, never in
-  source.
-- **A new rule** earns its place by a problem that happened, and says how it is enforced: lint,
-  review or test. A removed rule gets a bullet in Deliberately dropped, so the question is not
-  reopened.
-- **A default that keeps collecting ADRs** is reworded here.
+- **A problem with a floor rule, or an unproven part that doesn't fit:** stop and report it where
+  the work is reported. Don't edit this file and don't work around the rule in source; the owner
+  decides whether the home repository changes.
+- **A default that keeps collecting ADRs** is a finding, reported the same way.
+- **A new or removed rule** is made in the home repository. A new rule earns its place by a
+  problem that happened, and says how it is enforced: lint, review or test. A removed rule gets a
+  bullet in Deliberately dropped, so the question is not reopened.
 
 ## Sources of truth
 
