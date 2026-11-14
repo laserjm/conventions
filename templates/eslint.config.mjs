@@ -66,7 +66,7 @@ const moduleViaIndex = {
   message:
     "Import a module through its index.ts (`@/modules/<x>`); only `contracts.ts` (schemas, DTO types) may be imported directly.",
 }
-// Rule 6: callers that bring their own requester (other modules, system handlers, scripts)
+// Rule 6: callers that bring their own requester (other modules, system handlers)
 // use queries.ts/commands.ts/errors.ts directly. index.ts would bind the session; repo/mappers are internal.
 // A regex, not a glob: a glob on `@/modules/*` would also cover `@/modules/<x>/commands`.
 const noSessionBoundModule = {
@@ -83,6 +83,32 @@ const noComponentsInLib = {
   group: ["**/_components", "**/_components/*"],
   message:
     "`_lib` and `actions.ts` never import `_components`. Types the UI needs come from the query or module that returns them.",
+}
+// "Outside Next": files that run in plain Node can't load a `server-only` file as a value.
+const noServerOnlyLibOutsideNext = {
+  group: [
+    "@/lib/env",
+    "@/lib/db/client",
+    "@/lib/auth",
+    "**/lib/env",
+    "**/lib/db/client",
+    "**/lib/auth",
+  ],
+  allowTypeImports: true,
+  message:
+    "This file runs outside Next, where `server-only` throws. Load .env.local with dotenv, read process.env, build the db client from it and import schema.ts (CONVENTIONS.md, Outside Next).",
+}
+// "Outside Next": a module's files are `server-only` too, so a script has no door into a module.
+const noModulesOutsideNext = {
+  group: [
+    "@/modules/*",
+    "@/modules/*/*",
+    "**/modules/*",
+    "**/modules/*/*",
+  ],
+  allowTypeImports: true,
+  message:
+    "scripts/ run outside Next, where a module's `server-only` files throw. Write raw rows through schema.ts; a script that needs a use case is an ADR first (CONVENTIONS.md, Outside Next).",
 }
 const noRouteLibInApi = {
   group: [
@@ -102,8 +128,9 @@ const eslintConfig = defineConfig([
   ...nextTs,
   globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts"]),
 
-  // Rule 2: only `_lib/*`, `lib/` and `modules/` may import the db.
-  // `_lib` may import the db, but modules only through their index.ts.
+  // Rule 3: only `_lib/*`, `lib/` and `modules/` may import the db (inside Next; scripts/ and
+  // test/ are exempt, see "Outside Next"). `_lib` may import the db, but modules only through
+  // their index.ts.
   {
     files: ["app/**/_lib/**"],
     rules: {
@@ -136,11 +163,16 @@ const eslintConfig = defineConfig([
       ],
     },
   },
-  // Scripts (seed, maintenance) are system callers too (Rule 6, second door).
+  // Scripts (seed, maintenance) run outside Next ("Outside Next"): `server-only` throws there,
+  // so they build their own db client from process.env and import schema.ts, never
+  // env/client/auth or a module as values.
   {
     files: ["scripts/**"],
     rules: {
-      "no-restricted-imports": ["error", { patterns: [noSessionBoundModule] }],
+      "@typescript-eslint/no-restricted-imports": [
+        "error",
+        { patterns: [noModulesOutsideNext, noServerOnlyLibOutsideNext] },
+      ],
     },
   },
   // Route handlers are adapters: no db, no route `_lib`/`actions.ts`/`_components`, modules via index.ts.
@@ -166,8 +198,9 @@ const eslintConfig = defineConfig([
     },
   },
 
-  // Rule 3: server-only on every file that touches db or auth.
-  // schema.ts is exempt: drizzle-kit and seed.ts load it outside Next, where `server-only` throws.
+  // Rule 4: server-only on every file that touches db or auth.
+  // schema.ts is exempt: drizzle-kit, scripts/ and test/ load it outside Next, where
+  // `server-only` throws ("Outside Next"). Those places are not matched here either.
   {
     files: [
       "app/**/_lib/**",
@@ -188,7 +221,7 @@ const eslintConfig = defineConfig([
     rules: { "local/require-server-only": "error" },
   },
 
-  // Rule 3, actions: `'use server'` first, then `import 'server-only'` (checked above).
+  // Rule 4, actions: `'use server'` first, then `import 'server-only'` (checked above).
   // Matches both `_lib/actions.ts` (before promotion) and the route-level adapter (after).
   {
     files: ["app/**/actions.ts"],
@@ -196,7 +229,7 @@ const eslintConfig = defineConfig([
     rules: { "local/require-use-server": "error" },
   },
 
-  // Rule 4: lib/ never imports app/ (or modules/).
+  // Rule 5: lib/ never imports app/ (or modules/).
   {
     files: ["lib/**"],
     rules: {
@@ -218,7 +251,8 @@ const eslintConfig = defineConfig([
     },
   },
 
-  // Promoted modules: no Next, and app/ only through index.ts.
+  // Rule 5 and Rule 6: promoted modules import no Next and no app/, and reach other modules
+  // only through queries/commands/errors.
   {
     files: ["modules/**"],
     rules: {
@@ -262,7 +296,8 @@ const eslintConfig = defineConfig([
     },
   },
 
-  // Rule 9: lib/env.ts is the only reader of process.env.
+  // Rule 9: lib/env.ts is the only reader of process.env inside Next. scripts/, test/ and the
+  // tool configs are deliberately not matched ("Outside Next").
   {
     files: ["app/**", "modules/**", "lib/**", "components/**", "hooks/**"],
     ignores: ["lib/env.ts"],
@@ -278,8 +313,8 @@ const eslintConfig = defineConfig([
     },
   },
 
-  // Rule 12: a module imports from lib/ only the db, and types. Auth is bound in index.ts
-  // (Rule 1); clients for external services are built by the adapter and passed in.
+  // Rule 12: a module imports from lib/ only the db, lib/pure/ and types. Auth is bound in
+  // index.ts (Rule 1); clients for external services are built by the adapter and passed in.
   {
     files: ["modules/**"],
     ignores: ["modules/*/index.ts"],
@@ -289,10 +324,47 @@ const eslintConfig = defineConfig([
         {
           patterns: [
             {
-              group: ["@/lib/*", "@/lib/*/*", "!@/lib/db", "!@/lib/db/*"],
+              group: [
+                "@/lib/*",
+                "@/lib/*/*",
+                "!@/lib/db",
+                "!@/lib/db/*",
+                "!@/lib/pure",
+                "!@/lib/pure/*",
+              ],
               allowTypeImports: true,
               message:
-                "A module imports from lib/ only the db (Rule 12). Take `requester` instead of lib/auth, take the client as a parameter, use `import type` for types.",
+                "A module imports from lib/ only the db and lib/pure/ (Rule 12). Take `requester` instead of lib/auth, take the client as a parameter, put a shared helper in lib/pure/, use `import type` for types.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  // Rule 12: lib/pure/ is loaded by modules, UI and scripts alike, so it imports nothing that
+  // isn't safe everywhere: no other lib/ file, no Next, no `server-only`. Types are fine.
+  // (The lib/** block above already keeps app/ and modules/ out.)
+  {
+    files: ["lib/pure/**"],
+    rules: {
+      "@typescript-eslint/no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: [
+                "@/lib/*",
+                "@/lib/*/*",
+                "!@/lib/pure",
+                "!@/lib/pure/*",
+                "../*",
+                "server-only",
+                "next",
+                "next/*",
+              ],
+              allowTypeImports: true,
+              message:
+                "lib/pure/ imports nothing else from lib/, nothing from next/* and no `server-only`: modules, UI and scripts all load it (Rule 12).",
             },
           ],
         },

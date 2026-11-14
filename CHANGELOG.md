@@ -1,5 +1,51 @@
 # Changelog
 
+## Unreleased — 0.5.0 draft: floor and default
+
+Removes one door and loosens four rules (see "Loosened or removed"). A project on 0.4.1 has
+nothing to change unless a script imports a module.
+
+### Synced from dogfood-challenge
+
+- New section "Outside Next": the tool configs, `scripts/` and `test/` run in plain Node, where
+  `server-only` throws. They are the one exemption to Rules 3, 4 and 9, and the section is the
+  list. Rules 3, 4 and 9 now say "inside the Next server".
+- `scripts/` may not import `lib/env`, `lib/db/client` or `lib/auth` as values (lint); a script
+  loads `.env.local` itself and builds its own db client.
+- The rule numbers cited in `templates/eslint.config.mjs` match the document again, and "Sources
+  of truth" says the document owns the numbering.
+
+### Floor and default
+
+- New section "Floor and default". The floor holds in every project and going below it takes an
+  ADR. A default may be replaced by something stricter or equivalent in the project's own copy,
+  without an ADR. A project may always add on top of the floor.
+- Every section says which of its statements are which. All twelve rules are floor; the namespace
+  form of the module import in Rule 6 is a default. Naming keeps four floor names (business-noun
+  modules, the `Action` suffix, `get…` returning `null`, `<useCase>Input`); the tables and the
+  role list are defaults.
+- Promotion: the triggers say when a route must be promoted. Promoting earlier is above the floor.
+- "Deliberately dropped" says dropped is not forbidden: what sits on top of a rule may be added,
+  what would replace a rule is a deviation.
+- A list of unproven parts, which the dogfood app has not exercised yet: `app/api/system/`, one
+  module calling another, `policy.ts` and `Forbidden`, `Conflict` and `lib/db/errors.ts`,
+  `domain.ts`, UI tests. A misfit there is a finding about the rule, not a deviation.
+
+### Loosened or removed
+
+- Rule 12 gains a door: a module may import `lib/pure/`, for helpers two modules share. The
+  folder imports nothing else from `lib/`, nothing from `next/*` and no `server-only` (lint).
+  Before, a shared id or date helper had no home: `lib/` was closed to modules and a `utils`
+  module is not allowed.
+- `scripts/` is no longer a door into a module (Rule 6). `commands.ts` is `server-only` and no
+  script could load it; lint now reports any value import of `@/modules/*` from `scripts/`.
+- Soft trigger 5 is function length only. The 200-line file limit is gone.
+- Rule 10: a generated migration is never edited, and a backfill or other data change is its own
+  empty migration (`drizzle-kit generate --custom`). Before, "never hand-edited" left no way to
+  write one.
+- The component role list is a starting vocabulary a project extends in its own copy, not a
+  closed list.
+
 ## 0.4.1 — close the lint holes 0.4.0 left
 
 - `contracts.ts` imports only zod and types (lint). 0.4.0 exempted it from `server-only` without

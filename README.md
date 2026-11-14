@@ -5,8 +5,9 @@ A project copies the document, copies the ESLint config that enforces its import
 points its agent instructions at it. Nothing is installed.
 
 ```
-docs/nextjs/CONVENTIONS.md      the conventions: layout, eleven rules, the two states of a route,
-                                promotion triggers, errors, testing, naming
+docs/nextjs/CONVENTIONS.md      the conventions: floor and default, layout, twelve rules, what runs
+                                outside Next, the two states of a route, promotion triggers, errors,
+                                testing, naming
 templates/eslint.config.mjs     the import graph and the server-only / 'use server' checks the
                                 document only points at; flat config on top of eslint-config-next
 templates/adr-0000-template.md  one record per decision that changes or interprets a rule
@@ -18,6 +19,11 @@ Every rule in the document says how it is enforced: **lint** (the ESLint templat
 (a human or an agent reads the diff) or **test** (a test the document prescribes). A rule that
 lint can enforce is stated once in the document and lives in the config.
 
+Every section also says what in it is **floor** and what is **default**. The floor holds in every
+project, and going below it takes an ADR. A default is what a project does until it has a reason
+not to: it may replace one with something stricter or equivalent in its own copy, and it may
+always add on top of the floor.
+
 ## Adopt it in a project
 
 1. Copy `docs/nextjs/CONVENTIONS.md` to the project root as `CONVENTIONS.md`. Put the version you
@@ -25,7 +31,7 @@ lint can enforce is stated once in the document and lives in the config.
    against this repo knows where to start.
 2. Copy `templates/eslint.config.mjs` to the project root as `eslint.config.mjs`. It expects
    `eslint-config-next`, the `@/` path alias, and the folders the document names (`app/`,
-   `modules/`, `lib/`, `components/`, `hooks/`). Adjust the globs if yours differ.
+   `modules/`, `lib/`, `components/`, `hooks/`, `scripts/`). Adjust the globs if yours differ.
 3. Add to `AGENTS.md` (or `CLAUDE.md`):
 
    ```markdown
@@ -34,12 +40,15 @@ lint can enforce is stated once in the document and lives in the config.
    Use `CONVENTIONS.md`
    ```
 
-4. When a decision changes or interprets a rule, copy `templates/adr-0000-template.md` to
-   `docs/adr/NNNN-<slug>.md` and fill it in. The document's last section says what else the
-   project owns: the test setup that refuses to run outside a `_test` database, and the factories.
+4. When a decision goes below the floor or interprets a rule, copy
+   `templates/adr-0000-template.md` to `docs/adr/NNNN-<slug>.md` and fill it in. Replacing a
+   default needs no ADR: edit the sentence in your copy. The document's last section says what
+   else the project owns: the test setup that refuses to run outside a `_test` database, and the
+   factories.
 
 To upgrade, diff this repo's document against your copy and take what you want. Your local
-additions stay yours; the document is a starting point, not a dependency.
+additions and the defaults you replaced stay yours; the document is a starting point, not a
+dependency.
 
 ## Propose a rule change
 
@@ -47,6 +56,8 @@ Open a pull request against `docs/nextjs/CONVENTIONS.md`. The description says:
 
 - **The reason**: which project hit which problem. Link the commit, issue or ADR. A rule earns
   its place by a problem that happened, not by one that might.
+- **Floor or default.** A floor rule needs the problem above. A default needs only to be the
+  better starting point, and a project's own replacement of a default is not a change request.
 - **The enforcement class**: lint, review or test. A lint rule comes with the change to
   `templates/eslint.config.mjs` in the same pull request; a test rule names the test it adds.
 - **What it replaces**, if anything. A removed rule gets a bullet in "Deliberately dropped" with
