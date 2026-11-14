@@ -1,5 +1,96 @@
 # Changelog
 
+## 0.7.0 — what the workspace adoption found
+
+Reverses one rule: a module no longer starts as four files, it has the doors its callers use. The
+rest adds and tightens. Found while `workspace-prototype` adopted 0.6.0: a strict adoption
+(laserjm/workspace-prototype#83) needed eight ADRs, and the adapted one (#84) worked around the
+config and the error mapping in ways every project would need. A project on 0.6.0 adds
+`eslint.project.mjs`, an error list per `errors.ts` and `test/errors.test.ts` (see "To upgrade").
+
+### Lint
+
+- `eslint.config.mjs` spreads the project's own `eslint.project.mjs` last, and refuses to load if
+  a block there sets a rule the conventions set. For a rule with options a later block replaces
+  the earlier options instead of adding to them, so a project block for `no-restricted-imports`
+  switched the conventions' patterns off for its files without a word (tried: `next/*` in a
+  module was no longer reported). Project boundaries use rules the conventions leave free:
+  `import/no-restricted-paths`, `no-restricted-syntax`. New `templates/eslint.project.mjs`,
+  copied once and then the project's.
+- Rule 6 is an allowlist: another module, a script or a system handler imports a module's
+  `queries`, `commands`, `errors`, `contracts` or `tools`, nothing else. 0.6.0 only refused
+  `index`, `repo` and `mappers`, so a module's internal files (`domain.ts`, a provider SPI) were
+  reachable while the document said "no other doors".
+- A variant folder's `contracts.ts` (`modules/<x>/<variants>/<id>/contracts.ts`) is browser-safe
+  like the module's: no `server-only`, importable from `app/`, and it imports only zod, types and,
+  relatively, another `contracts.ts`. Removes the five disables #84 needed for GitHub's views.
+- `app/**/refusals.ts` starts with `import 'server-only'` (Rule 4).
+
+### Errors
+
+- Every error is mapped, and the compiler checks it. Each class has a literal `name`; `errors.ts`
+  exports the list, the union and a guard (`chatErrors`, `ChatError`, `isChatError`), and
+  `index.ts` re-exports them. An adapter `switch`es on `name` and ends in a `never` check, so a new
+  class fails to compile until every adapter maps it. The list is per module, so an adapter names
+  the errors none of its calls throws too, and answers them as a bug.
+- The mapping is `refusals.ts` next to `actions.ts` or `route.ts`, plain functions
+  (`chatRefusal`), so a test checks each case without Next. `actions.ts` exports only actions.
+- An action called from client state (an event handler, an optimistic update) answers `{ error }`
+  where the table says `notFound()` or `forbidden()`; a bug still throws, and the caller undoes its
+  change. `{ error }` may carry flags its caller acts on.
+- "Deliberately dropped: `Result` types" no longer names exhaustiveness as its price, and says that
+  a remote system's answer the user or a model is shown is data, not an error.
+
+### Testing
+
+- Testing §7 (test): `test/errors.test.ts`, from the new `templates/errors.test.ts`, checks that
+  each `errors.ts` lists every class it exports, named after itself; `refusals.test.ts` has a case
+  per error class. Unit tests now cover `refusals.ts`; UI tests are the only coverage for the rest
+  of an adapter. In #83, following 0.6.0 left the adapters' copy and statuses with no test at all.
+- Testing §6: copy and statuses that need testing belong in `refusals.ts`.
+
+### Layout and doors
+
+- A module has `contracts.ts` and the doors its callers use: `index.ts` once `app/` calls it,
+  `queries.ts` once it reads, `commands.ts` once it writes (reverses "a module starts as four
+  files", which contradicted "Structure is earned"; it gets a bullet in Deliberately dropped).
+- Variant folders: a module with several implementations of one interface it owns has
+  `<variant>.ts` (the interface), `<variants>.ts` (the registry) and `<variants>/<id>/`. Unproven.
+- Rule 6 has four doors: an agent module imports another module's `tools.ts` (the tools it offers
+  the model), and nothing else does (review).
+- Unproven: one module calling another and `lib/db/errors.ts` are exercised by the workspace
+  and leave the list. The shared transaction of hard trigger 3 is not; variant folders join it.
+
+### Naming
+
+- A role the list lacks is decided in an ADR and challenged; NAMING.md no longer says "extend this
+  list", which a project can't do since 0.6.0. New roles: `Icon`, `Chip`, `View`, `Section`,
+  `Frame`, `Shell`; a component that renders one kind of content is named for it (`Markdown`).
+- New rows: the error list (`chatErrors`), the refusal (`chatRefusal`), the agent tool
+  (`recordTools`, a `snake_case` tool name that is never renamed).
+- `_components/` and `components/` are flat until they no longer scan, then grouped one level deep
+  by the noun a component renders. A noun folder may share a module's name. "Deliberately dropped:
+  `components/<module>/`" now names the third place for UI it refused, not grouping.
+
+### Not taken
+
+- `domain.ts` as a browser-safe file for rules the browser runs too (workspace ADR 0007). Still
+  unproven; it waits for the owner's decision.
+- A lint rule for "only `lib/auth` imports `better-auth`": that is a project boundary and goes into
+  `eslint.project.mjs`.
+
+### To upgrade from 0.6.0
+
+1. Copy `eslint.config.mjs` again and `templates/eslint.project.mjs` once. Move any project block
+   you added to the config into `eslint.project.mjs`, rewritten with a rule the conventions don't
+   set. Remove `eslint-disable`s the new doors make unused; ESLint reports them.
+2. In each `errors.ts`: `override readonly name = "<Class>"` per class, the `<noun>Errors` list,
+   the union and the guard; re-export them from `index.ts`.
+3. Copy `templates/errors.test.ts` to `test/errors.test.ts`, and make sure vitest's `include`
+   matches it.
+4. Move an adapter's error mapping into `refusals.ts` with a `switch` that ends in `never`, and
+   give it `refusals.test.ts`.
+
 ## 0.6.0 — the copy is changed at home; agents challenge, the human decides
 
 Reverses where the document is changed: no longer "in this file" of the project, but only in the
