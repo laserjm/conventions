@@ -1,5 +1,61 @@
 # Changelog
 
+## 0.8.0 — refusals flag the page, service clients fail in their own words, tool names are portable
+
+Reverses one rule: a stored tool name is no longer "never renamed"; it is renamed with a migration
+of the stored messages in the same pull request. The rest adds and tightens. Found while rolling
+0.7.0 out to `dogfood-challenge` (#14) and `screenerhub3` (#29), whose challenges the owner
+accepted; the tool-name and service-error rules follow the providers' and RFCs' practice.
+
+### Errors
+
+- **A refusal flags the page it can't render** (review, plus Testing §7). `refusals.ts` imports no
+  `next/*`, so where the table says `notFound()` or `forbidden()` the refusal returns the copy with
+  a flag, `{ error, notFound: true }` or `{ error, forbidden: true }`, and the action calls the
+  function. An action called from client state returns the same answer, so one refusal serves
+  both. Both rollouts had invented a marker of their own (`"notFound"`, `"not-found"`).
+- **A service client's failures are its own** (tsc, plus Testing §7). A client in `lib/<service>/`
+  throws only the classes in its `errors.ts`, shaped like a module's: `<Service>Unavailable`,
+  `<Service>TimedOut`, `<Service>RateLimited`, `<Service>BadResponse`; a `4xx` it caused itself is
+  a bug. The client owns the timeout and the only retries. A module doesn't catch them; the
+  adapter maps them with a `<service>Refusal` per client: `503` (with `Retry-After` when rate
+  limited, since `429` is for the user's own rate), `504`, `502`, or `{ error }` copy that says to
+  try again, which an agent tool returns as its result. New row in the Errors table. Rule 12 and
+  Layout name `lib/<service>/` for a client that can fail. Sources: RFC 9110 §15.6, RFC 6585 §4,
+  the AWS Builders' Library and Azure's Retry pattern (retry in one layer), the Next.js guide on
+  expected errors, the Stripe and OpenAI SDKs' error classes. `screenerhub3` mapped its
+  `FmpError` without a rule (#29).
+- "Deliberately dropped: `Result` types": a remote system that gives no usable answer is a service
+  client's failure, not data.
+
+### Testing
+
+- `templates/errors.test.ts` also checks each `lib/<service>/errors.ts` (`lib/db/` is skipped).
+- Testing §8 (test): `test/tools.test.ts`, from the new `templates/tools.test.ts`, checks every
+  tool set a `tools.ts` exports against `^[a-z][a-z0-9_]{0,63}$`, the set Anthropic (128), OpenAI
+  (64), Gemini (64) and MCP all accept. Their docs name tools in `snake_case`; the Vercel AI SDK's
+  examples use camelCase keys, which it sends as the name and stores as `tool-<name>`.
+
+### Naming
+
+- Agent tool: `snake_case`, `^[a-z][a-z0-9_]{0,63}$`, renamed only with a migration of the stored
+  messages. An alias at the boundary is not enough: the AI SDK turns a stored part whose tool is
+  no longer registered into an untyped `dynamic-tool` part, or fails validation if it was
+  unfinished.
+- New row: service client error (`FmpUnavailable`, `fmpErrors`, `isFmpError`). The refusal row
+  names one per module or service client (`fmpRefusal`).
+
+### To upgrade from 0.7.0
+
+1. Copy both documents, `templates/errors.test.ts` to `test/errors.test.ts` and, once a module has
+   a `tools.ts`, `templates/tools.test.ts` to `test/tools.test.ts`.
+2. Give each refusal that answers with the not-found or forbidden page the flag instead of a
+   marker of its own, and have the action call `notFound()` or `forbidden()` on it.
+3. Move a service client that throws to `lib/<service>/` with an `errors.ts` of its failures,
+   move its timeout and retries into it, and map it in `refusals.ts` with `<service>Refusal`.
+4. Rename tools that fail `test/tools.test.ts`, with a migration that rewrites the stored
+   `tool-<old>` parts, and retire any ADR that kept the old names.
+
 ## 0.7.0 — what the workspace adoption found
 
 Reverses one rule: a module no longer starts as four files, it has the doors its callers use. The
