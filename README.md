@@ -1,8 +1,8 @@
 # conventions
 
 Architecture conventions for Next.js apps on Drizzle, Postgres and zod: a baseline with extension
-points. Two Markdown documents, an ESLint config, a test, an extensions template and an ADR
-template. A project copies them and points its agent instructions at
+points. Two Markdown documents, an ESLint config, an extensions template, an ADR template and a
+test for one of the extensions. A project copies them and points its agent instructions at
 them. Nothing is installed.
 
 This is the home repository. Changes are made and released here, then rolled out top down to the
@@ -19,7 +19,7 @@ templates/eslint.config.mjs      the import graph and the server-only / 'use ser
                                  flat config on top of eslint-config-next
 templates/eslint.project.mjs     the project's own lint rules (E1) and lint seams (E2), empty;
                                  copied once, then the project's
-templates/errors.test.ts         every module error is in its list, named after its class
+templates/errors.test.ts         with E8: every module error is in its list, named after its class
 templates/EXTENSIONS.md          the app's decisions at the extension points; copied once, then the app's
 templates/adr-0000-template.md   one record per decision that departs from a default
 templates/adr-0001-example-*.md  a filled-in example: where the current user is resolved
@@ -50,7 +50,7 @@ app's `package.json`. In a single-app repository that is the repository root; in
 ├─ CLAUDE.md            @AGENTS.md
 ├─ eslint.config.mjs    from templates/eslint.config.mjs
 ├─ eslint.project.mjs   from templates/eslint.project.mjs once, then the app's own
-├─ test/errors.test.ts  from templates/errors.test.ts
+├─ test/errors.test.ts  from templates/errors.test.ts, with E8 only
 └─ docs/
    ├─ CONVENTIONS.md    from docs/nextjs/
    ├─ NAMING.md         from docs/nextjs/
@@ -65,7 +65,8 @@ app's `package.json`. In a single-app repository that is the repository root; in
    `eslint-config-next`, the `@/` path alias, and the folders the document names (`app/`,
    `modules/`, `lib/`, `components/`, `hooks/`, `scripts/`). Adjust the globs if yours differ.
    Copy `templates/eslint.project.mjs` next to it once: it is where the app adds boundaries of its
-   own, and a rollout never overwrites it. Copy `templates/errors.test.ts` to `test/errors.test.ts`.
+   own, and a rollout never overwrites it. An app that uses the exhaustive error mapping (E8)
+   copies `templates/errors.test.ts` to `test/errors.test.ts`.
    Copy `templates/EXTENSIONS.md` to `docs/EXTENSIONS.md` once, and keep only the points the app
    uses.
 4. Add to the app's `AGENTS.md`, and give the app a `CLAUDE.md` that contains only `@AGENTS.md`:

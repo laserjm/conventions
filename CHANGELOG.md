@@ -3,9 +3,11 @@
 ## 0.9.0 — a baseline with extension points
 
 Reverses most of 0.8.0, which was never rolled out: the prescribed design for service clients
-and the tool-name test are dropped, and tool names may be camelCase again. Adds what 0.8.0 lacked,
-extension points: seams where the app decides, writes it in `docs/EXTENSIONS.md` and needs neither
-an ADR nor a release here.
+and the tool-name test are dropped, and tool names may be camelCase again. Reverses one 0.7.0
+default: the exhaustive error mapping (lists, guards, `refusals.ts`) is now extension point E8, and
+the default is the 0.6.0 inline `instanceof` again. Adds what was missing, extension points: seams
+where the app decides, writes it in `docs/EXTENSIONS.md` and needs neither an ADR nor a release
+here.
 
 0.8.0 turned three findings from two rollouts into rules. Every 0.x release since 0.2 has come out
 of a rollout or an adoption, so the conventions grew with each app. The first app the 0.8.0
@@ -23,7 +25,8 @@ one upstream. This release gives them a place and makes the baseline harder to c
 ### Extension points (new section)
 
 - E1 boundaries of the project's own (`eslint.project.mjs`, as before), E2 lint seams, E3 external
-  services, E4 naming additions, E5 agent tool names, E6 observability, E7 test support.
+  services, E4 naming additions, E5 agent tool names, E6 observability, E7 test support, E8
+  exhaustive error mapping.
 - New `templates/EXTENSIONS.md`, copied once and then the app's, with an example per point.
 - An extension departs from nothing: no ADR, no challenge. It never loosens the floor or
   contradicts a default; that is still an ADR.
@@ -37,12 +40,22 @@ one upstream. This release gives them a place and makes the baseline harder to c
 
 ### Errors
 
-- Kept from 0.8.0: a refusal flags the page it can't render (`{ error, notFound: true }`), and the
-  action calls `notFound()`. The baseline created that problem (`refusals.ts` imports no `next/*`),
-  so it owes the way out. The ban on other markers is dropped.
-- Replaced: an error from outside the modules is a bug until the app maps it at E3. The baseline
-  only says that a module never turns a client's failure into a domain error.
-- `templates/errors.test.ts` is back to 0.7.0: it checks `modules/*/errors.ts` only.
+- **The adapter maps inline again, as in 0.6.0.** `actions.ts` or `route.ts` catches around the
+  module call, maps with `instanceof` and rethrows the rest. The 0.7.0 default (a literal `name`, a
+  list, a union and a guard per `errors.ts`; a `refusals.ts` with a `switch` and `never` check per
+  adapter; `refusals.test.ts`; `test/errors.test.ts`) becomes E8. Every module paid for it, and
+  every new error class touched four files, against a mistake one app had made: the owner judged
+  that the inline mapping read better and held. Its price, a forgotten `instanceof` being a 500, is
+  back in Deliberately dropped, and E8 is how an app that paid it opts out of it.
+- Testing §7 is retired with it. Unit tests cover `domain.ts` and `policy.ts`; `refusals.ts` is
+  tested under E8.
+- The `notFound` flag from 0.8.0 lives in E8 as the example of how a refusal tells the action to
+  call `notFound()`. Inline mapping calls `notFound()` directly and needs no flag.
+- Kept from 0.7.0: `{ error }` may carry flags its caller acts on, and an action called from client
+  state answers `{ error }` where the table says `notFound()`.
+- Replaced from 0.8.0: an error from outside the modules is a bug until the app maps it at E3. The
+  baseline only says that a module never turns a client's failure into a domain error.
+- `templates/errors.test.ts` is back to 0.7.0 (`modules/*/errors.ts` only), for apps using E8.
 
 ### Changing this document
 
@@ -61,19 +74,19 @@ one upstream. This release gives them a place and makes the baseline harder to c
   the same E3 entry.
 - A test of tool names (0.8.0, Testing §8; the id is retired). A provider refuses a bad name on the
   first request.
+- Exhaustive error mapping as a default (0.7.0, Testing §7; the id is retired). It is E8.
 
 ### To upgrade from 0.7.0 (0.8.0 is skipped)
 
-The only possible code change is step 3, a few lines per adapter.
+No code changes.
 
-1. Copy both documents, `eslint.config.mjs` and `templates/errors.test.ts` (unchanged since
-   0.7.0).
+1. Copy both documents and `eslint.config.mjs`.
 2. Copy `templates/EXTENSIONS.md` to `docs/EXTENSIONS.md` and keep the points the app uses. A
-   decision already recorded as an ADR that only fills a seam (a naming role, a client's failure
-   policy, a tool-name style) moves there, and the ADR is retired.
-3. A refusal that returns a marker of its own for the not-found page (`"notFound"`,
-   `"not-found"`) switches to the flag; keeping the marker instead is a departure and needs an
-   ADR.
+   decision already recorded as an ADR that only fills a seam (a naming role, a tool-name style)
+   moves there, and the ADR is retired.
+3. An app that already has 0.7.0's lists and `refusals.ts` writes its E8 entry and keeps them,
+   with its marker for the not-found page as it is. Or it moves adapters back to inline
+   `instanceof` when it touches them; nothing forces that.
 
 ## 0.8.0 — refusals flag the page, service clients fail in their own words, tool names are portable
 

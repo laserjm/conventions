@@ -17,7 +17,7 @@ The sections bind differently. Only the floor can be violated.
 | Why                  | The priorities every rule comes from                  | Decides whatever the rules don't cover                       |
 | The floor            | What holds in every diff                              | Never. A wrong floor rule is challenged, not edited here     |
 | Defaults             | How things are done unless there is a reason not to   | A decision, not a violation, once an ADR records it          |
-| Extension points     | Seams the baseline leaves to the project, E1–E7       | Not a departure: decide it, write it in `docs/EXTENSIONS.md` |
+| Extension points     | Seams the baseline leaves to the project, E1–E8       | Not a departure: decide it, write it in `docs/EXTENSIONS.md` |
 | Deliberately dropped | Trade-offs already settled, each with what reopens it | Reopen when the named condition is met                       |
 | Open territory       | Everything this document doesn't name                 | Free; decide by Why                                          |
 
@@ -108,11 +108,9 @@ app/
 │  │  ├─ queries.ts       # reads: requireUser() → db → DTO
 │  │  └─ actions.ts       # 'use server' writes: requireUser() → parse → db → revalidate/redirect
 │  ├─ actions.ts          # module-backed route only: 'use server' adapter, parse → module → map errors → revalidate/redirect
-│  ├─ refusals.ts         # module-backed route only: the copy each module error answers with; plain functions
 │  └─ _components/        # render; a server component may await a query, never the db
 ├─ api/
 │  ├─ <x>/route.ts        # route handler for the signed-in user: adapter, parse → module → respond/stream
-│  ├─ <x>/refusals.ts     # the status and { error } each module error answers with
 │  └─ system/<x>/route.ts # webhook or cron: verifies a secret, not a session; names the requester it acts for
 modules/<x>/              # one concept each (e.g. chats); created on a promotion trigger
 ├─ index.ts               # session-bound API for app/: binds the current user (withUser), re-exports errors
@@ -123,7 +121,7 @@ modules/<x>/              # one concept each (e.g. chats); created on a promotio
 ├─ policy.ts              # authorization beyond "the owner can"; pure functions (on trigger)
 ├─ repo.ts                # db queries shared by reads and writes (the ownership check) (on need)
 ├─ mappers.ts             # row ⇄ DTO (on need)
-├─ errors.ts              # domain error classes and their list (on need)
+├─ errors.ts              # domain error classes (on need)
 ├─ tools.ts               # the tools the module offers an agent (on need)
 └─ <variants>/<id>/       # one implementation of an interface the module owns, e.g. providers/github/ (on need)
 components/               # UI more than one route group renders; components/ui/* is shadcn, untouched
@@ -169,8 +167,8 @@ adding to them, and would switch the conventions' check off for the same files.
   is extracted. _Lint, cycles by review._
 - **Rule 6. Four doors into a module, and no others.**
   - `app/` imports `index.ts` as a namespace (`import * as chats from "@/modules/chats"`): the
-    session-bound API. `index.ts` also re-exports the module's error classes, their list and its
-    guard, so an adapter can map them (`chats.isChatError`, `chats.ChatNotFound`).
+    session-bound API. `index.ts` also re-exports the module's error classes, so an adapter can
+    map them (`chats.ChatNotFound`).
   - Other modules, system callers (`scripts/`, `app/api/system/`) and tests import `queries.ts`,
     `commands.ts` and `errors.ts` directly and pass the requester they act for, and may import
     `contracts.ts` for its schemas and types. Never `index.ts`, which would bind the session, and
@@ -215,7 +213,7 @@ parses its own ids (`contracts.ts`); queries return `null`, commands throw a dom
 rules get their own file as soon as one is needed twice or deserves a unit test: `domain.ts` for
 calculations and state transitions, `policy.ts` for authorization beyond "the owner can". The
 route keeps a thin `actions.ts` next to `page.tsx` as the `'use server'` boundary: parse → module →
-map domain errors (`refusals.ts`) → `revalidatePath` / `redirect`. Pages and server components
+map domain errors (`instanceof`) → `revalidatePath` / `redirect`. Pages and server components
 call the module directly; `_lib/` is deleted.
 
 **Data in components.** A server component in `_components/` may await a query it owns (e.g. the
@@ -239,30 +237,18 @@ the UI sees an error class.
 - Until `policy.ts` exists, "not owned" is "not found" by design (Rule 2); `Forbidden` arrives
   with hard trigger 4.
 - `{ error }` holds copy the user can read (`useActionState`), never a class name or a tag. It may
-  carry flags its caller acts on: the field the copy is about, that the thing no longer exists
-  (`notFound: true`).
+  carry flags its caller acts on: the field the copy is about, that the thing no longer exists.
 - An action the browser calls from client state (an event handler, an optimistic update; not a
   `<form>` on a page that renders server state) answers `{ error }` where the table says
   `notFound()` or `forbidden()`. A bug still throws; the caller catches the rejected call, shows a
   generic line and undoes its optimistic change. `notFound()` and `error.tsx` would replace the
   page and throw away the state the browser holds.
-- **Every error is mapped, and the compiler checks it.** Each class in `errors.ts` has a literal
-  name (`override readonly name = "ChatNotFound"`), and the file exports the list of its classes,
-  their union and a guard (`chatErrors`, `ChatError`, `isChatError`). An adapter maps a module's
-  errors with a `switch` on `error.name` that ends in a `never` check, so a new class fails to
-  compile until every adapter has said what it means; what is not the module's is rethrown as a
-  bug. The list is per module, not per use case: an adapter also names the errors none of its
-  calls throws, and answers them as a bug. _tsc, plus Testing §7._
-- **The mapping is a plain file next to the adapter.** `refusals.ts` beside `actions.ts` or
-  `route.ts` holds a `<noun>Refusal(error)` per module: the copy, or the status and `{ error }`,
-  for each of its errors. It imports no `next/*`, so a test checks every case without Next, and it
-  is not in `actions.ts`, whose every export the browser can call; `actions.ts` exports only
-  actions. The adapter stays parse → module → refusal → revalidate/redirect. _Review._
-- **A refusal flags the page it can't render.** `refusals.ts` imports no `next/*`, so where the
-  table says `notFound()` or `forbidden()` the refusal returns the copy with a flag named after
-  that function, `{ error, notFound: true }` or `{ error, forbidden: true }`, and the action calls
-  it: `if (refusal.notFound) notFound()`. An action called from client state returns the same
-  answer as it is. One refusal serves both. _Review, plus Testing §7._
+- **The adapter maps inline.** `actions.ts` or `route.ts` catches around the module call, maps
+  each error it answers with `instanceof` (`if (error instanceof chats.ChatNotFound) notFound()`)
+  and rethrows the rest as a bug. The adapter stays parse → module → map → revalidate/redirect,
+  and its mapping reads top to bottom in one function. The price is that a forgotten mapping is a
+  `500`, not a compile error (Deliberately dropped). An app that has paid that price switches to
+  the exhaustive mapping, E8. _Review._
 - **An error from outside the modules is a bug until the project says otherwise.** A service
   client's failure, a library's exception: the adapter rethrows it like any error it doesn't map.
   How a client fails, retries and times out, which of its failures an adapter answers, and which
@@ -314,7 +300,7 @@ triggers: "it might be reused later", many small actions in one file, a cleaner 
 | Level      | Self-contained route                       | Module-backed route                                             |
 | ---------- | ------------------------------------------ | --------------------------------------------------------------- |
 | API tests  | none (would need Next; see soft trigger 6) | every use case in `queries.ts` and `commands.ts`, real Postgres |
-| Unit tests | business-critical pure functions only      | `domain.ts`, `policy.ts` and `refusals.ts`, by example tables   |
+| Unit tests | business-critical pure functions only      | `domain.ts` and `policy.ts`, by example tables                  |
 | UI tests   | business-critical workflows only, E2E      | same; the only coverage the rest of an adapter gets             |
 
 > **TODO:** confirm the definition of "business critical". Draft: it moves money, changes who may
@@ -336,12 +322,7 @@ triggers: "it might be reused later", many small actions in one file, a cleaner 
    `null` or throws, and changes nothing) and a malformed-id case next to its happy path. This one
    is part of the floor.
 6. **Never mock `next/*`.** A test that needs Next means the logic sits in the adapter and belongs
-   in the module, or, for copy and statuses, in the adapter's `refusals.ts`.
-7. **Every error is in its list, and every refusal is tested.** `test/errors.test.ts` (from the
-   conventions' `templates/errors.test.ts`) checks that each module's `errors.ts` lists every
-   class it exports, each named after itself. `refusals.test.ts` next to a `refusals.ts` has a
-   case per error class: the copy or status it answers, its flag, and that anything else is
-   rethrown.
+   in the module.
 
 ```bash
 createdb <app>_test   # once, on the local Postgres
@@ -377,7 +358,7 @@ fills a seam; it never loosens the floor or contradicts a default. If it has to,
   error classes, if any), its timeout and retries, how adapters answer each failure (copy, status,
   what is logged), and which use cases carry on without it (a read that leaves a value out, work
   completed later). The baseline only says that what nobody maps is a bug, and that a module never
-  turns a client's failure into a domain error. A mapping goes into `refusals.ts` like a module's.
+  turns a client's failure into a domain error. An adapter maps it like a module's error.
   A module that carries on without the client catches only the client's failures and rethrows the
   rest, which is what `moduleLibImports` (E2) is for. _Review._
 - **E4. Naming additions.** A component role, or a kind of file, the tables in NAMING.md lack: name
@@ -390,6 +371,17 @@ fills a seam; it never loosens the floor or contradicts a default. If it has to,
   error tracker) and what an expected refusal reports, if anything. _Review._
 - **E7. Test support.** `test/global-setup.ts`, `test/factories.ts`, fixtures and recordings of
   external services: what exists and how a test uses it. _Review._
+- **E8. Exhaustive error mapping.** For an app where a forgotten `instanceof` reached users, or
+  whose adapters' copy and statuses need tests. Each class in `errors.ts` has a literal `name`
+  (`override readonly name = "ChatNotFound"`), and the file exports the list, the union and a guard
+  (`chatErrors`, `ChatError`, `isChatError`), re-exported by `index.ts`. The mapping moves to
+  `refusals.ts` next to `actions.ts` or `route.ts`: a `<noun>Refusal(error)` per module, a `switch`
+  on `error.name` that ends in a `never` check, so a new class doesn't compile until every adapter
+  answers it. It imports no `next/*`, so where the action must call `notFound()` or `forbidden()`
+  the refusal says so in its answer (`{ error, notFound: true }`). `refusals.test.ts` has a case
+  per class, and `test/errors.test.ts` (from `templates/errors.test.ts`) checks every list is
+  complete. The entry says which modules and adapters use it; the rest map inline. _tsc, plus
+  test._
 
 ## Deliberately dropped
 
@@ -408,12 +400,17 @@ condition is met, proposing the dropped thing again is not an improvement.
   `index.ts`, so a missing one shows the day an adapter needs it.
 - **Full module layering from day one.** `domain/`, `application/`, `infra/` folders and ports
   are correct and too heavy for a route that owns one table. Flat files, promoted on trigger.
-- **`Result` types and tagged error unions for our own refusals.** Thrown classes mapped in the
-  adapter are the TypeScript default and cost no runtime package. The price `Result` would avoid,
-  exhaustiveness, is paid instead by each `errors.ts` listing its classes and the adapter's
-  `never` check (Errors). Revisit if an adapter has to know which errors one use case throws, not
-  just its module. An answer a remote system gives (a refusal the user or a model is shown) is
-  data the code returns, not an error, and is open territory.
+- **`Result` types and tagged error unions.** Thrown classes mapped in the adapter are the
+  TypeScript default and cost no runtime package. The price is exhaustiveness: a forgotten
+  `instanceof` is a `500`, not a compile error. Testing §1 proves the command throws; that the
+  adapter maps it is seen only by an E2E test. Accepted while an adapter stays as thin as parse →
+  module → map; E8 pays for exhaustiveness without a `Result`. An answer a remote system gives (a
+  refusal the user or a model is shown) is data the code returns, not an error, and is open
+  territory.
+- **Exhaustive error mapping as a default** (0.7.0, Testing §7; the id is retired). Every module
+  paid for a list, a guard, a `refusals.ts` and two tests, and every new error class touched four
+  files, against a mistake one app had made. The inline `instanceof` read better and held. It is
+  E8 for the app that has made that mistake.
 - **A separate browser-safe `index.ts` and server-only `server.ts`.** One server-only `index.ts`
   plus a browser-safe `contracts.ts` gives the same guarantee with one file fewer.
 - **Cache tags, cross-module events, branded ids.** Not until `cacheComponents` is on, a second
@@ -468,7 +465,7 @@ once, and the page never mentions a user.
 // modules/chats/index.ts
 export const getChat = withUser(queries.getChat)
 export const deleteChat = withUser(commands.deleteChat)
-export { ChatNotFound, TitleTaken, isChatError } from "./errors"
+export { ChatNotFound, TitleTaken } from "./errors"
 
 // app/(chat)/[id]/page.tsx
 import * as chats from "@/modules/chats"
@@ -477,64 +474,36 @@ const chat = await chats.getChat(id)
 if (!chat) notFound()
 ```
 
-A module's errors and the adapter that maps them: a literal name per class, one list, and a
-`switch` the compiler checks, so a new class doesn't build until the adapter has its copy.
+A module's error and the action that maps it inline: the copy and the not-found page sit next
+to the call that can fail, and everything else is rethrown as a bug.
 
 ```ts
 // modules/chats/errors.ts
 import "server-only"
 
 export class ChatNotFound extends Error {
-  override readonly name = "ChatNotFound"
   constructor(readonly chatId: string) {
     super(`Chat ${chatId} not found`)
   }
 }
 export class TitleTaken extends Error {
-  override readonly name = "TitleTaken"
   constructor(readonly title: string) {
     super(`Title ${title} is taken`)
   }
 }
 
-export const chatErrors = [ChatNotFound, TitleTaken] as const
-export type ChatError = InstanceType<(typeof chatErrors)[number]>
-export function isChatError(error: unknown): error is ChatError {
-  return chatErrors.some((type) => error instanceof type)
-}
-
-// app/(chat)/refusals.ts
-import "server-only"
-import * as chats from "@/modules/chats"
-
-export type ChatRefusal = { error: string; notFound?: true }
-
-export function chatRefusal(error: unknown): ChatRefusal {
-  if (!chats.isChatError(error)) throw error
-  switch (error.name) {
-    case "ChatNotFound":
-      return { error: "This chat no longer exists.", notFound: true }
-    case "TitleTaken":
-      return { error: `You already have a chat called ${error.title}.` }
-    default:
-      return unmapped(error)
-  }
-}
-
-function unmapped(error: never): never {
-  throw error
-}
-
-// app/(chat)/actions.ts: a form on the chat's page gets the not-found page
-export async function renameChatAction(_: ChatRefusal | null, formData: FormData) {
+// app/(chat)/actions.ts
+export async function renameChatAction(_: { error: string } | null, formData: FormData) {
   const input = renameChatInput.safeParse(Object.fromEntries(formData))
   if (!input.success) return { error: "Give the chat a title." }
   try {
     await chats.renameChat(input.data)
   } catch (error) {
-    const refusal = chatRefusal(error)
-    if (refusal.notFound) notFound()
-    return refusal
+    if (error instanceof chats.ChatNotFound) notFound()
+    if (error instanceof chats.TitleTaken) {
+      return { error: `You already have a chat called ${error.title}.` }
+    }
+    throw error
   }
   revalidatePath(`/chats/${input.data.chatId}`)
   return null
@@ -587,6 +556,6 @@ dropped, so the question is not reopened.
   its lint seams (E2).
 - `docs/adr/`: every decision that interprets or
   deviates from a rule, with the options considered and how to reverse it.
-- `test/global-setup.ts`, `test/factories.ts`: test database and fixtures. `test/errors.test.ts`:
-  every module error is in its list.
+- `test/global-setup.ts`, `test/factories.ts`: test database and fixtures. With E8,
+  `test/errors.test.ts`: every module error is in its list.
 - `lib/db/errors.ts`: the one place that knows the driver's error codes.

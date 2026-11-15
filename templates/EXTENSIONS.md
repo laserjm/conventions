@@ -26,8 +26,8 @@ request as the code.
 and which use cases carry on without it.
 - `lib/fmp/`: throws `FmpUnavailable`, `FmpTimedOut`, `FmpRateLimited`, `FmpBadResponse`
   (`lib/fmp/errors.ts`); a self-caused 4xx is a bug. 10 s deadline, 3 tries for 5xx, 429 and
-  lost connections. Actions answer "try again" copy through `fmpRefusal`. `getLiveQuotes`
-  answers without prices when FMP fails. -->
+  lost connections. Actions answer "try again" copy. `getLiveQuotes` answers without prices
+  when FMP fails. -->
 
 ## E4. Naming additions
 
@@ -46,5 +46,12 @@ and which use cases carry on without it.
 
 ## E7. Test support
 
-<!-- What test/ holds beyond the conventions' errors test, and how tests use it.
+<!-- What test/ holds, and how tests use it.
 - `test/fmp-recordings/`: recorded FMP answers; `test/support/recorded-fmp.ts` serves them. -->
+
+## E8. Exhaustive error mapping
+
+<!-- Which modules and adapters use it, how a refusal tells the action to call notFound(), and why.
+- All modules; `refusals.ts` next to each `actions.ts`. A refusal answers
+  `{ error, notFound: true }` where the action calls `notFound()`. A forgotten `instanceof`
+  showed a 500 for a stale chat. -->
