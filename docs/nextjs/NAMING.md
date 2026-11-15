@@ -1,4 +1,4 @@
-<!-- conventions 0.7.0 -->
+<!-- conventions 0.8.0 -->
 
 # Naming
 
@@ -16,8 +16,9 @@ or rename a file or an export.
 | Input contract (zod) | `contracts.ts`                                                           | `<useCase>Input`; inferred type `<UseCase>Input`                                                                                         | `sendMessageInput`, `SendMessageInput`                    |
 | Error class          | `errors.ts`                                                              | the fact that blocks the action; `override readonly name` is the class name                                                              | `ChatNotFound`, `TitleTaken`                              |
 | Error list           | `errors.ts`                                                              | `<noun>Errors`, union `<Noun>Error`, guard `is<Noun>Error`                                                                               | `chatErrors`, `ChatError`, `isChatError`                  |
-| Refusal              | `refusals.ts` next to `actions.ts` or `route.ts`                         | `<noun>Refusal(error)`, one per module it maps                                                                                           | `chatRefusal(error)`                                      |
-| Agent tool           | `modules/<x>/tools.ts`                                                   | `<noun>Tools`; the tool's own name is `snake_case` and never renamed once conversations store it                                         | `recordTools`, `search_records`                           |
+| Service client error | `lib/<service>/errors.ts`                                                | `<Service>` and the failure: `Unavailable`, `TimedOut`, `RateLimited`, `BadResponse`; list, union and guard as a module's                | `FmpUnavailable`, `fmpErrors`, `isFmpError`               |
+| Refusal              | `refusals.ts` next to `actions.ts` or `route.ts`                         | `<noun>Refusal(error)`, one per module or service client it maps                                                                         | `chatRefusal(error)`, `fmpRefusal(error)`                 |
+| Agent tool           | `modules/<x>/tools.ts`                                                   | `<noun>Tools`; the tool's own name is `snake_case`, `^[a-z][a-z0-9_]{0,63}$`, renamed only with a migration of the stored messages       | `recordTools`, `search_records`                           |
 | Component            | `components/<noun>-<role>.tsx`, or `app/.../_components/` if route-local | `<Noun><Role>`, props `<Component>Props`; client components start with `'use client'`, no suffix                                         | `ChatList`, `ChatListProps`                               |
 | Hook                 | `hooks/use-<thing>.ts`, or `_components/` if route-local                 | `use<Thing>`                                                                                                                             | `useIsMobile`                                             |
 | Page                 | `page.tsx`                                                               | `<Noun>Page` / `<Nouns>Page`                                                                                                             | `ChatPage`, `ChatsPage`                                   |

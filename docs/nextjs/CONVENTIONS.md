@@ -1,4 +1,4 @@
-<!-- conventions 0.7.0 -->
+<!-- conventions 0.8.0 -->
 
 # Conventions
 
@@ -119,6 +119,7 @@ lib/
 ├─ auth.ts                # getUser / requireUser (cache()), withUser
 ├─ env.ts                 # validated env; the only reader of process.env
 ├─ <service>.ts           # client for an external service (AI, mail): built from env, handed to modules by adapters
+├─ <service>/             # the same client once it can fail: index.ts and errors.ts, its failures and their list (on need)
 └─ db/                    # client, schema (code-first), generated migrations; errors.ts names the driver codes
 scripts/                  # seed and maintenance: system callers (optional)
 ```
@@ -181,9 +182,10 @@ adding to them, and would switch the conventions' check off for the same files.
   tool configs at the root (`drizzle.config.ts`, `vitest.config.ts`), which their tools load
   outside Next, where `lib/env.ts` can't be imported. _Lint._
 - **Rule 12. A module imports from `lib/` only the db, and types.** An external service (AI
-  provider, mail, payments) is a client in `lib/<service>.ts`, built from `env`. The adapter
-  constructs it and passes it in, so a module never configures a provider and its tests need no
-  provider settings. `index.ts` is the one exception, for `lib/auth` (Rule 1). _Lint._
+  provider, mail, payments) is a client in `lib/<service>.ts`, or in `lib/<service>/` once it
+  has failures of its own (Errors), built from `env`. The adapter constructs it and passes it in,
+  so a module never configures a provider and its tests need no provider settings. `index.ts` is
+  the one exception, for `lib/auth` (Rule 1). _Lint._
 
 ### The two states of a route
 
@@ -214,18 +216,20 @@ module is `server-only` and never reaches the browser bundle.
 A command throws, an adapter maps. Nothing above the module sees a driver error, and nothing in
 the UI sees an error class.
 
-| Case                                | Query / command                                       | Action                                                                 | Route handler               |
-| ----------------------------------- | ----------------------------------------------------- | ---------------------------------------------------------------------- | --------------------------- |
-| Missing, not-owned or malformed id  | query returns `null`; command throws `<Noun>NotFound` | `notFound()`                                                           | `404` + `{ error }`         |
-| Forbidden (once `policy.ts` exists) | command throws `Forbidden`                            | `forbidden()` (needs `experimental.authInterrupts`), else `notFound()` | `403` + `{ error }`         |
-| Constraint refused the write        | command catches the driver error, throws `<Fact>`     | `{ error }`                                                            | `409` + `{ error }`         |
-| Invalid input                       | never reached: the adapter parses with `contracts.ts` | `{ error }`                                                            | `400` + `{ error }`         |
-| Bug, broken invariant               | `throw new Error(…)`                                  | nearest `error.tsx`                                                    | `500` + `{ error }`, logged |
+| Case                                | Query / command                                       | Action                                                                 | Route handler                           |
+| ----------------------------------- | ----------------------------------------------------- | ---------------------------------------------------------------------- | --------------------------------------- |
+| Missing, not-owned or malformed id  | query returns `null`; command throws `<Noun>NotFound` | `notFound()`                                                           | `404` + `{ error }`                     |
+| Forbidden (once `policy.ts` exists) | command throws `Forbidden`                            | `forbidden()` (needs `experimental.authInterrupts`), else `notFound()` | `403` + `{ error }`                     |
+| Constraint refused the write        | command catches the driver error, throws `<Fact>`     | `{ error }`                                                            | `409` + `{ error }`                     |
+| Invalid input                       | never reached: the adapter parses with `contracts.ts` | `{ error }`                                                            | `400` + `{ error }`                     |
+| External service failed             | not caught: the client's error passes through         | `{ error }`, logged                                                    | `502`/`503`/`504` + `{ error }`, logged |
+| Bug, broken invariant               | `throw new Error(…)`                                  | nearest `error.tsx`                                                    | `500` + `{ error }`, logged             |
 
 - Until `policy.ts` exists, "not owned" is "not found" by design (Rule 2); `Forbidden` arrives
   with hard trigger 4.
 - `{ error }` holds copy the user can read (`useActionState`), never a class name or a tag. It may
-  carry flags its caller acts on: the field the copy is about, that the thing no longer exists.
+  carry flags its caller acts on: the field the copy is about, that the thing no longer exists
+  (`notFound: true`).
 - An action the browser calls from client state (an event handler, an optimistic update; not a
   `<form>` on a page that renders server state) answers `{ error }` where the table says
   `notFound()` or `forbidden()`. A bug still throws; the caller catches the rejected call, shows a
@@ -243,6 +247,28 @@ the UI sees an error class.
   for each of its errors. It imports no `next/*`, so a test checks every case without Next, and it
   is not in `actions.ts`, whose every export the browser can call; `actions.ts` exports only
   actions. The adapter stays parse → module → refusal → revalidate/redirect. _Review._
+- **A refusal flags the page it can't render.** Where the table says `notFound()` or
+  `forbidden()`, the refusal returns the copy with a flag named after that function,
+  `{ error, notFound: true }` or `{ error, forbidden: true }`, and the action calls it:
+  `if (refusal.notFound) notFound()`. An action called from client state returns the same answer
+  as it is, and its caller acts on the flag. One refusal serves both, and its test checks the
+  flag; no other marker (`"not-found"`, a status in an action) stands in for it. _Review, plus
+  Testing §7._
+- **A service client's failures are its own, and an adapter maps them.** A client in
+  `lib/<service>/` throws only the classes in its `errors.ts`, which has a module's shape (literal
+  names, `fmpErrors`, `FmpError`, `isFmpError`) and names the failures an adapter answers
+  differently: `<Service>Unavailable` (no connection, a `5xx`), `<Service>TimedOut` (past the
+  client's deadline), `<Service>RateLimited` (with `retryAfterSeconds`) and `<Service>BadResponse`
+  (the answer failed its zod schema). A `4xx` it caused itself (a bad key, a bad parameter) is a
+  bug, a plain `Error`. The client owns the timeout and the only retries: idempotent calls,
+  capped backoff with jitter, honoring `Retry-After`; no module or adapter retries again. A module
+  doesn't catch them, because an outage is not a domain fact. The adapter's `refusals.ts` maps
+  them with a `<service>Refusal(error)` per client, the same `switch` and `never` check: a route
+  answers `503` for unavailable, `503` with `Retry-After` for rate limited (`429` is for the
+  user's own rate), `504` for timed out and `502` for a bad response; an action answers
+  `{ error }` with copy that says to try again; an agent tool returns that copy as its result, so
+  the model can tell the user. They are logged, and they never reach `error.tsx`. _tsc, plus
+  Testing §7._
 - A route handler answers JSON `{ error }` on every status, `404` and `500` included: `notFound()`
   would render the HTML page.
 - When a module must produce user-facing text itself, as in an error chunk after a stream has
@@ -313,9 +339,15 @@ triggers: "it might be reused later", many small actions in one file, a cleaner 
 6. **Never mock `next/*`.** A test that needs Next means the logic sits in the adapter and belongs
    in the module, or, for copy and statuses, in the adapter's `refusals.ts`.
 7. **Every error is in its list, and every refusal is tested.** `test/errors.test.ts` (from the
-   conventions' `templates/errors.test.ts`) checks that each `errors.ts` lists every class it
-   exports, each named after itself. `refusals.test.ts` next to a `refusals.ts` has a case per
-   error class: the copy or status it answers, and that anything else is rethrown.
+   conventions' `templates/errors.test.ts`) checks that each `errors.ts` in `modules/` and
+   `lib/<service>/` lists every class it exports, each named after itself. `refusals.test.ts`
+   next to a `refusals.ts` has a case per error class: the copy or status it answers, its
+   `notFound` or `forbidden` flag, and that anything else is rethrown.
+8. **Every tool name matches the pattern.** `test/tools.test.ts` (from the conventions'
+   `templates/tools.test.ts`) checks every key of every tool set a `tools.ts` exports against
+   `^[a-z][a-z0-9_]{0,63}$`, the set every provider and MCP accept. Saved conversations store the
+   name (`tool-<name>` in a message part), so a rename ships with a migration that rewrites the
+   stored parts in the same pull request; an alias at the boundary is not enough.
 
 ```bash
 createdb <app>_test   # once, on the local Postgres
@@ -352,7 +384,8 @@ condition is met, proposing the dropped thing again is not an improvement.
   exhaustiveness, is paid instead by each `errors.ts` listing its classes and the adapter's
   `never` check (Errors). Revisit if an adapter has to know which errors one use case throws, not
   just its module. An answer a remote system gives (a refusal the user or a model is shown) is
-  data the code returns, not an error, and is open territory.
+  data the code returns, not an error, and is open territory; a remote system that gives no
+  usable answer is a service client's failure (Errors).
 - **A separate browser-safe `index.ts` and server-only `server.ts`.** One server-only `index.ts`
   plus a browser-safe `contracts.ts` gives the same guarantee with one file fewer.
 - **Cache tags, cross-module events, branded ids.** Not until `cacheComponents` is on, a second
@@ -439,11 +472,13 @@ export function isChatError(error: unknown): error is ChatError {
 import "server-only"
 import * as chats from "@/modules/chats"
 
-export function chatRefusal(error: unknown): { error: string } {
+export type ChatRefusal = { error: string; notFound?: true }
+
+export function chatRefusal(error: unknown): ChatRefusal {
   if (!chats.isChatError(error)) throw error
   switch (error.name) {
     case "ChatNotFound":
-      return { error: "This chat no longer exists." }
+      return { error: "This chat no longer exists.", notFound: true }
     case "TitleTaken":
       return { error: `You already have a chat called ${error.title}.` }
     default:
@@ -453,6 +488,21 @@ export function chatRefusal(error: unknown): { error: string } {
 
 function unmapped(error: never): never {
   throw error
+}
+
+// app/(chat)/actions.ts: a form on the chat's page gets the not-found page
+export async function renameChatAction(_: ChatRefusal | null, formData: FormData) {
+  const input = renameChatInput.safeParse(Object.fromEntries(formData))
+  if (!input.success) return { error: "Give the chat a title." }
+  try {
+    await chats.renameChat(input.data)
+  } catch (error) {
+    const refusal = chatRefusal(error)
+    if (refusal.notFound) notFound()
+    return refusal
+  }
+  revalidatePath(`/chats/${input.data.chatId}`)
+  return null
 }
 ```
 
@@ -500,5 +550,6 @@ removed rule gets a bullet in Deliberately dropped, so the question is not reope
 - `docs/adr/`: every decision that interprets or
   deviates from a rule, with the options considered and how to reverse it.
 - `test/global-setup.ts`, `test/factories.ts`: test database and fixtures. `test/errors.test.ts`:
-  every module error is in its list.
+  every module and service-client error is in its list. `test/tools.test.ts`: every tool name
+  matches the pattern.
 - `lib/db/errors.ts`: the one place that knows the driver's error codes.

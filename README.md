@@ -17,7 +17,8 @@ docs/nextjs/NAMING.md            file and identifier patterns per kind, componen
 templates/eslint.config.mjs      the import graph and the server-only / 'use server' checks;
                                  flat config on top of eslint-config-next
 templates/eslint.project.mjs     the project's own lint rules, empty; copied once, then the project's
-templates/errors.test.ts         every module error is in its list, named after its class
+templates/errors.test.ts         every module and service-client error is in its list, named after its class
+templates/tools.test.ts          every tool name is snake_case, in the set every provider accepts
 templates/adr-0000-template.md   one record per decision that departs from a default
 templates/adr-0001-example-*.md  a filled-in example: where the current user is resolved
 CHANGELOG.md                     what changed per version, and why
@@ -43,6 +44,7 @@ app's `package.json`. In a single-app repository that is the repository root; in
 ├─ eslint.config.mjs    from templates/eslint.config.mjs
 ├─ eslint.project.mjs   from templates/eslint.project.mjs once, then the app's own
 ├─ test/errors.test.ts  from templates/errors.test.ts
+├─ test/tools.test.ts   from templates/tools.test.ts, once a module has a tools.ts
 └─ docs/
    ├─ CONVENTIONS.md    from docs/nextjs/
    ├─ NAMING.md         from docs/nextjs/
@@ -51,12 +53,13 @@ app's `package.json`. In a single-app repository that is the repository root; in
 
 1. Register the app in the table in [AGENTS.md](AGENTS.md), one row per app.
 2. Copy `docs/nextjs/CONVENTIONS.md` and `docs/nextjs/NAMING.md` to `docs/` at the app root. Keep
-   their first line (`<!-- conventions 0.7.0 -->`): it tells the next rollout where to start.
+   their first line (`<!-- conventions 0.8.0 -->`): it tells the next rollout where to start.
 3. Copy `templates/eslint.config.mjs` to the app root as `eslint.config.mjs`. It expects
    `eslint-config-next`, the `@/` path alias, and the folders the document names (`app/`,
    `modules/`, `lib/`, `components/`, `hooks/`, `scripts/`). Adjust the globs if yours differ.
    Copy `templates/eslint.project.mjs` next to it once: it is where the app adds boundaries of its
-   own, and a rollout never overwrites it. Copy `templates/errors.test.ts` to `test/errors.test.ts`.
+   own, and a rollout never overwrites it. Copy `templates/errors.test.ts` to `test/errors.test.ts`, and
+   `templates/tools.test.ts` to `test/tools.test.ts` once a module offers tools.
 4. Add to the app's `AGENTS.md`, and give the app a `CLAUDE.md` that contains only `@AGENTS.md`:
 
    ```markdown
