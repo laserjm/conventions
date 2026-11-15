@@ -1,5 +1,80 @@
 # Changelog
 
+## 0.9.0 — a baseline with extension points
+
+Reverses most of 0.8.0, which was never rolled out: the prescribed design for service clients
+and the tool-name test are dropped, and tool names may be camelCase again. Adds what 0.8.0 lacked,
+extension points: seams where the app decides, writes it in `docs/EXTENSIONS.md` and needs neither
+an ADR nor a release here.
+
+0.8.0 turned three findings from two rollouts into rules. Every 0.x release since 0.2 has come out
+of a rollout or an adoption, so the conventions grew with each app. The first app the 0.8.0
+service-client rule met needed an exception (laserjm/screenerhub3#33, ADR 0003), and its rollout
+became a 900-line product change. A baseline with no place for the app's own decisions sends each
+one upstream. This release gives them a place and makes the baseline harder to change.
+
+### Why
+
+- **Deep modules**: a new file, wrapper or export has to make the caller's side simpler.
+- **Developer experience is the leading indicator**: a rule that makes a change longer or harder to
+  read than the problem it guards against is wrong for that case. Pragmatism over perfection: a
+  rule guards against a problem two apps have had.
+
+### Extension points (new section)
+
+- E1 boundaries of the project's own (`eslint.project.mjs`, as before), E2 lint seams, E3 external
+  services, E4 naming additions, E5 agent tool names, E6 observability, E7 test support.
+- New `templates/EXTENSIONS.md`, copied once and then the app's, with an example per point.
+- An extension departs from nothing: no ADR, no challenge. It never loosens the floor or
+  contradicts a default; that is still an ADR.
+- E2 (lint): `eslint.project.mjs` may export `seams`. The first one is `moduleLibImports`: paths
+  under `@/lib/` a module may import as values (Rule 12), for example a client's error classes
+  for a read that carries on without the service. `lib/auth` is refused (Rule 1), and so is an
+  unknown seam. Rule 12's pattern is now a regex: a `group` follows `.gitignore`, which can't let
+  `@/lib/fmp/errors` back in under `@/lib/fmp`. A project file without `seams` loads unchanged.
+- NAMING.md: a role the list lacks is added in `EXTENSIONS.md` (E4). It is no longer an ADR and a
+  challenge.
+
+### Errors
+
+- Kept from 0.8.0: a refusal flags the page it can't render (`{ error, notFound: true }`), and the
+  action calls `notFound()`. The baseline created that problem (`refusals.ts` imports no `next/*`),
+  so it owes the way out. The ban on other markers is dropped.
+- Replaced: an error from outside the modules is a bug until the app maps it at E3. The baseline
+  only says that a module never turns a client's failure into a domain error.
+- `templates/errors.test.ts` is back to 0.7.0: it checks `modules/*/errors.ts` only.
+
+### Changing this document
+
+- The project no longer challenges "an improvement every project would gain from". It keeps it as
+  an extension, and the owner moves it into the baseline once a second app has the same one.
+- Challenges are for a floor rule or an unproven part that doesn't fit, and for a missing seam
+  where a default is in the way.
+- A rule is added only if it makes the usual change shorter or safer in two apps. A rule that adds
+  a file or a step to every feature names the bug it prevented.
+- Home `AGENTS.md`, new rules 7 and 8: a rollout is not a source of changes, and a release says what
+  it costs each app.
+
+### Deliberately dropped
+
+- One prescribed design for external service clients (0.8.0). Reopens when two apps have written
+  the same E3 entry.
+- A test of tool names (0.8.0, Testing §8; the id is retired). A provider refuses a bad name on the
+  first request.
+
+### To upgrade from 0.7.0 (0.8.0 is skipped)
+
+The only possible code change is step 3, a few lines per adapter.
+
+1. Copy both documents, `eslint.config.mjs` and `templates/errors.test.ts` (unchanged since
+   0.7.0).
+2. Copy `templates/EXTENSIONS.md` to `docs/EXTENSIONS.md` and keep the points the app uses. A
+   decision already recorded as an ADR that only fills a seam (a naming role, a client's failure
+   policy, a tool-name style) moves there, and the ADR is retired.
+3. A refusal that returns a marker of its own for the not-found page (`"notFound"`,
+   `"not-found"`) switches to the flag; keeping the marker instead is a departure and needs an
+   ADR.
+
 ## 0.8.0 — refusals flag the page, service clients fail in their own words, tool names are portable
 
 Reverses one rule: a stored tool name is no longer "never renamed"; it is renamed with a migration

@@ -1,25 +1,29 @@
-<!-- conventions 0.8.0 -->
+<!-- conventions 0.9.0 -->
 
 # Conventions
 
 How a Next.js app on Drizzle, Postgres and zod is organized, and when a route grows into a
 module. Rules that lint enforces are only pointed at here; the project's `eslint.config.mjs` is the
 source of truth for the import graph, and `eslint.project.mjs` holds what the project adds to it.
+What the project decides at the points this document leaves open is in `docs/EXTENSIONS.md`; read
+it with this file.
 
 ## How to read this
 
 The sections bind differently. Only the floor can be violated.
 
-| Section              | What it is                                             | Departing from it                                           |
-| -------------------- | ------------------------------------------------------ | ----------------------------------------------------------- |
-| Why                  | The priorities every rule comes from                   | Decides whatever the rules don't cover                      |
-| The floor            | What holds in every diff                               | Never. A wrong floor rule is challenged, not edited here    |
-| Defaults             | How things are done unless there is a reason not to    | A decision, not a violation, once an ADR records it         |
-| Deliberately dropped | Trade-offs already settled, each with what reopens it  | Reopen when the named condition is met                      |
-| Open territory       | Everything this document doesn't name                  | Free; decide by Why                                         |
+| Section              | What it is                                            | Departing from it                                            |
+| -------------------- | ----------------------------------------------------- | ------------------------------------------------------------ |
+| Why                  | The priorities every rule comes from                  | Decides whatever the rules don't cover                       |
+| The floor            | What holds in every diff                              | Never. A wrong floor rule is challenged, not edited here     |
+| Defaults             | How things are done unless there is a reason not to   | A decision, not a violation, once an ADR records it          |
+| Extension points     | Seams the baseline leaves to the project, E1–E7       | Not a departure: decide it, write it in `docs/EXTENSIONS.md` |
+| Deliberately dropped | Trade-offs already settled, each with what reopens it | Reopen when the named condition is met                       |
+| Open territory       | Everything this document doesn't name                 | Free; decide by Why                                          |
 
-Rule, trigger and Testing § numbers are ids, not an order: the lint config, the ADRs and the
-changelog cite them, so they keep their number wherever the rule sits.
+Rule, trigger, Testing § and extension point (E) numbers are ids, not an order: the lint config,
+the ADRs, `EXTENSIONS.md` and the changelog cite them, so they keep their number wherever the rule
+sits.
 
 Paths (`app/`, `lib/`, `eslint.config.mjs`, `docs/adr/`) are relative to the app root, the
 folder that holds the Next.js app's `package.json`: the repository root in a single-app
@@ -51,6 +55,14 @@ Three habits run through the rules below, and apply where no rule does:
   each known in exactly one file.
 - **Tools hold what tools can check.** If lint or a test can enforce it, it lives there and this
   document only points at it.
+- **Deep modules.** A module's interface (`index.ts`, `queries.ts`, `commands.ts`) is small next to
+  what it hides: a caller learns a few functions, not the tables, the provider or the order of the
+  steps. A new file, wrapper or export has to make the caller's side simpler; one that only moves
+  lines makes the module shallower.
+- **Developer experience is the leading indicator.** When following a rule makes a change longer,
+  harder to read or slower to make than the problem it guards against, the rule is wrong for that
+  case: fill an extension point if one fits, write an ADR if a default is in the way. Pragmatism
+  over perfection: a rule guards against a problem two apps have had, not one that might come.
 
 ## The floor
 
@@ -118,8 +130,7 @@ components/               # UI more than one route group renders; components/ui/
 lib/
 ├─ auth.ts                # getUser / requireUser (cache()), withUser
 ├─ env.ts                 # validated env; the only reader of process.env
-├─ <service>.ts           # client for an external service (AI, mail): built from env, handed to modules by adapters
-├─ <service>/             # the same client once it can fail: index.ts and errors.ts, its failures and their list (on need)
+├─ <service>.ts           # client for an external service (AI, mail): built from env, handed to modules by adapters (E3)
 └─ db/                    # client, schema (code-first), generated migrations; errors.ts names the driver codes
 scripts/                  # seed and maintenance: system callers (optional)
 ```
@@ -140,8 +151,8 @@ reached only through the registry. What the browser reads of one implementation 
 ### Dependencies
 
 Lint enforces all of these, so a departure shows up as an `eslint-disable` with its ADR link. A
-boundary the project adds (one module never imports another, only one folder imports a library)
-goes into `eslint.project.mjs` with a rule the conventions leave free, such as
+boundary the project adds (one module never imports another, only one folder imports a library,
+E1) goes into `eslint.project.mjs` with a rule the conventions leave free, such as
 `import/no-restricted-paths` or `no-restricted-syntax`. `eslint.config.mjs` refuses to load a
 project block that sets one of its own rules: a later block replaces that rule's options instead of
 adding to them, and would switch the conventions' check off for the same files.
@@ -182,10 +193,11 @@ adding to them, and would switch the conventions' check off for the same files.
   tool configs at the root (`drizzle.config.ts`, `vitest.config.ts`), which their tools load
   outside Next, where `lib/env.ts` can't be imported. _Lint._
 - **Rule 12. A module imports from `lib/` only the db, and types.** An external service (AI
-  provider, mail, payments) is a client in `lib/<service>.ts`, or in `lib/<service>/` once it
-  has failures of its own (Errors), built from `env`. The adapter constructs it and passes it in,
-  so a module never configures a provider and its tests need no provider settings. `index.ts` is
-  the one exception, for `lib/auth` (Rule 1). _Lint._
+  provider, mail, payments) is a client in `lib/<service>.ts` (a folder once it needs one), built
+  from `env`. The adapter constructs it and passes it in, so a module never configures a provider
+  and its tests need no provider settings. `index.ts` is the one exception, for `lib/auth`
+  (Rule 1). A project widens this for named paths with the `moduleLibImports` seam (E2), e.g. a
+  client's error classes a module catches. _Lint._
 
 ### The two states of a route
 
@@ -216,14 +228,13 @@ module is `server-only` and never reaches the browser bundle.
 A command throws, an adapter maps. Nothing above the module sees a driver error, and nothing in
 the UI sees an error class.
 
-| Case                                | Query / command                                       | Action                                                                 | Route handler                           |
-| ----------------------------------- | ----------------------------------------------------- | ---------------------------------------------------------------------- | --------------------------------------- |
-| Missing, not-owned or malformed id  | query returns `null`; command throws `<Noun>NotFound` | `notFound()`                                                           | `404` + `{ error }`                     |
-| Forbidden (once `policy.ts` exists) | command throws `Forbidden`                            | `forbidden()` (needs `experimental.authInterrupts`), else `notFound()` | `403` + `{ error }`                     |
-| Constraint refused the write        | command catches the driver error, throws `<Fact>`     | `{ error }`                                                            | `409` + `{ error }`                     |
-| Invalid input                       | never reached: the adapter parses with `contracts.ts` | `{ error }`                                                            | `400` + `{ error }`                     |
-| External service failed             | not caught: the client's error passes through         | `{ error }`, logged                                                    | `502`/`503`/`504` + `{ error }`, logged |
-| Bug, broken invariant               | `throw new Error(…)`                                  | nearest `error.tsx`                                                    | `500` + `{ error }`, logged             |
+| Case                                | Query / command                                       | Action                                                                 | Route handler               |
+| ----------------------------------- | ----------------------------------------------------- | ---------------------------------------------------------------------- | --------------------------- |
+| Missing, not-owned or malformed id  | query returns `null`; command throws `<Noun>NotFound` | `notFound()`                                                           | `404` + `{ error }`         |
+| Forbidden (once `policy.ts` exists) | command throws `Forbidden`                            | `forbidden()` (needs `experimental.authInterrupts`), else `notFound()` | `403` + `{ error }`         |
+| Constraint refused the write        | command catches the driver error, throws `<Fact>`     | `{ error }`                                                            | `409` + `{ error }`         |
+| Invalid input                       | never reached: the adapter parses with `contracts.ts` | `{ error }`                                                            | `400` + `{ error }`         |
+| Bug, broken invariant               | `throw new Error(…)`                                  | nearest `error.tsx`                                                    | `500` + `{ error }`, logged |
 
 - Until `policy.ts` exists, "not owned" is "not found" by design (Rule 2); `Forbidden` arrives
   with hard trigger 4.
@@ -247,28 +258,16 @@ the UI sees an error class.
   for each of its errors. It imports no `next/*`, so a test checks every case without Next, and it
   is not in `actions.ts`, whose every export the browser can call; `actions.ts` exports only
   actions. The adapter stays parse → module → refusal → revalidate/redirect. _Review._
-- **A refusal flags the page it can't render.** Where the table says `notFound()` or
-  `forbidden()`, the refusal returns the copy with a flag named after that function,
-  `{ error, notFound: true }` or `{ error, forbidden: true }`, and the action calls it:
-  `if (refusal.notFound) notFound()`. An action called from client state returns the same answer
-  as it is, and its caller acts on the flag. One refusal serves both, and its test checks the
-  flag; no other marker (`"not-found"`, a status in an action) stands in for it. _Review, plus
-  Testing §7._
-- **A service client's failures are its own, and an adapter maps them.** A client in
-  `lib/<service>/` throws only the classes in its `errors.ts`, which has a module's shape (literal
-  names, `fmpErrors`, `FmpError`, `isFmpError`) and names the failures an adapter answers
-  differently: `<Service>Unavailable` (no connection, a `5xx`), `<Service>TimedOut` (past the
-  client's deadline), `<Service>RateLimited` (with `retryAfterSeconds`) and `<Service>BadResponse`
-  (the answer failed its zod schema). A `4xx` it caused itself (a bad key, a bad parameter) is a
-  bug, a plain `Error`. The client owns the timeout and the only retries: idempotent calls,
-  capped backoff with jitter, honoring `Retry-After`; no module or adapter retries again. A module
-  doesn't catch them, because an outage is not a domain fact. The adapter's `refusals.ts` maps
-  them with a `<service>Refusal(error)` per client, the same `switch` and `never` check: a route
-  answers `503` for unavailable, `503` with `Retry-After` for rate limited (`429` is for the
-  user's own rate), `504` for timed out and `502` for a bad response; an action answers
-  `{ error }` with copy that says to try again; an agent tool returns that copy as its result, so
-  the model can tell the user. They are logged, and they never reach `error.tsx`. _tsc, plus
-  Testing §7._
+- **A refusal flags the page it can't render.** `refusals.ts` imports no `next/*`, so where the
+  table says `notFound()` or `forbidden()` the refusal returns the copy with a flag named after
+  that function, `{ error, notFound: true }` or `{ error, forbidden: true }`, and the action calls
+  it: `if (refusal.notFound) notFound()`. An action called from client state returns the same
+  answer as it is. One refusal serves both. _Review, plus Testing §7._
+- **An error from outside the modules is a bug until the project says otherwise.** A service
+  client's failure, a library's exception: the adapter rethrows it like any error it doesn't map.
+  How a client fails, retries and times out, which of its failures an adapter answers, and which
+  use cases carry on without it are extension point E3. A module never turns such a failure into
+  a domain error. _Review._
 - A route handler answers JSON `{ error }` on every status, `404` and `500` included: `notFound()`
   would render the HTML page.
 - When a module must produce user-facing text itself, as in an error chunk after a stream has
@@ -339,15 +338,10 @@ triggers: "it might be reused later", many small actions in one file, a cleaner 
 6. **Never mock `next/*`.** A test that needs Next means the logic sits in the adapter and belongs
    in the module, or, for copy and statuses, in the adapter's `refusals.ts`.
 7. **Every error is in its list, and every refusal is tested.** `test/errors.test.ts` (from the
-   conventions' `templates/errors.test.ts`) checks that each `errors.ts` in `modules/` and
-   `lib/<service>/` lists every class it exports, each named after itself. `refusals.test.ts`
-   next to a `refusals.ts` has a case per error class: the copy or status it answers, its
-   `notFound` or `forbidden` flag, and that anything else is rethrown.
-8. **Every tool name matches the pattern.** `test/tools.test.ts` (from the conventions'
-   `templates/tools.test.ts`) checks every key of every tool set a `tools.ts` exports against
-   `^[a-z][a-z0-9_]{0,63}$`, the set every provider and MCP accept. Saved conversations store the
-   name (`tool-<name>` in a message part), so a rename ships with a migration that rewrites the
-   stored parts in the same pull request; an alias at the boundary is not enough.
+   conventions' `templates/errors.test.ts`) checks that each module's `errors.ts` lists every
+   class it exports, each named after itself. `refusals.test.ts` next to a `refusals.ts` has a
+   case per error class: the copy or status it answers, its flag, and that anything else is
+   rethrown.
 
 ```bash
 createdb <app>_test   # once, on the local Postgres
@@ -361,6 +355,41 @@ A module is named after a business noun, never a technical one: not `utils`, `co
 An exported name says what kind of thing it is (`deleteChatAction`, `getChat`, `ChatList`,
 `chatsTable`). The patterns per kind, and the list of component roles, are in
 [NAMING.md](./NAMING.md); read it when you create or rename a file or an export.
+
+## Extension points
+
+The baseline stops where apps start to differ. At these seams the project decides, writes the
+decision once in `docs/EXTENSIONS.md` (from the conventions' `templates/EXTENSIONS.md`) and
+follows it from then on. Filling a seam departs from nothing: it needs no ADR and no challenge,
+and a rollout never overwrites it. Leave a point out of the file until the app needs it.
+
+An entry says what was decided, where it lives in the code and, in a line, why. An extension
+fills a seam; it never loosens the floor or contradicts a default. If it has to, it is an ADR.
+
+- **E1. Boundaries of the project's own.** One module never imports another, only one folder
+  imports a library: a block in `eslint.project.mjs` with a rule the conventions leave free
+  (Dependencies). The entry names the boundary; the block enforces it. _Lint._
+- **E2. Lint seams.** `eslint.project.mjs` exports `seams`, options the conventions' config reads
+  to widen one of its rules for named paths instead of an `eslint-disable` per file. Today:
+  `moduleLibImports`, paths under `@/lib/` a module may import as values (Rule 12). A widening
+  the config has no seam for is an ADR and its `eslint-disable`. _Lint._
+- **E3. External services.** For each client in `lib/`: the failures it reports and how (its
+  error classes, if any), its timeout and retries, how adapters answer each failure (copy, status,
+  what is logged), and which use cases carry on without it (a read that leaves a value out, work
+  completed later). The baseline only says that what nobody maps is a bug, and that a module never
+  turns a client's failure into a domain error. A mapping goes into `refusals.ts` like a module's.
+  A module that carries on without the client catches only the client's failures and rethrows the
+  rest, which is what `moduleLibImports` (E2) is for. _Review._
+- **E4. Naming additions.** A component role, or a kind of file, the tables in NAMING.md lack: name
+  it, say what it is, give an example. _Review._
+- **E5. Agent tool names.** The case style of the tools' own names. The baseline only requires
+  names every provider accepts: a letter, then letters, digits or `_`, at most 64. Without an
+  entry, tools are `snake_case`. Saved conversations store the name, so renaming a tool is a
+  migration of stored messages, whatever the style. _Review._
+- **E6. Observability.** Where an error that the Errors table says is "logged" goes (console, an
+  error tracker) and what an expected refusal reports, if anything. _Review._
+- **E7. Test support.** `test/global-setup.ts`, `test/factories.ts`, fixtures and recordings of
+  external services: what exists and how a test uses it. _Review._
 
 ## Deliberately dropped
 
@@ -384,8 +413,7 @@ condition is met, proposing the dropped thing again is not an improvement.
   exhaustiveness, is paid instead by each `errors.ts` listing its classes and the adapter's
   `never` check (Errors). Revisit if an adapter has to know which errors one use case throws, not
   just its module. An answer a remote system gives (a refusal the user or a model is shown) is
-  data the code returns, not an error, and is open territory; a remote system that gives no
-  usable answer is a service client's failure (Errors).
+  data the code returns, not an error, and is open territory.
 - **A separate browser-safe `index.ts` and server-only `server.ts`.** One server-only `index.ts`
   plus a browser-safe `contracts.ts` gives the same guarantee with one file fewer.
 - **Cache tags, cross-module events, branded ids.** Not until `cacheComponents` is on, a second
@@ -398,6 +426,13 @@ condition is met, proposing the dropped thing again is not an improvement.
   component sits in the nearest `_components/`, or in `components/` once two route groups render
   it. A folder that no longer scans flat is grouped by the noun its components render
   (NAMING.md), which keeps that placement.
+- **One prescribed design for external service clients** (0.8.0: four failure classes, the
+  client's retry policy, fixed statuses). It came from one client in one app and needed an
+  exception in the first one it met: reads that carry on without the service. How a client fails
+  is E3. Reopen when two apps have written the same E3 entry.
+- **A test of tool names** (0.8.0, Testing §8). A provider refuses a bad name on the first request,
+  so nothing is left for a test to catch, and the `snake_case`-only pattern it checked was a style
+  no provider requires. The style is E5.
 
 ## Examples
 
@@ -509,7 +544,9 @@ export async function renameChatAction(_: ChatRefusal | null, formData: FormData
 ## Open territory
 
 What this document doesn't name is yours to decide: how a component is built inside, styling,
-local state, the shape of an unexported helper. Decide by Why, in order.
+local state, the shape of an unexported helper. Decide by Why, in order. Open territory is decided
+in the code and needs no entry; an extension point is decided once and written down, because every
+later change at that seam has to follow it.
 
 Going further than a default in its own direction is not a deviation and needs no ADR: a tighter
 type, a smaller function, a clearer name, a second test case for an id.
@@ -520,36 +557,36 @@ later") is not an improvement here; see Promotion and Deliberately dropped.
 ## Changing this document
 
 This file is a copy. It is changed only in the home repository of the conventions,
-`laserjm/conventions`, released there and rolled out to every project that uses it. Changes go
-top down: the project never edits this file, and doesn't open issues or pull requests against the
-home repository either. A rule is challenged through the human in the loop, and they decide
-whether the home repository changes.
+`laserjm/conventions`, released there and rolled out to every project that uses it. The project
+never edits it and doesn't open issues or pull requests against the home repository. The baseline
+changes rarely, and on purpose: a project that grows grows into its extension points, not into
+this file.
 
-- **A better way that fits the defaults:** do it. If every project would gain from it, challenge
-  the rule too.
-- **A better way that conflicts with a default:** follow the default and challenge it. If the
-  task can't be done well without departing, write the ADR first (Rule 11), then depart.
-- **A problem with a floor rule, or an unproven part that doesn't fit:** stop and challenge it.
-  Don't edit this file and don't work around the rule in source.
-- **A default that keeps collecting ADRs:** challenge it.
-- **An improvement every project would gain from** (a rule that would have prevented the bug you
-  just fixed, a default that could be tighter, a check lint or a test could take over):
-  challenge it, even when the task is done without it.
+- **A need an extension point covers:** decide it and write it in `docs/EXTENSIONS.md`.
+- **A better way that conflicts with a default:** write the ADR first (Rule 11), then depart.
+- **A need no extension point covers, where a default is in the way:** write the ADR, and name the
+  missing seam in a `Conventions challenge`.
+- **A floor rule, or an unproven part, that doesn't fit:** stop and challenge it. Don't edit this
+  file and don't work around the rule in source.
+- **An improvement that worked here:** keep it as an extension. It is not challenged. It moves into
+  the baseline when a second app has written the same extension, and the owner moves it.
 
 **How to challenge.** Where the work is reported (the pull request description or the final
-message), add a section `Conventions challenge` per rule. Name the rule by its id, what happened
-here (link the commit, issue or ADR), the change you propose, and how it would be enforced: lint,
-review or test. A rule earns its place by a problem that happened, not by one that might; a
-removed rule gets a bullet in Deliberately dropped, so the question is not reopened.
+message), add a section `Conventions challenge` per rule or seam. Name it by its id, what happened
+here (link the commit, issue or ADR), and the change you propose. Before a rule is added, it has to
+make the usual change shorter or safer for its reader in two apps; a rule that adds a file or a
+step to every feature names the bug it prevented. A removed rule gets a bullet in Deliberately
+dropped, so the question is not reopened.
 
 ## Sources of truth
 
 - `NAMING.md`: file and identifier patterns per kind, component roles.
+- `docs/EXTENSIONS.md`: what the project decided at each extension point it uses.
 - `eslint.config.mjs`: the import graph, `server-only`, `'use server'`, casts, `process.env`, what
-  a module may import from `lib/`. `eslint.project.mjs`: the boundaries the project adds.
+  a module may import from `lib/`. `eslint.project.mjs`: the boundaries the project adds (E1) and
+  its lint seams (E2).
 - `docs/adr/`: every decision that interprets or
   deviates from a rule, with the options considered and how to reverse it.
 - `test/global-setup.ts`, `test/factories.ts`: test database and fixtures. `test/errors.test.ts`:
-  every module and service-client error is in its list. `test/tools.test.ts`: every tool name
-  matches the pattern.
+  every module error is in its list.
 - `lib/db/errors.ts`: the one place that knows the driver's error codes.
