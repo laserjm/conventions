@@ -13,9 +13,10 @@ downstream of this one.
    downstream repository changes this one, and an agent working in a downstream repository
    never opens one here.
 2. **A downstream repository doesn't change its copy.** It takes the released files as they are
-   and keeps their version line (`<!-- conventions x.y.z -->`). Its own decisions go into its
-   ADRs (`docs/adr/`), which depart from a default; they don't rewrite the document. What a
-   downstream repository learns is at most a reason for the owner to start a change here.
+   and keeps their version line (`<!-- conventions x.y.z -->`). Its own decisions go into
+   `docs/EXTENSIONS.md` where they fill an extension point, and into its ADRs (`docs/adr/`) where
+   they depart from a default; they don't rewrite the document. What a downstream repository
+   learns is at most a reason for the owner to start a change here.
 3. **A change names its enforcement class**: lint, review or test. A lint rule comes with the
    change to `templates/eslint.config.mjs` in the same pull request; a test rule names the test
    it prescribes. A removed rule gets a bullet in "Deliberately dropped".
@@ -31,6 +32,15 @@ downstream of this one.
    the table below.
 6. **An app is registered here before it adopts the conventions**, one row per app, and removed
    from the table when it stops using them. A monorepo with two adopting apps has two rows.
+7. **A rollout is not a source of changes.** A challenge from a rollout is answered in the
+   rollout: most become the app's extension (`docs/EXTENSIONS.md`) or an ADR, not a release.
+   Something moves into the baseline when two registered apps have written the same extension,
+   or when a floor rule is wrong. A change that adds a rule names the bug it prevented in those
+   apps.
+8. **A release says what it costs.** Its changelog entry ends with "To upgrade", and that section
+   names every code change a registered app has to make. A release that only loosens, clarifies
+   or adds a seam costs a copy of the files; one that makes apps rewrite code needs a reason the
+   apps already felt.
 
 ## Registered repositories
 

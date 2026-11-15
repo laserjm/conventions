@@ -1,29 +1,27 @@
-// Copy to test/errors.test.ts. CONVENTIONS.md, Errors: every errors.ts in modules/<x>/ and
-// lib/<service>/ lists all of its error classes, each with a literal `name`, so an adapter's
-// exhaustive `switch` sees each one. A class left out of the list would pass the compiler and
-// reach the user as a bug. lib/db/errors.ts names driver codes, not classes, and is skipped.
+// Copy to test/errors.test.ts when the app uses the exhaustive error mapping (CONVENTIONS.md, E8):
+// every module's errors.ts lists all of its error classes, each with a literal `name`, so an
+// adapter's exhaustive `switch` sees each one. A class left out of the list would pass the compiler
+// and reach the user as a bug.
 import { existsSync, readdirSync } from "node:fs"
 import path from "node:path"
 import { describe, expect, it } from "vitest"
 
-const withErrors = (folder: string, skip: string[] = []) => {
-  const dir = path.resolve(import.meta.dirname, "..", folder)
-  if (!existsSync(dir)) return []
-  return readdirSync(dir)
-    .filter((name) => !skip.includes(name) && existsSync(path.join(dir, name, "errors.ts")))
-    .map((name) => ({ folder, name }))
-}
-const files = [...withErrors("modules"), ...withErrors("lib", ["db"])]
+const modulesDir = path.resolve(import.meta.dirname, "../modules")
+const withErrors = existsSync(modulesDir)
+  ? readdirSync(modulesDir).filter((name) =>
+      existsSync(path.join(modulesDir, name, "errors.ts"))
+    )
+  : []
 
 const isErrorClass = (value: unknown): value is new (...args: never[]) => Error =>
   typeof value === "function" && value.prototype instanceof Error
 
 // A project without an errors.ts yet still has one test, so the file doesn't fail as empty.
-if (files.length === 0) it.skip("no errors.ts yet", () => {})
+if (withErrors.length === 0) it.skip("no module has an errors.ts yet", () => {})
 
-describe.each(files)("$folder/$name/errors.ts", ({ folder, name }) => {
+describe.each(withErrors)("modules/%s/errors.ts", (name) => {
   it("lists every error class it exports, each named after its class", async () => {
-    const exports: Record<string, unknown> = await import(`../${folder}/${name}/errors.ts`)
+    const exports: Record<string, unknown> = await import(`../modules/${name}/errors.ts`)
     const lists = Object.entries(exports).filter(
       ([key, value]) => key.endsWith("Errors") && Array.isArray(value)
     )
