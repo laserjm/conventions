@@ -1,5 +1,51 @@
 # Changelog
 
+## 0.10.0 — a module's pure rules may be a `domain/` folder, and lint keeps them pure
+
+Adds a layout step and moves one rule from review to lint; nothing is reversed. Taken into the
+baseline from two registered apps that wrote the same extension: `laserjm/screenerhub3` (E1, E4:
+`snapshot`, `screener`, `alerts`, `ask-ai`) and `laserjm/jigframe` `apps/web` (laserjm/jigframe#328,
+E1, E4: `jobs`, `monitoring`). jigframe challenged `domain.ts`, an unproven part, in that pull
+request.
+
+### Layout
+
+- **`domain.ts`, or `domain/<group>.ts` once a module holds a second group of rules** (review).
+  A group is rules that are read and tested apart, each with its own example table. Each file is
+  named for what it holds and has its `<group>.test.ts` beside it. The folder has no `index`; its
+  files import each other one way only. jigframe's `jobs/domain.ts` had grown to 1,158 lines
+  holding four such groups, and a reader of the retry rule started at line 893. Both apps split
+  without losing a rule or a test.
+- `domain.ts` leaves the Unproven list: two apps have exercised it, and this release is what they
+  found.
+- NAMING.md: the Domain rule row names `domain/<group>.ts`. Testing: unit tests cover `domain.ts`
+  or `domain/`.
+- Deliberately dropped, "Full module layering from day one": a `domain/` folder is not that
+  layering. It splits one file of pure rules that grew and changes nothing about who calls whom.
+
+### Rule 3: the pure rules don't import the db (lint)
+
+- `domain.ts`, `domain/` and their tests never import the db, `import type` included. A rule that
+  needs a row takes it from the query or command that calls it. "Pure" was already the rule
+  (Layout); it was checked only in review. Both apps had added the same lint in
+  `eslint.project.mjs`.
+- `templates/eslint.config.mjs`: a `no-restricted-imports` block for `modules/*/domain.ts`,
+  `modules/*/domain.test.ts` and `modules/*/domain/**`. It repeats the `modules/**` block's
+  patterns, which are now named constants, because flat config replaces options instead of merging
+  them. The template doesn't use the apps' `import/no-restricted-paths`: that rule stays free for
+  the project's own boundaries (E1).
+
+### To upgrade from 0.9.0
+
+No code changes: no registered app's domain file imports the db.
+
+1. Copy both documents and `eslint.config.mjs`.
+2. An app whose `docs/EXTENSIONS.md` names the `domain/` folder (E4) or a lint zone that keeps it
+   pure (E1) deletes those entries and the zone in `eslint.project.mjs`: the baseline holds both
+   now. A zone that also covers other files keeps those.
+3. A `domain/` folder with a single file (screenerhub3's `alerts`) stays as it is; the next
+   split follows the trigger.
+
 ## 0.9.0 — a baseline with extension points
 
 Reverses most of 0.8.0, which was never rolled out: the prescribed design for service clients
