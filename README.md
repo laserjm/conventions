@@ -60,7 +60,7 @@ app's `package.json`. In a single-app repository that is the repository root; in
 
 1. Register the app in the table in [AGENTS.md](AGENTS.md), one row per app.
 2. Copy `docs/nextjs/CONVENTIONS.md` and `docs/nextjs/NAMING.md` to `docs/` at the app root. Keep
-   their first line (`<!-- conventions 0.9.0 -->`): it tells the next rollout where to start.
+   their first line (`<!-- conventions 0.10.0 -->`): it tells the next rollout where to start.
 3. Copy `templates/eslint.config.mjs` to the app root as `eslint.config.mjs`. It expects
    `eslint-config-next`, the `@/` path alias, and the folders the document names (`app/`,
    `modules/`, `lib/`, `components/`, `hooks/`, `scripts/`). Adjust the globs if yours differ.
